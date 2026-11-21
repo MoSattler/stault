@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* "Vault" direction colors, from design/DirVault.dc.html. */
+@theme {
+	--color-carbon: #0b0c0e;
+	--color-ink: #eceef0;
+	--color-muted: #a9b0b8;
+	--color-lime: #c5f04a;
+}
+
+@layer base {
+	body {
+		background-color: var(--color-carbon);
+		color: var(--color-ink);
+	}
+}

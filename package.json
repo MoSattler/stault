@@ -1,0 +1,22 @@
+{
+	"name": "stault",
+	"version": "0.0.1",
+	"description": "Steam-style desktop client for a self-hosted GameVault server",
+	"private": true,
+	"type": "module",
+	"dependencies": {
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1"
+	},
+	"devDependencies": {
+		"@tailwindcss/vite": "^4.3.3",
+		"@types/bun": "^1.4.4",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"@vitejs/plugin-react": "^5.2.0",
+		"concurrently": "^9.2.5",
+		"tailwindcss": "^4.3.3",
+		"typescript": "~5.9.3",
+		"vite": "^7.3.7"
+	}
+}

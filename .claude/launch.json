@@ -1,0 +1,11 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "ui",
+			"runtimeExecutable": "sh",
+			"runtimeArgs": ["-c", "PATH=\"$HOME/.hutch/bin:$PATH\" exec hutch run hmr"],
+			"port": 5173
+		}
+	]
+}
