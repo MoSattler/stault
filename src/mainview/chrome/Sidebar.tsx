@@ -108,10 +108,6 @@ export function Sidebar() {
 					</p>
 				)}
 			</ul>
-
-			<p className="mx-2 pt-1 font-mono text-[10.5px] leading-[1.6] text-faint">
-				New games appear when they land in the server's /files folder.
-			</p>
 		</aside>
 	);
 }

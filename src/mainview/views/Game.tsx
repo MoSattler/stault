@@ -10,7 +10,7 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { StepList } from "../components/StepList";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
-import { PROGRESS_LABEL, serverHost, useGameStatus } from "../state/derive";
+import { PROGRESS_LABEL, useGameStatus } from "../state/derive";
 import { attempt, go, setUi, showToast, useApp } from "../state/store";
 
 const card = "rounded-lg border border-line bg-panel px-5 py-[18px]";
@@ -43,7 +43,6 @@ function useDetail(game: GameSummary): GameDetail | "unavailable" | null {
 
 export function Game({ game }: { game: GameSummary }) {
 	const platform = useApp((s) => s.platform);
-	const session = useApp((s) => s.session);
 	const loaded = useDetail(game);
 	const detail = typeof loaded === "object" ? loaded : null;
 	const status = useGameStatus(game, detail?.versions);
@@ -52,7 +51,6 @@ export function Game({ game }: { game: GameSummary }) {
 	const genres = detail?.genres ?? game.genres;
 	const pending = loaded === "unavailable" ? "Not available while the server can't be reached." : "Loading…";
 	const { install, download } = status;
-	const host = session ? serverHost(session.serverUrl) : "the server";
 	const versions = detail?.versions ?? [];
 
 	const heroTag = install
@@ -193,7 +191,7 @@ export function Game({ game }: { game: GameSummary }) {
 					</section>
 
 					<section aria-labelledby="h-ver" className={`${card} flex flex-col`}>
-						<h2 id="h-ver" className="mb-2.5 text-sm font-bold">Versions on {host}</h2>
+						<h2 id="h-ver" className="mb-2.5 text-sm font-bold">Versions</h2>
 						{versions.length === 0 && (
 							<p className="border-t border-hover py-[9px] text-[12.5px] text-muted">
 								{detail ? "No versions listed." : pending}
