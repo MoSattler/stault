@@ -64,7 +64,7 @@ export function Connect() {
 						<span className="stretch-125 text-[22px] font-extrabold tracking-[0.16em]">STAULT</span>
 					</span>
 					<span className="max-w-[26ch] text-lg text-[#D5D9DE]">
-						Your GameVault library on every screen you play on.
+						The launcher your GameVault server deserves.
 					</span>
 				</div>
 			</div>
