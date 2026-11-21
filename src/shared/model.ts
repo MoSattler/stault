@@ -54,6 +54,7 @@ export interface GameDetail extends GameSummary {
 	versions: GameVersion[];
 	/** Markdown from the server's metadata provider. */
 	description: string | null;
+	publishers: string[];
 }
 
 export interface Install {

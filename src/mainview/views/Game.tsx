@@ -168,6 +168,12 @@ export function Game({ game }: { game: GameSummary }) {
 						<dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-[18px] gap-y-[9px] text-[13px]">
 							<dt className="text-muted">Developer</dt>
 							<dd>{developers.join(", ") || (detail ? "Unknown" : "…")}</dd>
+							{detail && detail.publishers.length > 0 && (
+								<>
+									<dt className="text-muted">Publisher</dt>
+									<dd>{detail.publishers.join(", ")}</dd>
+								</>
+							)}
 							<dt className="text-muted">Released</dt>
 							<dd>{game.releaseYear ?? "Unknown"}</dd>
 							{install && (

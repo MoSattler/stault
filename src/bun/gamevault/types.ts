@@ -38,6 +38,7 @@ export interface ApiMetadata {
 	umu_proton_path: string | null;
 	genres?: ApiNamed[];
 	developers?: ApiNamed[];
+	publishers?: ApiNamed[];
 }
 
 export interface ApiVersion {
