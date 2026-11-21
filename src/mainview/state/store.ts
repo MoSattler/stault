@@ -65,6 +65,10 @@ interface UiState {
 	installing: { gameId: number; versionId?: number } | null;
 	/** Game waiting for the user to choose one of several executables. */
 	picking: { gameId: number; candidates: string[] } | null;
+	/** Game being asked about before its files are deleted. */
+	uninstalling: { gameId: number } | null;
+	/** Game whose right-click menu is open, and where in the window it was opened. */
+	menu: { gameId: number; x: number; y: number } | null;
 }
 
 const ui = createStore<UiState>({
@@ -75,6 +79,8 @@ const ui = createStore<UiState>({
 	toast: null,
 	installing: null,
 	picking: null,
+	uninstalling: null,
+	menu: null,
 });
 
 export function useUi<T>(select: (state: UiState) => T): T {

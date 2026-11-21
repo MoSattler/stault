@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameSummary } from "../../shared/model";
 import { Cover } from "../components/Cover";
+import { gameMenu } from "../components/GameMenu";
 import { SearchIcon } from "../components/icons";
 import { useGameStatus } from "../state/derive";
 import { go, setUi, useApp, useUi } from "../state/store";
@@ -9,12 +10,14 @@ function Row({ game, selected }: { game: GameSummary; selected: boolean }) {
 	const status = useGameStatus(game);
 	const active = status.running || !!status.download;
 	const here = !!status.install || !!status.download;
+	const menuOpen = useUi((s) => s.menu?.gameId === game.id);
 	return (
 		<li>
 			<button
 				type="button"
 				onClick={() => go({ name: "game", gameId: game.id })}
-				className={`flex w-full items-center gap-2.5 rounded-md py-[5px] pl-1.5 pr-2 text-left hover:bg-hover ${selected ? "bg-hover" : ""} ${here ? "text-ink" : "text-muted"}`}
+				onContextMenu={gameMenu(game.id)}
+				className={`flex w-full items-center gap-2.5 rounded-md py-[5px] pl-1.5 pr-2 text-left hover:bg-hover ${selected || menuOpen ? "bg-hover" : ""} ${here ? "text-ink" : "text-muted"}`}
 			>
 				<Cover title={game.title} url={game.coverUrl} className="h-9 w-[26px] flex-none rounded-[3px]" />
 				<span className="flex min-w-0 flex-auto flex-col gap-px">
