@@ -1,16 +1,117 @@
 @import "tailwindcss";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 
-/* "Vault" direction colors, from design/DirVault.dc.html. */
+/* "Vault" direction, from design/DirVault.dc.html and design/Main.dc.html. */
 @theme {
 	--color-carbon: #0b0c0e;
-	--color-ink: #eceef0;
+	--color-panel: #111316;
+	--color-raised: #16191d;
+	--color-hover: #1d2126;
+	--color-line: #262b31;
+	--color-edge: #323840;
+	--color-faint: #7d858f;
 	--color-muted: #a9b0b8;
+	--color-soft: #c9ced4;
+	--color-ink: #eceef0;
 	--color-lime: #c5f04a;
+	--color-lime-hi: #e2ff8a;
+	--color-amber: #ffb648;
+	--color-danger: #ff7a6b;
+
+	--font-sans: "Archivo Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+	--font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+	--animate-rise: rise 0.22s ease-out;
+	--animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
+
+	@keyframes rise {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+	@keyframes pulse-soft {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
+	}
+}
+
+/* Archivo's width axis: 112% for labels and tabs, 125% for titles. */
+@utility stretch-112 {
+	font-stretch: 112%;
+}
+@utility stretch-125 {
+	font-stretch: 125%;
+}
+
+/* Native window dragging (Electrobun reads the app-region property). */
+@utility drag {
+	-webkit-app-region: drag;
+	app-region: drag;
+}
+@utility no-drag {
+	-webkit-app-region: no-drag;
+	app-region: no-drag;
 }
 
 @layer base {
+	html,
+	body,
+	#root {
+		height: 100%;
+	}
 	body {
 		background-color: var(--color-carbon);
 		color: var(--color-ink);
+		font-family: var(--font-sans);
+		font-size: 14px;
+		line-height: 1.45;
+		user-select: none;
+		-webkit-user-select: none;
+		cursor: default;
+		overflow: hidden;
+	}
+	button,
+	select,
+	input {
+		font: inherit;
+		color: inherit;
+	}
+	button:not(:disabled),
+	select {
+		cursor: pointer;
+	}
+	input {
+		user-select: text;
+		-webkit-user-select: text;
+	}
+	input::placeholder {
+		color: var(--color-faint);
+	}
+	:focus-visible {
+		outline: 2px solid var(--color-lime);
+		outline-offset: 2px;
+	}
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	::-webkit-scrollbar-thumb {
+		background: #2a2f36;
+		border-radius: 10px;
+		border: 2px solid var(--color-panel);
+	}
+	dialog::backdrop {
+		background: rgba(5, 6, 8, 0.72);
 	}
 }

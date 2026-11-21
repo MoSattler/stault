@@ -7,6 +7,7 @@ export default {
 		"dev:hmr": ["hutch", "pm", "exec", "--", "concurrently", "hutch run hmr", "hutch run start"],
 		hmr: "hutch electrobun prepare && hutch pm exec -- vite --port 5173",
 		typecheck: "hutch electrobun prepare && hutch pm exec -- tsc",
+		test: ["hutch", "test"],
 		build: "hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=stable",
 		"build:canary": "hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=canary",
 	},

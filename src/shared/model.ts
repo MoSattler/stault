@@ -1,0 +1,147 @@
+// View models shared by the main process and the webview. Types only.
+
+export type Platform = "macos" | "windows" | "linux";
+
+export type GameType =
+	| "UNDETECTABLE"
+	| "WINDOWS_SETUP"
+	| "WINDOWS_PORTABLE"
+	| "WINDOWS_SOFTWARE"
+	| "LINUX_PORTABLE"
+	| "LINUX_SOFTWARE";
+
+export type ProgressState =
+	| "UNPLAYED"
+	| "INFINITE"
+	| "PLAYING"
+	| "COMPLETED"
+	| "ABORTED_TEMPORARY"
+	| "ABORTED_PERMANENT";
+
+export interface GameVersion {
+	id: number;
+	/** Version label from the server, e.g. "v1.4.2". Null when the file name has none. */
+	version: string | null;
+	type: GameType;
+	sizeBytes: number;
+	earlyAccess: boolean;
+}
+
+export interface GameSummary {
+	id: number;
+	title: string;
+	sortTitle: string;
+	/** Ready-to-use image URLs (already routed through the media proxy), or null. */
+	coverUrl: string | null;
+	backgroundUrl: string | null;
+	genres: string[];
+	developers: string[];
+	releaseYear: number | null;
+	/** ISO timestamp of when the game landed on the server. */
+	addedAt: string;
+	/** The server's default version. The full list is on GameDetail. */
+	version: string | null;
+	type: GameType;
+	sizeBytes: number;
+	minutesPlayed: number;
+	lastPlayedAt: string | null;
+	progressState: ProgressState;
+	bookmarked: boolean;
+}
+
+export interface GameDetail extends GameSummary {
+	/** Every version on the server, default first. */
+	versions: GameVersion[];
+	/** Markdown from the server's metadata provider. */
+	description: string | null;
+}
+
+export interface Install {
+	gameId: number;
+	versionId: number;
+	version: string | null;
+	type: GameType;
+	/** Folder that holds the game's files. */
+	path: string;
+	sizeBytes: number;
+	installedAt: string;
+}
+
+export type DownloadPhase = "download" | "extract" | "setup";
+
+export interface Download {
+	gameId: number;
+	versionId: number;
+	title: string;
+	version: string | null;
+	type: GameType;
+	phase: DownloadPhase;
+	paused: boolean;
+	receivedBytes: number;
+	totalBytes: number;
+	bytesPerSecond: number;
+	/** Progress of the current phase, 0 to 1. */
+	progress: number;
+	error: string | null;
+}
+
+export interface CompletedInstall {
+	gameId: number;
+	title: string;
+	at: string;
+	sizeBytes: number;
+}
+
+export interface LibraryFolder {
+	path: string;
+	freeBytes: number | null;
+}
+
+export interface Session {
+	serverUrl: string;
+	serverVersion: string;
+	userId: number;
+	username: string;
+}
+
+export interface Running {
+	gameId: number;
+	startedAt: string;
+}
+
+export interface Toast {
+	id: number;
+	text: string;
+	sub?: string;
+}
+
+/** Everything the UI renders. The main process owns it and pushes patches. */
+export interface AppState {
+	platform: Platform;
+	/** False until the main process has tried to restore a saved session. */
+	ready: boolean;
+	session: Session | null;
+	/** False when the last server request failed to connect. */
+	online: boolean;
+	deviceName: string;
+	games: GameSummary[];
+	gamesLoaded: boolean;
+	installs: Install[];
+	downloads: Download[];
+	completed: CompletedInstall[];
+	running: Running | null;
+	folders: LibraryFolder[];
+	/** Download speed limit in KiB/s, 0 for unlimited. */
+	speedLimitKib: number;
+}
+
+export interface ServerCheck {
+	ok: boolean;
+	version?: string;
+	error?: string;
+}
+
+export type PlayResult =
+	| { status: "started" }
+	/** Several executables fit; the user has to choose one. */
+	| { status: "pick"; candidates: string[] };

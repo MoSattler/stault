@@ -1,0 +1,14 @@
+# Local GameVault server for developing and testing Stault. Not for real use.
+# Start with ./dev/seed.sh, which also creates the sample games and a test user.
+services:
+  gamevault:
+    image: phalcode/gamevault-backend:17.2.0
+    environment:
+      DB_SYSTEM: SQLITE
+      SERVER_ACCOUNT_ACTIVATION_DISABLED: "true"
+    volumes:
+      - ./.data/files:/files
+      - ./.data/media:/media
+      - ./.data/db:/db
+    ports:
+      - 127.0.0.1:18080:8080

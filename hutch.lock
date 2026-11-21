@@ -5,6 +5,8 @@
     "": {
       "name": "stault",
       "dependencies": {
+        "@fontsource-variable/archivo": "^5.2.0",
+        "@fontsource-variable/jetbrains-mono": "^5.2.0",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
       },
@@ -111,6 +113,10 @@
     "@esbuild/win32-ia32": ["@esbuild/win32-ia32@0.28.2", "https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.28.2.tgz", {"os": ["win32"], "cpu": ["ia32"]}, "sha512-YmJbfTlvU7Sdn9BB+4PRES4oB6pxgS37MAONj+hBr/cpXS1aBPKXxNnDbu+QCWPj0o9dgyxeq79g6c5P8KeuYA=="],
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.28.2", "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.28.2.tgz", {"os": ["win32"], "cpu": ["x64"]}, "sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g=="],
+
+    "@fontsource-variable/archivo": ["@fontsource-variable/archivo@5.3.0", "https://registry.npmjs.org/@fontsource-variable/archivo/-/archivo-5.3.0.tgz", {}, "sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g=="],
+
+    "@fontsource-variable/jetbrains-mono": ["@fontsource-variable/jetbrains-mono@5.3.0", "https://registry.npmjs.org/@fontsource-variable/jetbrains-mono/-/jetbrains-mono-5.3.0.tgz", {}, "sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.13.tgz", {"dependencies": {"@jridgewell/trace-mapping": "^0.3.24", "@jridgewell/sourcemap-codec": "^1.5.0"}}, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 
