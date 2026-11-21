@@ -5,6 +5,7 @@ import { Heading } from "../components/Heading";
 import { ArrowUpIcon, CloseIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { StepList } from "../components/StepList";
+import { useRise } from "../components/useRise";
 import { formatBytes, formatEta, formatSpeed, formatWhenTime } from "../format";
 import { useGameStatus } from "../state/derive";
 import { attempt, go, useApp } from "../state/store";
@@ -123,9 +124,10 @@ export function Downloads() {
 	const byId = new Map(games.map((g) => [g.id, g]));
 	const [current, ...queue] = downloads;
 	const allPaused = downloads.length > 0 && downloads.every((d) => d.paused);
+	const rise = useRise();
 
 	return (
-		<div className="flex w-full max-w-[1100px] animate-rise flex-col gap-7 px-8 pb-12 pt-7">
+		<div className={`flex w-full max-w-[1100px] flex-col gap-7 px-8 pb-12 pt-7 ${rise}`}>
 			<div className="flex flex-wrap items-center gap-x-4 gap-y-3">
 				<h1 className="stretch-125 text-[28px] font-extrabold uppercase tracking-[0.02em]">Downloads</h1>
 				<div className="flex-1" />

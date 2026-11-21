@@ -144,7 +144,7 @@ async function install(gameId: number, versionId: number, folder: string) {
 	const version = detail.versions.find((v) => v.id === versionId);
 	const file = library.raw(gameId)?.versions?.find((v) => v.id === versionId)?.file_path;
 	if (!version || !file) throw new Error("That version is no longer on the server.");
-	if (canRun(platform, version.type) === "no") {
+	if (canRun(platform, version.type, version.version) === "no") {
 		throw new Error("This build can't run on this device.");
 	}
 	// The server wraps single-file games (a lone .exe or .sh) in a tar on the way out.

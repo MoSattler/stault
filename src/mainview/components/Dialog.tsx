@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef } from "react";
+import { useRise } from "./useRise";
 
 interface Props {
 	labelledBy: string;
@@ -10,6 +11,7 @@ interface Props {
 /** A modal on the native <dialog>: focus trap, Esc and backdrop come for free. */
 export function Dialog({ labelledBy, onClose, children, className = "max-w-[560px]" }: Props) {
 	const ref = useRef<HTMLDialogElement>(null);
+	const rise = useRise();
 	useEffect(() => {
 		const dialog = ref.current;
 		if (dialog && !dialog.open) dialog.showModal();
@@ -21,7 +23,7 @@ export function Dialog({ labelledBy, onClose, children, className = "max-w-[560p
 			onClose={onClose}
 			// A click on the backdrop lands on the dialog element itself.
 			onClick={(event) => event.target === ref.current && ref.current?.close()}
-			className={`m-auto max-h-[calc(100vh-48px)] w-[calc(100%-48px)] animate-rise overflow-auto rounded-xl border border-edge bg-raised p-0 text-ink shadow-[0_30px_80px_rgba(0,0,0,.6)] ${className}`}
+			className={`m-auto max-h-[calc(100vh-48px)] w-[calc(100%-48px)] overflow-auto rounded-xl border border-edge bg-raised p-0 text-ink shadow-[0_30px_80px_rgba(0,0,0,.6)] ${rise} ${className}`}
 		>
 			{children}
 		</dialog>

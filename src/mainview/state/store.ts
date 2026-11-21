@@ -102,3 +102,7 @@ export async function attempt<T>(action: Promise<T>): Promise<T | undefined> {
 		return undefined;
 	}
 }
+
+// This module holds a live connection (and the state fed by it). Swapping it in
+// place during development would open a second one, so reload the page instead.
+if (import.meta.hot) import.meta.hot.accept(() => location.reload());

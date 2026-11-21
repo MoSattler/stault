@@ -3,6 +3,7 @@ import { PLATFORM_NAME } from "../../shared/compat";
 import { api } from "../api";
 import { CloseIcon, FolderIcon } from "../components/icons";
 import { formatBytes } from "../format";
+import { useRise } from "../components/useRise";
 import { serverHost } from "../state/derive";
 import { attempt, useApp } from "../state/store";
 import { SpeedLimitSelect } from "./Downloads";
@@ -97,8 +98,9 @@ function Account() {
 export function Settings() {
 	const [tab, setTab] = useState<Tab>("library");
 	const session = useApp((s) => s.session);
+	const rise = useRise();
 	return (
-		<div className="flex w-full max-w-[1100px] animate-rise flex-col gap-6 px-8 pb-12 pt-7">
+		<div className={`flex w-full max-w-[1100px] flex-col gap-6 px-8 pb-12 pt-7 ${rise}`}>
 			<h1 className="stretch-125 text-[28px] font-extrabold uppercase tracking-[0.02em]">Settings</h1>
 			<div className="flex flex-wrap items-start gap-7">
 				<nav aria-label="Settings sections" className="flex flex-[1_1_200px] flex-col gap-0.5">

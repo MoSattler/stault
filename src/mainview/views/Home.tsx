@@ -5,6 +5,7 @@ import { Cover } from "../components/Cover";
 import { Heading } from "../components/Heading";
 import { CheckIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
 import { serverHost, useGameStatus } from "../state/derive";
 import { go, setUi, type Sort, useApp, useUi } from "../state/store";
@@ -24,7 +25,7 @@ function Featured({ game }: { game: GameSummary }) {
 				<span className="font-mono text-[11px] uppercase tracking-[0.1em]">
 					{formatHours(game.minutesPlayed)} played · last {formatWhen(game.lastPlayedAt)}
 				</span>
-				<button type="button" onClick={() => open(game)} className="stretch-125 text-left text-[40px] font-extrabold uppercase leading-none tracking-[0.01em] text-white">
+				<button type="button" onClick={() => open(game)} className={`stretch-125 text-left font-extrabold uppercase leading-[1.02] tracking-[0.01em] text-white ${game.title.length <= 18 ? "text-[40px]" : game.title.length <= 34 ? "text-[30px]" : "text-[24px]"}`}>
 					{game.title}
 				</button>
 				<div className="flex flex-wrap gap-2.5">
@@ -76,7 +77,7 @@ function Tile({ game, caption }: { game: GameSummary; caption: "genres" | "statu
 			<span className="text-[13px] font-semibold">{game.title}</span>
 			{caption === "genres" ? (
 				<span className="-mt-1.5 truncate text-xs text-muted">
-					{game.genres.join(" · ") || `${typeLabel(game.type).os} · ${formatBytes(game.sizeBytes)}`}
+					{game.genres.join(" · ") || `${typeLabel(game.type, game.version).os} · ${formatBytes(game.sizeBytes)}`}
 				</span>
 			) : (
 				<span className="-mt-1.5 font-mono text-[10.5px] text-muted">{status.line}</span>
@@ -102,6 +103,7 @@ export function Home() {
 	const running = useApp((s) => s.running);
 	const session = useApp((s) => s.session);
 	const sort = useUi((s) => s.sort);
+	const rise = useRise();
 	const host = session ? serverHost(session.serverUrl) : "the server";
 
 	const { recent, fresh, all } = useMemo(() => {
@@ -137,7 +139,7 @@ export function Home() {
 	}
 
 	return (
-		<div className="flex w-full max-w-[1320px] animate-rise flex-col gap-10 px-8 pb-12 pt-7">
+		<div className={`flex w-full max-w-[1320px] flex-col gap-10 px-8 pb-12 pt-7 ${rise}`}>
 			{recent.length > 0 && (
 				<section aria-labelledby="h-cont" className="flex flex-col gap-3.5">
 					<Heading id="h-cont">Jump back in</Heading>

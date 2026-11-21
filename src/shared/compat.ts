@@ -1,35 +1,52 @@
 import type { GameType, Platform } from "./model";
 
+export type BuildOs = "windows" | "linux" | "macos" | "unknown";
+
 /**
- * Whether a build of this type can run on this OS.
- * "maybe" means the server could not tell what the archive holds, so we only
- * know after extracting it (this is how Mac builds show up).
+ * Which OS a build is for. The server only knows Windows and Linux builds;
+ * anything else is "undetectable". For those, a version label that names
+ * macOS ("v1.6 · macOS Intel") is taken at its word.
  */
-export function canRun(platform: Platform, type: GameType): "yes" | "maybe" | "no" {
-	if (type === "UNDETECTABLE") return "maybe";
-	const windowsBuild = type.startsWith("WINDOWS");
-	if (platform === "windows") return windowsBuild ? "yes" : "no";
+export function buildOs(type: GameType, versionLabel?: string | null): BuildOs {
+	if (type.startsWith("WINDOWS")) return "windows";
+	if (type.startsWith("LINUX")) return "linux";
+	return /\b(mac\s?os|os\s?x|mac)\b/i.test(versionLabel ?? "") ? "macos" : "unknown";
+}
+
+/**
+ * Whether a build can run on this OS. "maybe" means nothing says what the
+ * archive holds, so we only know after extracting it.
+ */
+export function canRun(
+	platform: Platform,
+	type: GameType,
+	versionLabel?: string | null,
+): "yes" | "maybe" | "no" {
+	const os = buildOs(type, versionLabel);
+	if (os === "unknown") return "maybe";
+	if (os === "macos") return platform === "macos" ? "yes" : "no";
+	if (platform === "windows") return os === "windows" ? "yes" : "no";
 	// Linux runs its own builds natively and Windows builds through Proton.
 	if (platform === "linux") return "yes";
 	// macOS: Windows builds would need Wine, which Stault does not drive yet.
 	return "no";
 }
 
-export function typeLabel(type: GameType): { os: string; kind: string } {
-	switch (type) {
-		case "WINDOWS_SETUP":
-			return { os: "Windows", kind: "setup" };
-		case "WINDOWS_PORTABLE":
-			return { os: "Windows", kind: "portable" };
-		case "WINDOWS_SOFTWARE":
-			return { os: "Windows", kind: "software" };
-		case "LINUX_PORTABLE":
-			return { os: "Linux", kind: "portable" };
-		case "LINUX_SOFTWARE":
-			return { os: "Linux", kind: "software" };
-		case "UNDETECTABLE":
-			return { os: "Unknown", kind: "undetected" };
-	}
+const OS_NAME: Record<BuildOs, string> = {
+	windows: "Windows",
+	linux: "Linux",
+	macos: "macOS",
+	unknown: "Unknown",
+};
+
+/** "Windows · setup", "macOS · app", "Unknown · undetected". */
+export function typeLabel(
+	type: GameType,
+	versionLabel?: string | null,
+): { os: string; kind: string } {
+	const os = OS_NAME[buildOs(type, versionLabel)];
+	if (type === "UNDETECTABLE") return { os, kind: os === "macOS" ? "app" : "undetected" };
+	return { os, kind: type.split("_")[1].toLowerCase() };
 }
 
 export const PLATFORM_NAME: Record<Platform, string> = {

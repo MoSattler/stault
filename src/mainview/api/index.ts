@@ -21,3 +21,7 @@ export const inApp = "__electrobunWebviewId" in window;
 export const api: StaultApi = inApp
 	? (await import("./rpc")).createRpcApi()
 	: (await import("./mock")).createMockApi();
+
+// This module holds a live connection (and the state fed by it). Swapping it in
+// place during development would open a second one, so reload the page instead.
+if (import.meta.hot) import.meta.hot.accept(() => location.reload());

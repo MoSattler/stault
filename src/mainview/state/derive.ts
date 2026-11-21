@@ -5,6 +5,7 @@ import type {
 	Download,
 	DownloadPhase,
 	GameSummary,
+	GameVersion,
 	Install,
 	ProgressState,
 } from "../../shared/model";
@@ -94,7 +95,16 @@ async function play(gameId: number) {
 
 type Slice = Pick<AppState, "platform" | "installs" | "downloads" | "running">;
 
-export function gameStatus(game: GameSummary, state: Slice, now: number): GameStatus {
+/**
+ * `versions` is the full list when it is known (the game page). Without it,
+ * only the server's default version can be judged.
+ */
+export function gameStatus(
+	game: GameSummary,
+	state: Slice,
+	now: number,
+	versions?: GameVersion[],
+): GameStatus {
 	const install = state.installs.find((i) => i.gameId === game.id);
 	const download = state.downloads.find((d) => d.gameId === game.id);
 	const running = state.running?.gameId === game.id;
@@ -129,25 +139,31 @@ export function gameStatus(game: GameSummary, state: Slice, now: number): GameSt
 	} else if (install) {
 		line = `Installed · ${game.minutesPlayed ? formatHours(game.minutesPlayed) : "new"}`;
 		primary = { label: "Play", sub: "", icon: "play", tone: "accent", fill: 0, act: () => play(gameId) };
-	} else if (canRun(state.platform, game.type) === "no") {
-		line = "Not installed";
-		primary = { label: `Not on ${PLATFORM_NAME[state.platform]}`, sub: `${typeLabel(game.type).os} build`, icon: "none", tone: "off", fill: 0, act() {} };
 	} else {
 		line = "Not installed";
-		primary = { label: "Install", sub: formatBytes(game.sizeBytes), icon: "install", tone: "accent", fill: 0, act: () => setUi({ installing: { gameId } }) };
+		const runnable = (versions ?? [game]).filter(
+			(v) => canRun(state.platform, v.type, v.version) !== "no",
+		);
+		if (runnable.length === 0) {
+			const others = new Set((versions ?? [game]).map((v) => typeLabel(v.type, v.version).os));
+			primary = { label: `Not on ${PLATFORM_NAME[state.platform]}`, sub: `${[...others].join(" and ")} only`, icon: "none", tone: "off", fill: 0, act() {} };
+		} else {
+			const sub = runnable.length > 1 ? `${runnable.length} versions · choose next` : formatBytes(runnable[0].sizeBytes);
+			primary = { label: "Install", sub, icon: "install", tone: "accent", fill: 0, act: () => setUi({ installing: { gameId } }) };
+		}
 	}
 
 	return { install, download, running, line, primary };
 }
 
 /** Status of one game, kept current as downloads and sessions change. */
-export function useGameStatus(game: GameSummary): GameStatus {
+export function useGameStatus(game: GameSummary, versions?: GameVersion[]): GameStatus {
 	const platform = useApp((s) => s.platform);
 	const installs = useApp((s) => s.installs);
 	const downloads = useApp((s) => s.downloads);
 	const running = useApp((s) => s.running);
 	const now = useNow();
-	return gameStatus(game, { platform, installs, downloads, running }, now);
+	return gameStatus(game, { platform, installs, downloads, running }, now, versions);
 }
 
 /** Server name as shown in the UI: "vault.lan". */

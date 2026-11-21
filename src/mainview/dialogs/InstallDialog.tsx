@@ -40,7 +40,13 @@ export function InstallDialog({ game, versionId }: Props) {
 			(d) => {
 				setDetail(d);
 				// Default to the first version this OS can run.
-				setPicked((current) => current ?? d.versions.find((v) => canRun(platform, v.type) !== "no")?.id);
+				setPicked(
+					(current) =>
+						current ??
+						// Prefer a build known to run here over one nobody can vouch for.
+						(d.versions.find((v) => canRun(platform, v.type, v.version) === "yes") ??
+							d.versions.find((v) => canRun(platform, v.type, v.version) === "maybe"))?.id,
+				);
 			},
 			(e) => setFailed(e instanceof Error ? e.message : String(e)),
 		);
@@ -70,7 +76,7 @@ export function InstallDialog({ game, versionId }: Props) {
 					</span>
 					<h2 id="d-inst" className="stretch-125 text-[22px] font-extrabold uppercase leading-none">{game.title}</h2>
 					<span className="font-mono text-[11.5px] text-muted">
-						{version ? `${version.version ?? "Unversioned"} · ${typeLabel(version.type).os} · ${typeLabel(version.type).kind}` : " "}
+						{version ? `${version.version ?? "Unversioned"} · ${typeLabel(version.type, version.version).os} · ${typeLabel(version.type, version.version).kind}` : " "}
 					</span>
 				</div>
 			</div>
@@ -81,8 +87,9 @@ export function InstallDialog({ game, versionId }: Props) {
 					{failed && <p className="text-[13px] text-amber">{failed}</p>}
 					{!detail && !failed && <p className="text-[13px] text-muted">Loading versions…</p>}
 					{detail?.versions.map((v, i) => {
-						const runnable = canRun(platform, v.type) !== "no";
-						const { os, kind } = typeLabel(v.type);
+						const fit = canRun(platform, v.type, v.version);
+						const runnable = fit !== "no";
+						const { os, kind } = typeLabel(v.type, v.version);
 						return (
 							<button key={v.id} type="button" onClick={() => setPicked(v.id)} aria-pressed={picked === v.id} disabled={!runnable} className={`${option(picked === v.id)} min-h-[52px] py-2`}>
 								<Radio on={picked === v.id} />
@@ -94,7 +101,7 @@ export function InstallDialog({ game, versionId }: Props) {
 									</span>
 									<span className="text-[12.5px] text-muted">
 										{os} · {kind}
-										{v.type === "UNDETECTABLE" && " · Stault checks after extracting whether it can run here"}
+										{fit === "maybe" && " · Stault checks after extracting whether it can run here"}
 									</span>
 								</span>
 								<span className="whitespace-nowrap font-mono text-xs text-muted">

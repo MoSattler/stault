@@ -8,6 +8,7 @@ import { Heading } from "../components/Heading";
 import { BackIcon, BookmarkIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { StepList } from "../components/StepList";
+import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
 import { PROGRESS_LABEL, serverHost, useGameStatus } from "../state/derive";
 import { attempt, go, setUi, showToast, useApp } from "../state/store";
@@ -15,7 +16,7 @@ import { attempt, go, setUi, showToast, useApp } from "../state/store";
 const card = "rounded-lg border border-line bg-panel px-5 py-[18px]";
 
 function versionKind(v: GameVersion): string {
-	const { os, kind } = typeLabel(v.type);
+	const { os, kind } = typeLabel(v.type, v.version);
 	return `${os} · ${kind}${v.earlyAccess ? " · early access" : ""}`;
 }
 
@@ -43,9 +44,12 @@ function useDetail(game: GameSummary): GameDetail | "unavailable" | null {
 export function Game({ game }: { game: GameSummary }) {
 	const platform = useApp((s) => s.platform);
 	const session = useApp((s) => s.session);
-	const status = useGameStatus(game);
 	const loaded = useDetail(game);
 	const detail = typeof loaded === "object" ? loaded : null;
+	const status = useGameStatus(game, detail?.versions);
+	// The list from the server leaves out developers and genres; the detail has them.
+	const developers = detail?.developers ?? game.developers;
+	const genres = detail?.genres ?? game.genres;
 	const pending = loaded === "unavailable" ? "Not available while the server can't be reached." : "Loading…";
 	const { install, download } = status;
 	const host = session ? serverHost(session.serverUrl) : "the server";
@@ -56,9 +60,17 @@ export function Game({ game }: { game: GameSummary }) {
 		: versions.length > 1
 			? `${versions.length} VERSIONS ON SERVER`
 			: `${game.version ?? "LATEST"} ON SERVER`;
-	const facts = [game.developers.join(", "), game.releaseYear, game.genres.join(" · ")].filter(Boolean);
+	const facts = [developers.join(", "), game.releaseYear, genres.join(" · ")].filter(Boolean);
+	// Long titles get smaller type, so the hero stays within about two lines.
+	const titleSize =
+		game.title.length <= 16
+			? "text-[clamp(32px,4.4vw,56px)]"
+			: game.title.length <= 32
+				? "text-[clamp(28px,3.4vw,42px)]"
+				: "text-[clamp(24px,2.7vw,34px)]";
 
 	const [confirming, setConfirming] = useState(false);
+	const rise = useRise();
 
 	async function uninstall() {
 		setConfirming(false);
@@ -68,7 +80,7 @@ export function Game({ game }: { game: GameSummary }) {
 	}
 
 	return (
-		<div className="flex animate-rise flex-col">
+		<div className={`flex flex-col ${rise}`}>
 			<div className="relative flex min-h-[340px] flex-col justify-between gap-6 px-8 pb-7 pt-5">
 				<Cover title={game.title} url={game.backgroundUrl ?? game.coverUrl} className="!absolute inset-0" />
 				<div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,16,19,.15)_0%,rgba(14,16,19,.35)_45%,rgba(14,16,19,.96)_100%),linear-gradient(90deg,rgba(14,16,19,.7)_0%,rgba(14,16,19,0)_65%)]" />
@@ -82,7 +94,7 @@ export function Game({ game }: { game: GameSummary }) {
 							{heroTag}
 						</span>
 					</div>
-					<h1 className="stretch-125 text-balance text-[clamp(34px,5vw,60px)] font-extrabold uppercase leading-[0.98] tracking-[0.01em] text-white">
+					<h1 className={`stretch-125 max-w-[22em] text-balance font-extrabold uppercase leading-[1.02] tracking-[0.01em] text-white ${titleSize}`}>
 						{game.title}
 					</h1>
 					{facts.length > 0 && <p className="text-sm text-[#D5D9DE]">{facts.join(" · ")}</p>}
@@ -160,7 +172,7 @@ export function Game({ game }: { game: GameSummary }) {
 						<h2 id="h-det" className="mb-3 text-sm font-bold">Details</h2>
 						<dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-[18px] gap-y-[9px] text-[13px]">
 							<dt className="text-muted">Developer</dt>
-							<dd>{game.developers.join(", ") || "Unknown"}</dd>
+							<dd>{developers.join(", ") || (detail ? "Unknown" : "…")}</dd>
 							<dt className="text-muted">Released</dt>
 							<dd>{game.releaseYear ?? "Unknown"}</dd>
 							{install && (
@@ -183,7 +195,7 @@ export function Game({ game }: { game: GameSummary }) {
 						)}
 						{versions.map((v, i) => {
 							const current = install?.versionId === v.id;
-							const runnable = canRun(platform, v.type) !== "no";
+							const runnable = canRun(platform, v.type, v.version) !== "no";
 							return (
 								<div key={v.id} className="flex items-center gap-3 border-t border-hover py-[9px]">
 									<span className="flex min-w-0 flex-auto flex-col gap-px">

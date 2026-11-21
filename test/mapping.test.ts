@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { toDetail, toSummary, userGameData } from "../src/bun/gamevault/mapping";
 import type { ApiGame } from "../src/bun/gamevault/types";
-import { canRun } from "../src/shared/compat";
+import { buildOs, canRun, typeLabel } from "../src/shared/compat";
 
 const game: ApiGame = {
 	id: 3,
@@ -72,6 +72,23 @@ test("which builds run where", () => {
 	expect(canRun("linux", "LINUX_PORTABLE")).toBe("yes");
 	expect(canRun("macos", "WINDOWS_PORTABLE")).toBe("no");
 	expect(canRun("macos", "LINUX_PORTABLE")).toBe("no");
-	// Mac builds are indexed as undetectable, so they stay installable everywhere.
+	// Nothing says what an undetectable build holds, so it stays installable everywhere.
 	expect(canRun("macos", "UNDETECTABLE")).toBe("maybe");
+	expect(canRun("windows", "UNDETECTABLE", "v1.0")).toBe("maybe");
+});
+
+test("a version label that names macOS marks a Mac build", () => {
+	for (const label of ["v1.6.13 · Bugfixes & QoL · macOS Intel", "v1.1.18 · fheroes2 · macOS Apple Silicon", "v0.5.7 · OpenRCT2 · macOS Universal", "v2 (Mac)", "v1 OSX"]) {
+		expect(buildOs("UNDETECTABLE", label)).toBe("macos");
+		expect(canRun("macos", "UNDETECTABLE", label)).toBe("yes");
+		expect(canRun("windows", "UNDETECTABLE", label)).toBe("no");
+		expect(canRun("linux", "UNDETECTABLE", label)).toBe("no");
+	}
+	expect(typeLabel("UNDETECTABLE", "v1 · macOS Intel")).toEqual({ os: "macOS", kind: "app" });
+	// The label never overrides what the server detected.
+	expect(buildOs("WINDOWS_SETUP", "v1 · macOS Intel")).toBe("windows");
+	// Words that merely contain "mac" don't count.
+	expect(buildOs("UNDETECTABLE", "v1 · Machinarium")).toBe("unknown");
+	expect(typeLabel("WINDOWS_SETUP")).toEqual({ os: "Windows", kind: "setup" });
+	expect(typeLabel("UNDETECTABLE")).toEqual({ os: "Unknown", kind: "undetected" });
 });
