@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/MoSattler/stault/compare/v0.3.0...v0.3.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* lighten games that are not installed in the game list ([dd465bb](https://github.com/MoSattler/stault/commit/dd465bb54a2ac3f00609bb8ad548bb81bac55c2f))
+* lighten games that are not installed in the game list ([5fbca80](https://github.com/MoSattler/stault/commit/5fbca80101e1a4c846a5a829c890dfc5ef37946a))
+
 ## [0.3.0](https://github.com/MoSattler/stault/compare/v0.2.0...v0.3.0) (2026-11-21)
 
 
