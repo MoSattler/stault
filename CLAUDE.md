@@ -12,6 +12,11 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Upgrade Electrobun with `hutch electrobun update`.
 - Read the docs before using an API; older examples are wrong for 2.x: https://docs.electrobun.dev/electrobun/
 
+## Commits and releases
+
+- Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`, `refactor:`, `test:`; `!` marks a breaking change). release-please reads them on `main` to pick the next version and write the changelog, so the type decides whether a change is released: only `feat` and `fix` are.
+- Never edit `version` in `package.json`, `CHANGELOG.md` or `.release-please-manifest.json`, and never push a version tag. Merging the release PR does all of it (`.github/workflows/release.yml`).
+
 ## Architecture
 
 - `src/bun/` is the main process and owns everything privileged: tokens, server calls, files, downloads, child processes. `index.ts` wires the services together and is the only file that imports `electrobun/main`, so everything else can be unit-tested.

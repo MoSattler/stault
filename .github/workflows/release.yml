@@ -1,16 +1,22 @@
 name: Release
 
-# Builds Stault on every OS it ships for. Hutch can only build for the OS it
-# runs on, so each platform needs its own runner.
+# Versions come from the commit messages on main (Conventional Commits),
+# through release-please.
 #
-#   Tag like v0.1.0      stable installers, published as a GitHub release
+#   Push to main         opens or updates the release PR: next version, changelog
+#   Release PR merged    tags the version and publishes the GitHub release, then
+#                        builds stable installers and attaches them to it
 #   Manual run           canary installers, kept on the run for testing
 #   PR touching the      the same canary build, as a check that packaging
 #   packaging files      still works
+#
+# The builds live in this workflow because a tag created by a workflow does not
+# start another one. Hutch can only build for the OS it runs on, so each
+# platform needs its own runner.
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
   workflow_dispatch:
   pull_request:
     paths:
@@ -19,9 +25,10 @@ on:
       - hutch.config.ts
       - hutch.lock
 
+# A newer push to a PR replaces its build. Runs on main never replace each other.
 concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: release-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -31,8 +38,26 @@ env:
   HUTCH_VERSION: "0.30.0"
 
 jobs:
+  release-please:
+    name: Release PR
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v5
+        id: release
+
   build:
     name: Build (${{ matrix.name }})
+    needs: release-please
+    # Pushes to main build only when they released a version.
+    if: ${{ !cancelled() && (needs.release-please.result == 'skipped' || needs.release-please.outputs.release_created == 'true') }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -45,7 +70,7 @@ jobs:
           - name: Linux x64
             runner: ubuntu-latest
     env:
-      CHANNEL: ${{ startsWith(github.ref, 'refs/tags/v') && 'stable' || 'canary' }}
+      CHANNEL: ${{ needs.release-please.outputs.release_created == 'true' && 'stable' || 'canary' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -62,12 +87,6 @@ jobs:
           & ([scriptblock]::Create((irm https://hutch.blackboard.sh/hutch/install.ps1))) -Version $env:HUTCH_VERSION -NoModifyPath
           Join-Path $HOME ".hutch\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      # v0.1.0 -> 0.1.0. electrobun.config.ts reads STAULT_VERSION.
-      - name: Take the app version from the tag
-        if: env.CHANNEL == 'stable'
-        shell: bash
-        run: echo "STAULT_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
-
       - name: Install dependencies
         run: hutch run install
 
@@ -81,10 +100,10 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  release:
-    name: Publish release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+  publish:
+    name: Attach installers
+    needs: [release-please, build]
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -94,13 +113,13 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      # A tag with a hyphen (v0.2.0-rc.1) is published as a pre-release.
-      - name: Create the GitHub release
+      # release-please has already published the release with its changelog.
+      - name: Attach the installers to the release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
-          PRERELEASE: ${{ contains(github.ref_name, '-') && '--prerelease' || '' }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           ls -l artifacts
-          gh release create "$TAG" artifacts/* --title "Stault $TAG" --generate-notes --verify-tag $PRERELEASE
+          gh release upload "$TAG" artifacts/* --clobber
+          gh release edit "$TAG" --title "Stault $TAG"

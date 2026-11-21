@@ -1,4 +1,5 @@
 import type { ElectrobunConfig } from "electrobun";
+import packageJson from "./package.json";
 
 // 7-Zip extracts downloaded games. Only this platform's binary goes in the bundle.
 const sevenZipDir = `node_modules/7zip-bin-full/${
@@ -10,9 +11,8 @@ export default {
 	app: {
 		name: "Stault",
 		identifier: "com.mosattler.stault",
-		// Release builds take their version from the git tag
-		// (.github/workflows/release.yml sets STAULT_VERSION).
-		version: process.env.STAULT_VERSION || "0.0.1",
+		// release-please bumps the version in package.json when it prepares a release.
+		version: packageJson.version,
 	},
 	build: {
 		mainProcess: "bun",
