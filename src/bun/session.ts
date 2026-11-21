@@ -103,7 +103,6 @@ export class Session {
 		serverUrl: string;
 		username: string;
 		password: string;
-		deviceName: string;
 	}) {
 		const username = input.username.trim();
 		if (!username || !input.password) throw new Error("Enter your username and password.");
@@ -120,10 +119,9 @@ export class Session {
 				userId: Number(me.id),
 				username: me.username,
 			};
-			const deviceName = input.deviceName.trim() || getState().deviceName;
 			const lastSignIn = { serverUrl, username: me.username };
-			this.settings.update({ account, deviceName, lastSignIn });
-			patchState({ session: account, deviceName, lastSignIn, online: true });
+			this.settings.update({ account, lastSignIn });
+			patchState({ session: account, lastSignIn, online: true });
 			this.hooks.signedIn(serverUrl);
 		} catch (error) {
 			this.current = null;

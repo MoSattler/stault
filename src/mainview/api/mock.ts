@@ -240,10 +240,10 @@ export function createMockApi(): StaultApi {
 		getState: () => later(state, 0),
 		checkServer: ({ url }) =>
 			later(/\S+\.\S+/.test(url) ? { ok: true, serverUrl: /^https?:/.test(url) ? url : `https://${url}`, version: "17.2.0" } : { ok: false, error: "No GameVault server answered at that address." }, 400),
-		async signIn({ serverUrl, password, username, deviceName }) {
+		async signIn({ serverUrl, password, username }) {
 			await later(null, 600);
 			if (password === "wrong") throw new Error("Wrong username or password.");
-			patch({ session: { ...session, serverUrl, username }, deviceName });
+			patch({ session: { ...session, serverUrl, username } });
 		},
 		async signOut() {
 			patch({ session: null });

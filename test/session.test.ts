@@ -49,13 +49,12 @@ test.skipIf(!up)("signs in, loads the library, restores on the next start, and s
 	expect((await session.check("http://127.0.0.1:9")).ok).toBe(false);
 
 	await expect(
-		session.signIn({ serverUrl: SERVER, username: read("DEV_USER"), password: "not-it", deviceName: "" }),
+		session.signIn({ serverUrl: SERVER, username: read("DEV_USER"), password: "not-it" }),
 	).rejects.toThrow("Wrong username or password.");
 	expect(getState().session).toBeNull();
 
-	await session.signIn({ serverUrl: `${SERVER}/`, username: read("DEV_USER"), password: read("DEV_PASSWORD"), deviceName: "Rig" });
+	await session.signIn({ serverUrl: `${SERVER}/`, username: read("DEV_USER"), password: read("DEV_PASSWORD") });
 	expect(getState().session).toMatchObject({ serverUrl: SERVER, username: read("DEV_USER") });
-	expect(getState().deviceName).toBe("Rig");
 	expect(getState().games.map((g) => g.title)).toContain("Harbor Lights");
 	expect(stored.size).toBe(1);
 	expect(events).toEqual([`in ${SERVER}`]);

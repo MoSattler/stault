@@ -12,14 +12,12 @@ const label = "text-sm font-semibold";
 const field =
 	"min-h-[46px] min-w-0 rounded-md border border-edge bg-raised px-3.5 disabled:opacity-60";
 
-/** First run: find the server, sign in, name this device. */
+/** First run: find the server and sign in. */
 export function Connect() {
-	const defaultDevice = useApp((s) => s.deviceName);
 	const last = useApp((s) => s.lastSignIn);
 	const [url, setUrl] = useState(last?.serverUrl ?? "");
 	const [username, setUsername] = useState(last?.username ?? "");
 	const [password, setPassword] = useState("");
-	const [device, setDevice] = useState(defaultDevice);
 	const [check, setCheck] = useState<ServerCheck | "checking" | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -38,7 +36,7 @@ export function Connect() {
 		setBusy(true);
 		setError(null);
 		try {
-			await api.signIn({ serverUrl: url, username, password, deviceName: device });
+			await api.signIn({ serverUrl: url, username, password });
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
 			setBusy(false);
@@ -131,14 +129,6 @@ export function Connect() {
 							<label htmlFor="pwd" className={label}>Password</label>
 							<input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" disabled={busy} className={field} />
 						</div>
-					</div>
-
-					<div className="flex flex-col gap-2">
-						<label htmlFor="dev" className={label}>Name this device</label>
-						<input id="dev" value={device} onChange={(e) => setDevice(e.target.value)} disabled={busy} className={field} />
-						<span className="text-[13px] text-muted">
-							Shown in Stault, so you can tell your devices apart.
-						</span>
 					</div>
 
 					{error && <p role="alert" className="text-[13px] text-amber">{error}</p>}

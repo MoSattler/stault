@@ -17,7 +17,6 @@ export type Requests = {
 		serverUrl: string;
 		username: string;
 		password: string;
-		deviceName: string;
 	}>;
 	signOut: Req<{}>;
 	refreshLibrary: Req<{}>;
