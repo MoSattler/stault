@@ -21,11 +21,13 @@ Not in v0.1: cloud saves, Big Picture Mode, Steam shortcuts, single sign-on.
 
 ## Install
 
-Download an installer from the [latest release](https://github.com/MoSattler/stault/releases/latest), or on macOS (Apple Silicon, macOS 14 or newer) use Homebrew:
+On macOS (Apple Silicon, macOS 14 or newer), install with Homebrew:
 
 ```bash
 brew install --cask mosattler/tap/stault
 ```
+
+On Windows and Linux, download an installer from the [latest release](https://github.com/MoSattler/stault/releases/latest).
 
 ## Setup
 
@@ -61,7 +63,7 @@ Versions come from the commit messages on `main`, which follow [Conventional Com
 - A release also updates the Homebrew cask in [MoSattler/homebrew-tap](https://github.com/MoSattler/homebrew-tap). The workflow pushes there with the deploy key in the `HOMEBREW_TAP_DEPLOY_KEY` secret.
 - Run the workflow by hand (Actions → Release → Run workflow) for canary installers, which stay attached to the run for 14 days. Use this to try a build on Windows or a Steam Deck.
 
-The builds are not code-signed, so macOS and Windows warn before opening them.
+The builds are not code-signed. Windows warns before opening them. macOS reports a downloaded copy as damaged and refuses to open it, so the Homebrew cask removes the quarantine flag after installing. For a copy taken from the DMG, run `xattr -dr com.apple.quarantine /Applications/Stault.app` once.
 
 ## Test server
 
