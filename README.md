@@ -47,7 +47,9 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 
 `.github/workflows/release.yml` builds installers for macOS (Apple Silicon), Windows x64 and Linux x64.
 
-- Push a tag such as `v0.1.0` to build stable installers and publish them as a GitHub release. The app version comes from the tag. A tag with a hyphen (`v0.2.0-rc.1`) becomes a pre-release.
+Versions come from the commit messages on `main`, which follow [Conventional Commits](https://www.conventionalcommits.org): `fix:` raises the patch version, `feat:` the minor version, and a breaking change (`feat!:`) also the minor version until 1.0. Other types (`docs:`, `chore:`, `ci:`, `refactor:`, `test:`) release nothing.
+
+- [release-please](https://github.com/googleapis/release-please) keeps a release PR open with the next version and its changelog. Merge it to tag the version, publish the GitHub release and attach stable installers. The version lives in `package.json`; don't edit it or create tags by hand.
 - Run the workflow by hand (Actions → Release → Run workflow) for canary installers, which stay attached to the run for 14 days. Use this to try a build on Windows or a Steam Deck.
 
 The builds are not code-signed, so macOS and Windows warn before opening them.
