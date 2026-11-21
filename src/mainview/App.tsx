@@ -2,9 +2,11 @@ import { useEffect, useRef } from "react";
 import { Footer } from "./chrome/Footer";
 import { Sidebar } from "./chrome/Sidebar";
 import { TitleBar } from "./chrome/TitleBar";
+import { GameMenu } from "./components/GameMenu";
 import { Toast } from "./components/Toast";
 import { InstallDialog } from "./dialogs/InstallDialog";
 import { PickExecutableDialog } from "./dialogs/PickExecutableDialog";
+import { UninstallDialog } from "./dialogs/UninstallDialog";
 import { go, useApp, useUi } from "./state/store";
 import { Connect } from "./views/Connect";
 import { Downloads } from "./views/Downloads";
@@ -42,13 +44,16 @@ function Main() {
 function Dialogs() {
 	const installing = useUi((s) => s.installing);
 	const picking = useUi((s) => s.picking);
+	const uninstalling = useUi((s) => s.uninstalling);
 	const games = useApp((s) => s.games);
 	const installGame = installing && games.find((g) => g.id === installing.gameId);
 	const pickGame = picking && games.find((g) => g.id === picking.gameId);
+	const uninstallGame = uninstalling && games.find((g) => g.id === uninstalling.gameId);
 	return (
 		<>
 			{installing && installGame && <InstallDialog game={installGame} versionId={installing.versionId} />}
 			{picking && pickGame && <PickExecutableDialog game={pickGame} candidates={picking.candidates} />}
+			{uninstallGame && <UninstallDialog game={uninstallGame} />}
 		</>
 	);
 }
@@ -74,6 +79,7 @@ export default function App() {
 				<Main />
 			</div>
 			<Footer />
+			<GameMenu />
 			<Dialogs />
 			<Toast />
 		</div>
