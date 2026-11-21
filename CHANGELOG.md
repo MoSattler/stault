@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/MoSattler/stault/compare/v0.4.0...v0.5.0) (2026-11-21)
+
+
+### Features
+
+* sync game saves with the server ([ce19518](https://github.com/MoSattler/stault/commit/ce19518ca9bd96af0402bb981f27e1af7a5902a9))
+* sync game saves with the server ([04669dd](https://github.com/MoSattler/stault/commit/04669dd6c3cc866114bfdc27719bdc2890f48de9))
+
 ## [0.4.0](https://github.com/MoSattler/stault/compare/v0.3.1...v0.4.0) (2026-11-21)
 
 
