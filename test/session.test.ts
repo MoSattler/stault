@@ -4,6 +4,8 @@ import { afterAll, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { GameVaultClient } from "../src/bun/gamevault/client";
+import type { ApiTokens } from "../src/bun/gamevault/types";
 import { Library } from "../src/bun/library";
 import { MediaProxy } from "../src/bun/media";
 import type { SecretStore } from "../src/bun/secrets";
@@ -27,6 +29,8 @@ function boot() {
 		delete: async (name) => void stored.delete(name),
 	};
 	const events: string[] = [];
+	/** What the login window would hand back: tokens, or null for a window the user closed. */
+	const sso: { tokens: ApiTokens | null } = { tokens: null };
 	const make = () => {
 		const settings = new SettingsFile(join(dir, "settings.json"), {
 			account: null, lastSignIn: null, deviceName: "Test rig", libraryFolders: [], speedLimitKib: 0, saveSync: true,
@@ -36,9 +40,10 @@ function boot() {
 		return new Session(settings, secrets, media, library, {
 			signedIn: (url) => void events.push(`in ${url}`),
 			signingOut: async () => void events.push("out"),
+			ssoLogin: async () => sso.tokens,
 		});
 	};
-	return { make, stored, events };
+	return { make, stored, events, sso };
 }
 
 test.skipIf(!up)("signs in, loads the library, restores on the next start, and signs out", async () => {
@@ -77,4 +82,31 @@ test.skipIf(!up)("signs in, loads the library, restores on the next start, and s
 	expect(getState().games).toEqual([]);
 	expect(stored.size).toBe(0);
 	expect(getState().lastSignIn).toEqual({ serverUrl: SERVER, username: read("DEV_USER") });
+});
+
+test.skipIf(!up)("signs in with the tokens of a single sign-on, and not at all when the window is closed", async () => {
+	const { make, stored, events, sso } = boot();
+	const session = make();
+
+	expect(await session.signInWithSso({ serverUrl: SERVER, deviceName: "" })).toBe(false);
+	expect(getState().session).toBeNull();
+	expect(stored.size).toBe(0);
+	expect(events).toEqual([]);
+
+	// The test server has no identity provider to visit; its tokens are the same either way.
+	await new GameVaultClient(SERVER, null, { onTokens: (tokens) => void (sso.tokens = tokens) })
+		.login(read("DEV_USER"), read("DEV_PASSWORD"));
+
+	expect(await session.signInWithSso({ serverUrl: SERVER, deviceName: "Rig" })).toBe(true);
+	expect(getState().session).toMatchObject({ serverUrl: SERVER, username: read("DEV_USER") });
+	expect(getState().games.length).toBeGreaterThan(0);
+	expect([...stored.keys()]).toEqual([`${SERVER}#${read("DEV_USER")}`]);
+	expect(events).toEqual([`in ${SERVER}`]);
+
+	// The stored token is the one that keeps the session going after a restart.
+	const restored = make();
+	await restored.restore();
+	expect(getState().session?.username).toBe(read("DEV_USER"));
+	await restored.signOut();
+	expect(stored.size).toBe(0);
 });

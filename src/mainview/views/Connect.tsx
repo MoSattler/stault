@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import type { ServerCheck } from "../../shared/model";
 import { api } from "../api";
 import { WindowControls } from "../chrome/WindowControls";
@@ -7,6 +7,9 @@ import { CheckIcon, Logo } from "../components/icons";
 import { useApp } from "../state/store";
 
 const WALL = Array.from({ length: 20 }, (_, i) => gradientFor(`wall-${i * 7}`));
+
+const SSO = "Sign in with SSO";
+const SSO_WAITING = "Waiting for sign-in…";
 
 const label = "text-sm font-semibold";
 const field =
@@ -21,8 +24,13 @@ export function Connect() {
 	const [password, setPassword] = useState("");
 	const [device, setDevice] = useState(defaultDevice);
 	const [check, setCheck] = useState<ServerCheck | "checking" | null>(null);
-	const [busy, setBusy] = useState(false);
+	const [busy, setBusy] = useState<"password" | "sso" | null>(null);
 	const [error, setError] = useState<string | null>(null);
+
+	// Until the server has said otherwise, expect a password sign-in.
+	const methods = (check !== "checking" && check?.methods) || ["basic"];
+	const passwordSignIn = methods.includes("basic");
+	const sso = methods.includes("sso");
 
 	async function runCheck() {
 		if (!url.trim()) return;
@@ -33,16 +41,25 @@ export function Connect() {
 		if (result.serverUrl) setUrl(result.serverUrl);
 	}
 
-	async function submit(event: FormEvent) {
-		event.preventDefault();
-		setBusy(true);
+	// A remembered server is asked right away how it signs people in.
+	useEffect(() => void runCheck(), []);
+
+	/** On success the app leaves this screen, so only a failure or a closed login window ends up back here. */
+	async function signIn(how: "password" | "sso") {
+		setBusy(how);
 		setError(null);
 		try {
-			await api.signIn({ serverUrl: url, username, password, deviceName: device });
+			if (how === "sso") await api.signInWithSso({ serverUrl: url, deviceName: device });
+			else await api.signIn({ serverUrl: url, username, password, deviceName: device });
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
-			setBusy(false);
 		}
+		setBusy(null);
+	}
+
+	function submit(event: FormEvent) {
+		event.preventDefault();
+		void signIn(passwordSignIn ? "password" : "sso");
 	}
 
 	return (
@@ -94,13 +111,13 @@ export function Connect() {
 								autoCapitalize="off"
 								spellCheck={false}
 								autoFocus
-								disabled={busy}
+								disabled={!!busy}
 								className={`${field} flex-auto font-mono text-sm`}
 							/>
 							<button
 								type="button"
 								onClick={runCheck}
-								disabled={busy || check === "checking"}
+								disabled={!!busy || check === "checking"}
 								className="min-h-[46px] rounded-md border border-edge bg-hover px-4 text-sm font-semibold"
 							>
 								Check
@@ -122,20 +139,22 @@ export function Connect() {
 						)}
 					</div>
 
-					<div className="grid grid-cols-2 gap-3.5">
-						<div className="flex flex-col gap-2">
-							<label htmlFor="usr" className={label}>Username</label>
-							<input id="usr" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoCapitalize="off" spellCheck={false} disabled={busy} className={field} />
+					{passwordSignIn && (
+						<div className="grid grid-cols-2 gap-3.5">
+							<div className="flex flex-col gap-2">
+								<label htmlFor="usr" className={label}>Username</label>
+								<input id="usr" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoCapitalize="off" spellCheck={false} disabled={!!busy} className={field} />
+							</div>
+							<div className="flex flex-col gap-2">
+								<label htmlFor="pwd" className={label}>Password</label>
+								<input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" disabled={!!busy} className={field} />
+							</div>
 						</div>
-						<div className="flex flex-col gap-2">
-							<label htmlFor="pwd" className={label}>Password</label>
-							<input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" disabled={busy} className={field} />
-						</div>
-					</div>
+					)}
 
 					<div className="flex flex-col gap-2">
 						<label htmlFor="dev" className={label}>Name this device</label>
-						<input id="dev" value={device} onChange={(e) => setDevice(e.target.value)} disabled={busy} className={field} />
+						<input id="dev" value={device} onChange={(e) => setDevice(e.target.value)} disabled={!!busy} className={field} />
 						<span className="text-[13px] text-muted">
 							Shown in Stault, so you can tell your devices apart.
 						</span>
@@ -143,15 +162,31 @@ export function Connect() {
 
 					{error && <p role="alert" className="text-[13px] text-amber">{error}</p>}
 
-					<button
-						type="submit"
-						disabled={busy || !url.trim() || !username.trim() || !password}
-						className="stretch-112 flex min-h-[50px] items-center justify-center rounded-md bg-lime text-[15px] font-[750] uppercase tracking-[0.05em] text-carbon hover:brightness-110 disabled:opacity-50"
-					>
-						{busy ? "Signing in…" : "Sign in"}
-					</button>
+					<div className="flex flex-col gap-2.5">
+						<button
+							type="submit"
+							disabled={!!busy || !url.trim() || (passwordSignIn && (!username.trim() || !password))}
+							className="stretch-112 flex min-h-[50px] items-center justify-center rounded-md bg-lime text-[15px] font-[750] uppercase tracking-[0.05em] text-carbon hover:brightness-110 disabled:opacity-50"
+						>
+							{passwordSignIn
+								? busy === "password" ? "Signing in…" : "Sign in"
+								: busy ? SSO_WAITING : SSO}
+						</button>
+						{passwordSignIn && sso && (
+							<button
+								type="button"
+								onClick={() => signIn("sso")}
+								disabled={!!busy}
+								className="flex min-h-[46px] items-center justify-center rounded-md border border-edge bg-hover text-sm font-semibold disabled:opacity-50"
+							>
+								{busy === "sso" ? SSO_WAITING : SSO}
+							</button>
+						)}
+					</div>
 					<p className="text-[13px] text-muted">
-						Stault stores the session token in the system keychain, never the password.
+						{passwordSignIn
+							? "Stault stores the session token in the system keychain, never the password."
+							: "You sign in on your server's login page. Stault stores the session token in the system keychain."}
 					</p>
 				</form>
 			</main>

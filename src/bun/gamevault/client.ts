@@ -139,8 +139,8 @@ export class GameVaultClient {
 		}
 	}
 
-	private async acceptTokens(response: Response): Promise<void> {
-		const tokens = (await response.json()) as ApiTokens;
+	/** Continues with a token pair, from this server or from a sign-in that happened elsewhere. */
+	async adopt(tokens: ApiTokens): Promise<void> {
 		this.accessToken = tokens.access_token;
 		this.refreshToken = tokens.refresh_token;
 		await this.hooks.onTokens(tokens);
@@ -153,7 +153,7 @@ export class GameVaultClient {
 		});
 		if (response.status === 401) throw new ApiError(401, "Wrong username or password.");
 		if (!response.ok) throw await errorFrom(response);
-		await this.acceptTokens(response);
+		await this.adopt((await response.json()) as ApiTokens);
 	}
 
 	/** Trades the refresh token for a new pair. Concurrent callers share one request. */
@@ -169,7 +169,7 @@ export class GameVaultClient {
 				throw new SignedOutError();
 			}
 			if (!response.ok) throw await errorFrom(response);
-			await this.acceptTokens(response);
+			await this.adopt((await response.json()) as ApiTokens);
 		})().finally(() => {
 			this.refreshing = null;
 		});

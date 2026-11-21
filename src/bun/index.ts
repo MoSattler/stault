@@ -15,7 +15,7 @@ import { createSecretStore } from "./secrets";
 import { Session } from "./session";
 import { SettingsFile } from "./settings";
 import { connectSink, getState, patchState, toast } from "./state";
-import { createMainWindow } from "./window";
+import { createMainWindow, ssoLogin } from "./window";
 
 const DEV_SERVER_URL = "http://localhost:5173";
 
@@ -86,6 +86,7 @@ const session: Session = new Session(
 			await downloads.clear();
 			installs.scan([], null);
 		},
+		ssoLogin,
 	},
 );
 
@@ -230,6 +231,7 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			getState: () => getState(),
 			checkServer: ({ url }) => session.check(url),
 			signIn: (input) => session.signIn(input),
+			signInWithSso: (input) => session.signInWithSso(input),
 			signOut: () => session.signOut(),
 			refreshLibrary: () => session.refreshLibrary(),
 			getGame: ({ gameId }) => library.detail(session.client, gameId),

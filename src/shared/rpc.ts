@@ -19,6 +19,11 @@ export type Requests = {
 		password: string;
 		deviceName: string;
 	}>;
+	/**
+	 * Opens the server's single sign-on page in a window of its own and waits
+	 * for the user. False when they closed the window without signing in.
+	 */
+	signInWithSso: Req<{ serverUrl: string; deviceName: string }, boolean>;
 	signOut: Req<{}>;
 	refreshLibrary: Req<{}>;
 	getGame: Req<{ gameId: number }, GameDetail>;

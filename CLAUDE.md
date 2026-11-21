@@ -32,7 +32,15 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Login is `GET /api/auth/basic/login` with a Basic header. Access tokens last 5 minutes; refresh tokens rotate.
 - There is no macOS game type. A Mac build is indexed as `UNDETECTABLE`.
 - The spec is served by any server at `/api/docs-json`.
+- `GET /api/status` lists the sign-in methods in `available_authentication_methods` (`basic`, `sso`).
+- Single sign-on is a browser flow, `GET /api/auth/oauth2/login`, tied to a session cookie. It ends with the server sending the browser to `<callback origin>/?access_token=…&refresh_token=…`. Tokens go nowhere else: `client_origin` only accepts the server itself, its CORS origins and the official Tauri app, so the system browser cannot hand them to Stault.
 - Save files (`/api/savefiles/user/{id}/game/{id}`) are off unless the server sets `SAVEFILES_ENABLED=true`; a disabled endpoint answers `405`. Only the newest save can be fetched. `HEAD` returns its name, `<upload ms>_<installation id>.zip`, without the body. `DELETE` answers `401` even with a valid token.
+
+## Single sign-on (`src/bun/sso.ts`, `ssoLogin` in `src/bun/window.ts`)
+
+- The login runs in a second window: a sandboxed `BrowserView` in a partition named anew each time. A partition whose name does not start with `persist:` keeps nothing on disk. `BrowserWindow` has no partition option, which is why the view is added to an empty window.
+- `watchForTokens` reads the tokens from the server's last redirect and accepts them only from the server's origin or the `redirect_uri` origin of its first redirect.
+- Electrobun sends the address of a `will-navigate` event as JSON (`{"url": …, "allowed": true}`), unlike its types and the other navigation events, which carry the bare address.
 
 ## Save sync (`src/bun/saves/`)
 
@@ -43,9 +51,9 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 ## Working on and checking the UI
 
-- `hutch run hmr` (preview config `ui` in `.claude/launch.json`) serves the UI on mock data at http://localhost:5173. Switches: `?platform=macos|windows|linux`, `?signedout`.
+- `hutch run hmr` (preview config `ui` in `.claude/launch.json`) serves the UI on mock data at http://localhost:5173. Switches: `?platform=macos|windows|linux`, `?signedout`, `?sso` (the server also offers single sign-on), `?sso=only`.
 - For the real app, start the test server with `./dev/seed.sh` and run `hutch run dev:hmr`. Webview console output is forwarded to the terminal.
-- Screen-control tools cannot type into the password field. `hutch dev/sign-in.ts "<data folder>"` signs the dev build into the test server instead; the app prints its data folder on start.
+- Screen-control tools cannot type into the password field. `hutch dev/sign-in.ts "<data folder>"` signs the dev build into the test server instead; the app prints its data folder on start. Single sign-on needs no password: the test server's identity provider (http://127.0.0.1:18081) takes any username.
 - When the app window is covered by another window (or the browser pane is hidden), CSS animations pause, so a screenshot can show a page still faded out. The content is there; check the accessibility tree or bring the window forward.
 - The running dev app holds Hutch's build lock. `hutch run build:canary` waits silently until the dev app is closed.
 - Only the macOS build has been run so far. Launching on Windows and Linux (umu-launcher, setup installers) is covered by unit tests of the command builders but has not been run on those systems.

@@ -1,6 +1,7 @@
 // Stand-in for the main process when the UI runs in a plain browser
 // (`hutch run hmr`). Sample library taken from design/Main.dc.html.
-// URL switches: ?platform=macos|windows|linux, ?signedout, ?savesoff (the server has save files switched off)
+// URL switches: ?platform=macos|windows|linux, ?signedout, ?savesoff (the server has save files switched off),
+// ?sso (the server also offers single sign-on), ?sso=only (it offers nothing else)
 
 import { canRun } from "../../shared/compat";
 import type {
@@ -12,6 +13,7 @@ import type {
 	Platform,
 	ProgressState,
 	SaveState,
+	SignInMethod,
 } from "../../shared/model";
 import type { Pushes } from "../../shared/rpc";
 import type { StaultApi } from "./index";
@@ -19,6 +21,9 @@ import type { StaultApi } from "./index";
 const GB = 1024 ** 3;
 const DAY = 86_400_000;
 const params = new URLSearchParams(location.search);
+const methods: SignInMethod[] = !params.has("sso")
+	? ["basic"]
+	: params.get("sso") === "only" ? ["sso"] : ["basic", "sso"];
 const ago = (days: number) => new Date(Date.now() - days * DAY).toISOString();
 
 let nextVersionId = 100;
@@ -239,11 +244,17 @@ export function createMockApi(): StaultApi {
 		},
 		getState: () => later(state, 0),
 		checkServer: ({ url }) =>
-			later(/\S+\.\S+/.test(url) ? { ok: true, serverUrl: /^https?:/.test(url) ? url : `https://${url}`, version: "17.2.0" } : { ok: false, error: "No GameVault server answered at that address." }, 400),
+			later(/\S+\.\S+/.test(url) ? { ok: true, serverUrl: /^https?:/.test(url) ? url : `https://${url}`, version: "17.2.0", methods } : { ok: false, error: "No GameVault server answered at that address." }, 400),
 		async signIn({ serverUrl, password, username, deviceName }) {
 			await later(null, 600);
 			if (password === "wrong") throw new Error("Wrong username or password.");
 			patch({ session: { ...session, serverUrl, username }, deviceName });
+		},
+		async signInWithSso({ serverUrl, deviceName }) {
+			// Stands in for the login window: three seconds, then the user is back.
+			await later(null, 3000);
+			patch({ session: { ...session, serverUrl }, deviceName });
+			return true;
 		},
 		async signOut() {
 			patch({ session: null });

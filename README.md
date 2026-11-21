@@ -6,7 +6,7 @@ Built with [Electrobun](https://docs.electrobun.dev/electrobun/) 2 (Bun main pro
 
 ## What v0.1 does
 
-- Connects to a GameVault server (17.0 or newer) and signs in. The session token is kept in the system keychain.
+- Connects to a GameVault server (17.0 or newer) and signs in, with a password or through the server's single sign-on (see [Single sign-on](#single-sign-on)). The session token is kept in the system keychain.
 - Shows the library: recently played, recently added, all games, and a page per game.
 - Installs games: a download queue with pause, resume, a bandwidth limit and recovery after a restart, then extraction with a bundled 7-Zip.
 - Launches games and records playtime on the server.
@@ -18,7 +18,17 @@ Built with [Electrobun](https://docs.electrobun.dev/electrobun/) 2 (Bun main pro
 | Linux / SteamOS | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) (install it separately) |
 | macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
 
-Not in v0.1: Big Picture Mode, Steam shortcuts, single sign-on.
+Not in v0.1: Big Picture Mode, Steam shortcuts.
+
+## Single sign-on
+
+When the server has OAuth2 switched on (`AUTH_OAUTH2_ENABLED=true`), the Connect screen offers "Sign in with SSO". It opens the server's login page in a window of its own; after the login the window closes and Stault is signed in.
+
+- The login window keeps no cookies. Signing out of Stault and in again asks the identity provider for a login again.
+- A login that needs a passkey or security key may not work in the window, and some providers (Google) refuse logins from windows inside apps. Neither has been tried.
+- When the server refuses the login, for example a new account that an admin still has to activate, its message stays in the window. Close it to return to Stault.
+
+So far this has only been run on macOS.
 
 ## Save sync
 
@@ -81,7 +91,7 @@ The builds are not code-signed. Windows warns before opening them. macOS reports
 
 ## Test server
 
-`./dev/seed.sh` starts a local GameVault server in Docker at http://127.0.0.1:18080 with a few tiny sample games and a test account (see the script for its name and password). One sample, Harbor Lights, is a real Mac app that writes a save each time it runs, so install, launch and save sync can be tried on macOS.
+`./dev/seed.sh` starts a local GameVault server in Docker at http://127.0.0.1:18080 with a few tiny sample games and a test account (see the script for its name and password). Beside it runs a stand-in identity provider for single sign-on, whose login page takes any username without a password; the test account's name signs in as that account. One sample, Harbor Lights, is a real Mac app that writes a save each time it runs, so install, launch and save sync can be tried on macOS.
 
 ## Layout
 

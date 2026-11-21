@@ -181,11 +181,15 @@ export interface AppState {
 	};
 }
 
+/** How a server lets its users sign in: with a password, through its identity provider, or both. */
+export type SignInMethod = "basic" | "sso";
+
 export interface ServerCheck {
 	ok: boolean;
 	/** The full address that answered, e.g. "http://nas.local:8080". */
 	serverUrl?: string;
 	version?: string;
+	methods?: SignInMethod[];
 	error?: string;
 }
 

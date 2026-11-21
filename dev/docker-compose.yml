@@ -10,6 +10,15 @@ services:
       SERVER_ACCOUNT_ACTIVATION_DISABLED: "true"
       # Save sync needs the server to accept save files; they are off by default.
       SAVEFILES_ENABLED: "true"
+      # Single sign-on through the stand-in identity provider below. The browser
+      # reaches it on this machine, the server reaches it inside Docker.
+      AUTH_OAUTH2_ENABLED: "true"
+      AUTH_OAUTH2_CLIENT_ID: stault-dev
+      AUTH_OAUTH2_CLIENT_SECRET: stault-dev-only
+      AUTH_OAUTH2_AUTH_URL: http://127.0.0.1:18081/default/authorize
+      AUTH_OAUTH2_TOKEN_URL: http://sso:8080/default/token
+      AUTH_OAUTH2_USERINFO_URL: http://sso:8080/default/userinfo
+      AUTH_OAUTH2_CALLBACK_URL: http://127.0.0.1:18080/api/auth/oauth2/login
     volumes:
       - ./.data/files:/files
       - ./.data/media:/media
@@ -17,3 +26,14 @@ services:
       - ./.data/savefiles:/savefiles
     ports:
       - 127.0.0.1:18080:8080
+
+  # Stand-in identity provider. Its login page takes any username, without a
+  # password, and signs that user in. "stault" is the test user seed.sh creates.
+  sso:
+    image: ghcr.io/navikt/mock-oauth2-server:6.1.1
+    environment:
+      JSON_CONFIG: >-
+        {"interactiveLogin": true, "tokenCallbacks": [{"issuerId": "default", "requestMappings":
+        [{"requestParam": "subject", "match": ".*", "claims": {"preferred_username": "$${subject}"}}]}]}
+    ports:
+      - 127.0.0.1:18081:8080

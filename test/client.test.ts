@@ -91,6 +91,16 @@ describe("GameVaultClient", () => {
 		expect((await client.me()).username).toBe("sam");
 	});
 
+	test("continues with tokens from a sign-in that happened elsewhere", async () => {
+		const server = fakeServer();
+		const saved: string[] = [];
+		const client = new GameVaultClient("http://gv", null, { onTokens: (t) => void saved.push(t.refresh_token) }, server.fetchImpl);
+		await new GameVaultClient("http://gv", null, { onTokens: (t) => client.adopt(t) }, server.fetchImpl).login("sam", "secret");
+		expect(saved).toEqual(["r1"]);
+		expect((await client.me()).username).toBe("sam");
+		expect(server.calls).toEqual(["GET /api/auth/basic/login", "GET /api/users/me"]);
+	});
+
 	test("a wrong password is a clear error", async () => {
 		const server = fakeServer();
 		const client = new GameVaultClient("http://gv", null, { onTokens() {} }, server.fetchImpl);
