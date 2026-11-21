@@ -30,6 +30,12 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 
 `./dev/seed.sh` starts a local GameVault server in Docker at http://127.0.0.1:18080 with a few tiny sample games and a test account (see the script for its name and password). One sample, Harbor Lights, is a real Mac app that writes a save each time it runs, so install, launch and save sync can be tried on macOS.
 
+## Testing on Linux
+
+`./dev/linux/up.sh` starts a Linux desktop in Docker (Debian 13, x64) next to the test server, and `./dev/linux/run.sh` runs the current code in it. Watch the screen at `vnc://127.0.0.1:5901`; inside the container the test server is `http://gamevault:8080`. It has umu-launcher, and the Pixel Drift and Setup Quest samples are real Windows programs once the image is built, so installing and launching Windows games can be tried without a game or a GPU.
+
+On an Apple Silicon Mac the container runs through Rosetta. That is enough for everything above, but Hutch does not run there, so `run.sh` builds the JavaScript on the Mac and puts it into the latest released Linux app. It does not test the Linux packaging; the canary build from the Release workflow does.
+
 ## Layout
 
 ```
@@ -37,7 +43,7 @@ src/shared/       Types shared by both sides, including the RPC contract
 src/bun/          Main process: server client, session, downloads, installs, launcher, save sync
 src/mainview/     Webview UI: React + Tailwind, built by Vite
 test/             Unit tests (Bun's test runner)
-dev/              Local test server and helper scripts
+dev/              Local test server, Linux test desktop and helper scripts
 electrobun.config.ts   App identity and how the bundle is assembled
 hutch.config.ts        Tasks and the pinned Electrobun version
 ```
