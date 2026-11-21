@@ -1,6 +1,6 @@
 # Stault
 
-Steam-style desktop client for a self-hosted GameVault server. Design boards and decisions: `design/README.md`. What v0.1 covers and what it leaves out: `README.md`.
+Steam-style desktop client for a self-hosted GameVault server. Design boards and decisions: `design/README.md`. What the app covers and what it leaves out: `README.md`. Setup, tasks and releases: `CONTRIBUTING.md`.
 
 Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, Vite 7.
 
