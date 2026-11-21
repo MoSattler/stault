@@ -123,6 +123,8 @@ export interface AppState {
 	session: Session | null;
 	/** False when the last server request failed to connect. */
 	online: boolean;
+	/** Last server and user that signed in here, to prefill the Connect screen. */
+	lastSignIn: { serverUrl: string; username: string } | null;
 	deviceName: string;
 	games: GameSummary[];
 	gamesLoaded: boolean;
@@ -137,6 +139,8 @@ export interface AppState {
 
 export interface ServerCheck {
 	ok: boolean;
+	/** The full address that answered, e.g. "http://nas.local:8080". */
+	serverUrl?: string;
 	version?: string;
 	error?: string;
 }

@@ -44,6 +44,30 @@ export function normalizeServerUrl(input: string): string {
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
+/**
+ * Finds the GameVault server behind what the user typed. An address without
+ * a scheme is tried over HTTPS first, then plain HTTP (common on a home LAN).
+ */
+export async function findServer(
+	input: string,
+	fetchImpl: Fetch = fetch,
+): Promise<{ serverUrl: string; status: ApiStatus }> {
+	const typed = input.trim();
+	const first = normalizeServerUrl(typed);
+	const candidates = /^https?:\/\//i.test(typed)
+		? [first]
+		: [first, first.replace(/^https:/, "http:")];
+	let failure: unknown;
+	for (const serverUrl of candidates) {
+		try {
+			return { serverUrl, status: await GameVaultClient.status(serverUrl, fetchImpl) };
+		} catch (error) {
+			failure ??= error;
+		}
+	}
+	throw failure;
+}
+
 export interface ClientHooks {
 	/** Called with every new token pair. Must persist the refresh token. */
 	onTokens(tokens: ApiTokens): void | Promise<void>;

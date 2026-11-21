@@ -25,6 +25,7 @@ const app = createStore<AppState>({
 	ready: false,
 	session: null,
 	online: true,
+	lastSignIn: null,
 	deviceName: "",
 	games: [],
 	gamesLoaded: false,

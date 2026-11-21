@@ -5,6 +5,8 @@ services:
     image: phalcode/gamevault-backend:17.2.0
     environment:
       DB_SYSTEM: SQLITE
+      # Without a fixed seed the server signs everyone out each time it restarts.
+      AUTH_SEED: stault-dev-only
       SERVER_ACCOUNT_ACTIVATION_DISABLED: "true"
     volumes:
       - ./.data/files:/files

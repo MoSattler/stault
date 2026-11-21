@@ -31,6 +31,7 @@ const settingsPath = join(dataDir, "settings.json");
 writeJson(settingsPath, {
 	...readJson<object>(settingsPath, {}),
 	account: { serverUrl, serverVersion: status.version, userId: Number(me.id), username: me.username },
+	lastSignIn: { serverUrl, username: me.username },
 });
 // The app reads this file when the keychain has no entry for the account.
 writeJson(join(dataDir, "session.json"), { [`${serverUrl}#${username}`]: refreshToken }, 0o600);

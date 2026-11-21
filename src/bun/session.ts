@@ -1,8 +1,4 @@
-import {
-	GameVaultClient,
-	normalizeServerUrl,
-	SignedOutError,
-} from "./gamevault/client";
+import { findServer, GameVaultClient, SignedOutError } from "./gamevault/client";
 import type { Library } from "./library";
 import type { MediaProxy } from "./media";
 import type { SecretStore } from "./secrets";
@@ -69,9 +65,9 @@ export class Session {
 
 	async check(url: string): Promise<ServerCheck> {
 		try {
-			const status = await GameVaultClient.status(normalizeServerUrl(url));
+			const { serverUrl, status } = await findServer(url);
 			checkVersion(status.version);
-			return { ok: true, version: status.version };
+			return { ok: true, serverUrl, version: status.version };
 		} catch (error) {
 			return { ok: false, error: (error as Error).message };
 		}
@@ -109,10 +105,9 @@ export class Session {
 		password: string;
 		deviceName: string;
 	}) {
-		const serverUrl = normalizeServerUrl(input.serverUrl);
 		const username = input.username.trim();
 		if (!username || !input.password) throw new Error("Enter your username and password.");
-		const status = await GameVaultClient.status(serverUrl);
+		const { serverUrl, status } = await findServer(input.serverUrl);
 		checkVersion(status.version);
 
 		const client = this.connect(serverUrl, username, null);
@@ -126,8 +121,9 @@ export class Session {
 				username: me.username,
 			};
 			const deviceName = input.deviceName.trim() || getState().deviceName;
-			this.settings.update({ account, deviceName });
-			patchState({ session: account, deviceName, online: true });
+			const lastSignIn = { serverUrl, username: me.username };
+			this.settings.update({ account, deviceName, lastSignIn });
+			patchState({ session: account, deviceName, lastSignIn, online: true });
 			this.hooks.signedIn(serverUrl);
 		} catch (error) {
 			this.current = null;

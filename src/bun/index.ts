@@ -40,6 +40,7 @@ const { platform } = getState();
 
 const settings = new SettingsFile(join(dataDir, "settings.json"), {
 	account: null,
+	lastSignIn: null,
 	deviceName: hostname().replace(/\.local$/, ""),
 	libraryFolders: [join(homedir(), "Games", "Stault")],
 	speedLimitKib: 0,
@@ -176,6 +177,7 @@ async function uninstall(gameId: number) {
 }
 
 patchState({
+	lastSignIn: settings.get().lastSignIn,
 	deviceName: settings.get().deviceName,
 	speedLimitKib: settings.get().speedLimitKib,
 });
@@ -251,3 +253,16 @@ connectSink({
 
 await refreshFolders();
 await session.restore();
+
+// Keep the library current: retry every minute while the server is out of
+// reach, otherwise look for new games every ten minutes.
+let minutes = 0;
+setInterval(async () => {
+	minutes++;
+	const state = getState();
+	if (!state.session || (state.online && minutes % 10 !== 0)) return;
+	await session.refreshLibrary().catch(() => {});
+	if (getState().online) {
+		for (const install of getState().installs) void launcher.flush(install.gameId);
+	}
+}, 60_000);

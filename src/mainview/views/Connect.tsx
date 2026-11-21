@@ -15,8 +15,9 @@ const field =
 /** First run: find the server, sign in, name this device. */
 export function Connect() {
 	const defaultDevice = useApp((s) => s.deviceName);
-	const [url, setUrl] = useState("");
-	const [username, setUsername] = useState("");
+	const last = useApp((s) => s.lastSignIn);
+	const [url, setUrl] = useState(last?.serverUrl ?? "");
+	const [username, setUsername] = useState(last?.username ?? "");
 	const [password, setPassword] = useState("");
 	const [device, setDevice] = useState(defaultDevice);
 	const [check, setCheck] = useState<ServerCheck | "checking" | null>(null);
@@ -26,7 +27,10 @@ export function Connect() {
 	async function runCheck() {
 		if (!url.trim()) return;
 		setCheck("checking");
-		setCheck(await api.checkServer({ url }));
+		const result = await api.checkServer({ url });
+		setCheck(result);
+		// Show the address that actually answered (scheme filled in).
+		if (result.serverUrl) setUrl(result.serverUrl);
 	}
 
 	async function submit(event: FormEvent) {

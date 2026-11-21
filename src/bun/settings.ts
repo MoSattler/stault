@@ -8,6 +8,8 @@ export interface Settings {
 		userId: number;
 		username: string;
 	} | null;
+	/** Kept after sign-out, to prefill the Connect screen. */
+	lastSignIn: { serverUrl: string; username: string } | null;
 	deviceName: string;
 	libraryFolders: string[];
 	speedLimitKib: number;

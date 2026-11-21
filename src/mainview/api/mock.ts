@@ -122,6 +122,7 @@ export function createMockApi(): StaultApi {
 		ready: true,
 		session: params.has("signedout") ? null : session,
 		online: true,
+		lastSignIn: params.has("signedout") ? { serverUrl: "https://vault.lan", username: "sam" } : null,
 		deviceName: { macos: "MacBook Pro", windows: "Desktop PC", linux: "Steam Deck" }[platform],
 		games: seed.map(({ description: _d, installed: _i, versions: _v, ...summary }) => summary),
 		gamesLoaded: true,
@@ -216,7 +217,7 @@ export function createMockApi(): StaultApi {
 		},
 		getState: () => later(state, 0),
 		checkServer: ({ url }) =>
-			later(/^https?:\/\/\S+/.test(url) ? { ok: true, version: "17.2.0" } : { ok: false, error: "No GameVault server answered at that address." }, 400),
+			later(/\S+\.\S+/.test(url) ? { ok: true, serverUrl: /^https?:/.test(url) ? url : `https://${url}`, version: "17.2.0" } : { ok: false, error: "No GameVault server answered at that address." }, 400),
 		async signIn({ serverUrl, password, username, deviceName }) {
 			await later(null, 600);
 			if (password === "wrong") throw new Error("Wrong username or password.");

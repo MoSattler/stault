@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	ApiError,
+	findServer,
 	GameVaultClient,
 	normalizeServerUrl,
 	OfflineError,
@@ -51,6 +52,32 @@ describe("normalizeServerUrl", () => {
 	});
 	test("rejects an empty address", () => {
 		expect(() => normalizeServerUrl("  ")).toThrow();
+	});
+});
+
+describe("findServer", () => {
+	const answering = (origin: string) => async (url: string) => {
+		if (!url.startsWith(origin)) throw new TypeError("fetch failed");
+		return json({ status: "HEALTHY", version: "17.2.0" });
+	};
+
+	test("an address without a scheme falls back from https to http", async () => {
+		const found = await findServer("nas.local:8080", answering("http://nas.local:8080"));
+		expect(found.serverUrl).toBe("http://nas.local:8080");
+		expect(found.status.version).toBe("17.2.0");
+	});
+
+	test("https wins when both would answer", async () => {
+		const found = await findServer("vault.lan", async () => json({ status: "HEALTHY", version: "17.2.0" }));
+		expect(found.serverUrl).toBe("https://vault.lan");
+	});
+
+	test("an explicit scheme is not second-guessed", async () => {
+		expect(findServer("https://nas.local:8080", answering("http://nas.local:8080"))).rejects.toBeInstanceOf(OfflineError);
+	});
+
+	test("something that answers but is not GameVault is rejected", async () => {
+		expect(findServer("http://router.lan", async () => json({ hello: "world" }))).rejects.toThrow("not like a GameVault server");
 	});
 });
 

@@ -19,20 +19,24 @@ function versionKind(v: GameVersion): string {
 	return `${os} · ${kind}${v.earlyAccess ? " · early access" : ""}`;
 }
 
-/** Loads the full record (description, versions). Refetches when the library changes. */
-function useDetail(game: GameSummary): GameDetail | null {
-	const [detail, setDetail] = useState<GameDetail | null>(null);
+/**
+ * Loads the full record (description, versions). "unavailable" when the server
+ * can't be reached; the page then shows what the list already knows.
+ */
+function useDetail(game: GameSummary): GameDetail | "unavailable" | null {
+	const online = useApp((s) => s.online);
+	const [detail, setDetail] = useState<GameDetail | "unavailable" | null>(null);
+	// Refetch when the connection comes back.
 	useEffect(() => {
 		let current = true;
-		setDetail(null);
 		api.getGame({ gameId: game.id }).then(
 			(d) => current && setDetail(d),
-			() => {}, // Offline: the page still shows what the list knows.
+			() => current && setDetail((had) => had ?? "unavailable"),
 		);
 		return () => {
 			current = false;
 		};
-	}, [game.id]);
+	}, [game.id, online]);
 	return detail;
 }
 
@@ -40,7 +44,9 @@ export function Game({ game }: { game: GameSummary }) {
 	const platform = useApp((s) => s.platform);
 	const session = useApp((s) => s.session);
 	const status = useGameStatus(game);
-	const detail = useDetail(game);
+	const loaded = useDetail(game);
+	const detail = typeof loaded === "object" ? loaded : null;
+	const pending = loaded === "unavailable" ? "Not available while the server can't be reached." : "Loading…";
 	const { install, download } = status;
 	const host = session ? serverHost(session.serverUrl) : "the server";
 	const versions = detail?.versions ?? [];
@@ -140,7 +146,7 @@ export function Game({ game }: { game: GameSummary }) {
 							</p>
 						) : (
 							<p className="max-w-[62ch] text-base leading-[1.6] text-muted">
-								{detail ? "The server has no description for this game." : "Loading…"}
+								{detail ? "The server has no description for this game." : pending}
 							</p>
 						)}
 						<p className="text-[12.5px] text-muted">
@@ -172,7 +178,7 @@ export function Game({ game }: { game: GameSummary }) {
 						<h2 id="h-ver" className="mb-2.5 text-sm font-bold">Versions on {host}</h2>
 						{versions.length === 0 && (
 							<p className="border-t border-hover py-[9px] text-[12.5px] text-muted">
-								{detail ? "No versions listed." : "Loading…"}
+								{detail ? "No versions listed." : pending}
 							</p>
 						)}
 						{versions.map((v, i) => {
