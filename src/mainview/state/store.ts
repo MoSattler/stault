@@ -75,7 +75,7 @@ const ui = createStore<UiState>({
 	view: { name: "home" },
 	query: "",
 	filter: "all",
-	sort: "added",
+	sort: "name",
 	toast: null,
 	installing: null,
 	picking: null,
