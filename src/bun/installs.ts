@@ -18,6 +18,21 @@ export interface Manifest {
 	executable?: string;
 	/** Minutes played that the server has not been told about yet. */
 	pendingMinutes?: number;
+	/** Save sync bookkeeping. Absent until Stault has looked the game up. */
+	saves?: SaveRecord;
+}
+
+export interface SaveRecord {
+	/** Tells the server which install a save came from (UUID v4). */
+	installationId: string;
+	/** Ludusavi's name for this game. Null: it knows none, or the user turned sync off. */
+	name: string | null;
+	/** Upload time of the server save this install last restored or uploaded. */
+	syncedAt?: number;
+	/** Upload time of a server save made for another operating system, to leave alone. */
+	foreignAt?: number;
+	/** The saves here still have to reach the server. */
+	pending?: boolean;
 }
 
 const META = ".stault";
@@ -95,6 +110,10 @@ export class Installs {
 
 	get(gameId: number) {
 		return this.byGame.get(gameId);
+	}
+
+	ids(): number[] {
+		return [...this.byGame.keys()];
 	}
 
 	/** Records a finished install. */

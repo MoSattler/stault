@@ -32,6 +32,14 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Login is `GET /api/auth/basic/login` with a Basic header. Access tokens last 5 minutes; refresh tokens rotate.
 - There is no macOS game type. A Mac build is indexed as `UNDETECTABLE`.
 - The spec is served by any server at `/api/docs-json`.
+- Save files (`/api/savefiles/user/{id}/game/{id}`) are off unless the server sets `SAVEFILES_ENABLED=true`; a disabled endpoint answers `405`. Only the newest save can be fetched. `HEAD` returns its name, `<upload ms>_<installation id>.zip`, without the body. `DELETE` answers `401` even with a valid token.
+
+## Save sync (`src/bun/saves/`)
+
+- Ludusavi 0.31 finds and moves save files. It is not on npm: `dev/fetch-ludusavi.ts` downloads the pinned build into `vendor/` (git-ignored) before every build and dev start, and `electrobun.config.ts` copies it into the app. To upgrade, change the version and checksums there.
+- The rule the sync follows (`nextStep` in `saves/index.ts`): never replace a server save this device has not seen, never replace local saves the server has not seen. Both changed means compare, then ask.
+- Ludusavi quirks, all found by running it: without a game name it waits on stdin; root paths are globs, so the `[id]` in Stault's folder names must be escaped; it reports real paths, so folders must be resolved through symlinks before they are named in redirects; it does not follow symlinks into game folders.
+- A game can describe its own saves with a `.ludusavi.yaml` in its files; the Harbor Lights sample does.
 
 ## Working on and checking the UI
 

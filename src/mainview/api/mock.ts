@@ -1,6 +1,6 @@
 // Stand-in for the main process when the UI runs in a plain browser
 // (`hutch run hmr`). Sample library taken from design/Main.dc.html.
-// URL switches: ?platform=macos|windows|linux, ?signedout
+// URL switches: ?platform=macos|windows|linux, ?signedout, ?savesoff (the server has save files switched off)
 
 import { canRun } from "../../shared/compat";
 import type {
@@ -11,6 +11,7 @@ import type {
 	GameVersion,
 	Platform,
 	ProgressState,
+	SaveState,
 } from "../../shared/model";
 import type { Pushes } from "../../shared/rpc";
 import type { StaultApi } from "./index";
@@ -119,6 +120,18 @@ export function createMockApi(): StaultApi {
 	const installedHere = (g: (typeof seed)[number]) =>
 		g.installed && canRun(platform, g.versions[0].type) !== "no";
 
+	// One of each state, to look at: 2 is waiting to upload, 3 changed on two devices, 9 is unknown to Ludusavi.
+	const SAVE_STATES: Record<number, SaveState> = { 2: "pending", 3: "conflict", 9: "unsupported" };
+	const save = (gameId: number, state: SaveState = SAVE_STATES[gameId] ?? "idle"): AppState["saves"][number] => ({
+		gameId,
+		state,
+		name: state === "unsupported" ? null : find(gameId).title,
+		syncedAt: state === "unsupported" || gameId === 12 ? null : ago(gameId / 4),
+		...(state === "conflict"
+			? { conflict: { serverAt: ago(0.2), serverDevice: "Steam Deck", localAt: ago(0.05) } }
+			: {}),
+	});
+
 	let state: AppState = {
 		platform,
 		ready: true,
@@ -144,6 +157,8 @@ export function createMockApi(): StaultApi {
 		running: null,
 		folders: FOLDERS[platform],
 		speedLimitKib: 0,
+		saves: seed.filter(installedHere).map((g) => save(g.id)),
+		saveSync: { enabled: true, serverOff: params.has("savesoff") },
 	};
 
 	const patch = (p: Partial<AppState>) => {
@@ -153,7 +168,11 @@ export function createMockApi(): StaultApi {
 	const toast = (text: string, sub?: string) => handlers.toast?.({ text, sub });
 	const later = <T,>(value: T, ms = 150) =>
 		new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
-	const find = (gameId: number) => seed.find((g) => g.id === gameId)!;
+	function find(gameId: number) {
+		return seed.find((g) => g.id === gameId)!;
+	}
+	const setSave = (gameId: number, change: Partial<AppState["saves"][number]>) =>
+		patch({ saves: state.saves.map((s) => (s.gameId === gameId ? { ...s, ...change } : s)) });
 	const updateGame = (gameId: number, change: Partial<AppState["games"][number]>) =>
 		patch({ games: state.games.map((g) => (g.id === gameId ? { ...g, ...change } : g)) });
 
@@ -203,6 +222,7 @@ export function createMockApi(): StaultApi {
 				downloads: state.downloads.filter((_, i) => i !== index),
 				completed: [{ gameId: d.gameId, title: d.title, at: new Date().toISOString(), sizeBytes: d.totalBytes * 1.15 }, ...state.completed],
 				installs: [...state.installs, { gameId: d.gameId, versionId: d.versionId, version: d.version, type: d.type, path: `${folder}/${d.title}`, sizeBytes: d.totalBytes * 1.15, installedAt: new Date().toISOString() }],
+				saves: [...state.saves.filter((s) => s.gameId !== d.gameId), save(d.gameId, "idle")],
 			});
 			toast(`${d.title} is ready to play`, `Installed to ${folder}`);
 			return;
@@ -264,11 +284,20 @@ export function createMockApi(): StaultApi {
 			patch({
 				installs: state.installs.filter((i) => i.gameId !== gameId),
 				completed: state.completed.filter((c) => c.gameId !== gameId),
+				saves: state.saves.filter((s) => s.gameId !== gameId),
 			});
 		},
 		async play({ gameId }) {
 			if (gameId === 9 && !params.has("picked")) {
 				return { status: "pick", candidates: ["Cartographer.exe", "tools/MapEditor.exe"] };
+			}
+			const saves = state.saves.find((s) => s.gameId === gameId);
+			if (state.saveSync.enabled && !state.saveSync.serverOff && saves?.name) {
+				if (saves.state === "conflict") return { status: "save-conflict" };
+				// The check for a newer save on the server, before the game starts.
+				setSave(gameId, { state: "syncing" });
+				await later(null, 1500);
+				setSave(gameId, { state: saves.state });
 			}
 			patch({ running: { gameId, startedAt: new Date().toISOString() } });
 			toast(`Launching ${find(gameId).title}`, "Playtime is tracked on the server");
@@ -286,6 +315,23 @@ export function createMockApi(): StaultApi {
 				lastPlayedAt: new Date().toISOString(),
 				progressState: g.progressState === "UNPLAYED" ? "PLAYING" : g.progressState,
 			});
+		},
+		async syncSaves({ gameId, direction }) {
+			setSave(gameId, { state: "syncing" });
+			await later(null, 700);
+			setSave(gameId, { state: "idle", syncedAt: new Date().toISOString(), conflict: undefined });
+			toast(`${find(gameId).title}: saves ${direction === "upload" ? "uploaded" : "restored"}`);
+		},
+		findSaveGames: ({ query }) =>
+			later(
+				seed.map((g) => g.title).filter((title) => title.toLowerCase().includes(query.trim().toLowerCase().slice(0, 4))),
+				300,
+			),
+		async setSaveGame({ gameId, name }) {
+			setSave(gameId, { name, state: name ? "idle" : "unsupported", syncedAt: null, conflict: undefined });
+		},
+		async setSaveSync({ on }) {
+			patch({ saveSync: { ...state.saveSync, enabled: on } });
 		},
 		async addLibraryFolder() {
 			patch({ folders: [...state.folders, { path: `${state.folders[0].path} ${state.folders.length + 1}`, freeBytes: 64 * GB }] });

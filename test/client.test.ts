@@ -151,3 +151,48 @@ describe("GameVaultClient", () => {
 		expect(online).toEqual([false]);
 	});
 });
+
+describe("save files", () => {
+	const signedIn = (answer: (method: string, init: RequestInit) => Response) => {
+		const calls: { method: string; path: string; init: RequestInit }[] = [];
+		const client = new GameVaultClient("http://gv", "r0", { onTokens() {} }, async (url, init = {}) => {
+			const path = new URL(url).pathname;
+			if (path === "/api/auth/refresh") return json({ access_token: "a1", refresh_token: "r1" });
+			calls.push({ method: init.method ?? "GET", path, init });
+			return answer(init.method ?? "GET", init);
+		});
+		return { client, calls };
+	};
+
+	test("the newest save is read from the file name, without downloading it", async () => {
+		const { client, calls } = signedIn(
+			() =>
+				new Response(null, {
+					headers: { "Content-Disposition": 'attachment; filename="1700000000123_24660172-3e73-4539-8653-286a02ba82d9.zip"' },
+				}),
+		);
+		expect(await client.newestSave(7, 3)).toEqual({
+			uploadedAt: 1700000000123,
+			installationId: "24660172-3e73-4539-8653-286a02ba82d9",
+		});
+		expect(calls).toMatchObject([{ method: "HEAD", path: "/api/savefiles/user/7/game/3" }]);
+	});
+
+	test("no save yet is not an error; save files switched off is", async () => {
+		const none = signedIn(() => json({ message: "Savefile was not found." }, 404));
+		expect(await none.client.newestSave(7, 3)).toBeNull();
+		const off = signedIn(() => json({ message: "This API endpoint is disabled." }, 405));
+		const error = await off.client.newestSave(7, 3).catch((e) => e);
+		expect(error).toBeInstanceOf(ApiError);
+		expect(error.status).toBe(405);
+	});
+
+	test("an upload is a form with the zip, marked with this install's id", async () => {
+		const { client, calls } = signedIn(() => new Response(null, { status: 201 }));
+		await client.uploadSave(7, 3, new Blob(["zip"]), "24660172-3e73-4539-8653-286a02ba82d9");
+		const [call] = calls;
+		expect(call).toMatchObject({ method: "POST", path: "/api/savefiles/user/7/game/3" });
+		expect((call.init.headers as Record<string, string>)["X-Installation-Id"]).toBe("24660172-3e73-4539-8653-286a02ba82d9");
+		expect(((call.init.body as FormData).get("file") as File).name).toBe("save.zip");
+	});
+});

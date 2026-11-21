@@ -11,6 +11,7 @@ import { SpeedLimitSelect } from "./Downloads";
 const TABS = [
 	["library", "Library folders"],
 	["downloads", "Downloads"],
+	["saves", "Saves"],
 	["account", "Account"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -61,6 +62,41 @@ function LibraryFolders() {
 			<button type="button" onClick={() => attempt(api.addLibraryFolder({}))} className={`${button} mt-3.5 self-start`}>
 				Add folder…
 			</button>
+		</>
+	);
+}
+
+function Saves() {
+	const { enabled, serverOff } = useApp((s) => s.saveSync);
+	const session = useApp((s) => s.session);
+	const host = session ? serverHost(session.serverUrl) : "the server";
+	return (
+		<>
+			<Row
+				title="Sync game saves"
+				help={`Fetches a newer save from ${host} before a game starts, and uploads yours after you quit.`}
+			>
+				<button
+					type="button"
+					role="switch"
+					aria-checked={enabled}
+					aria-label="Sync game saves"
+					onClick={() => attempt(api.setSaveSync({ on: !enabled }))}
+					className={`${button} min-w-16 ${enabled ? "border-lime text-lime" : "text-muted"}`}
+				>
+					{enabled ? "On" : "Off"}
+				</button>
+			</Row>
+			{serverOff && (
+				<p className="pt-3.5 text-[13px] text-amber">
+					Save files are switched off on {host}. Whoever runs it can turn them on with{" "}
+					<span className="select-text font-mono text-xs">SAVEFILES_ENABLED=true</span>.
+				</p>
+			)}
+			<p className="pt-3.5 text-[12.5px] text-muted">
+				Save locations come from Ludusavi, so only games it knows are synced. A save made by a Mac build can't be
+				used by a Windows or Linux build of the same game, or the other way round.
+			</p>
 		</>
 	);
 }
@@ -122,6 +158,7 @@ export function Settings() {
 							<SpeedLimitSelect />
 						</Row>
 					)}
+					{tab === "saves" && <Saves />}
 					{tab === "account" && <Account />}
 				</div>
 			</div>

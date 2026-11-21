@@ -6,10 +6,11 @@ import { Cover } from "../components/Cover";
 import { Heading } from "../components/Heading";
 import { BackIcon, BookmarkIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { SavesCard } from "../components/SavesCard";
 import { StepList } from "../components/StepList";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
-import { PROGRESS_LABEL, useGameStatus } from "../state/derive";
+import { PROGRESS_LABEL, saveLabel, useGameStatus } from "../state/derive";
 import { attempt, go, setUi, useApp } from "../state/store";
 
 const card = "rounded-lg border border-line bg-panel px-5 py-[18px]";
@@ -42,6 +43,10 @@ function useDetail(game: GameSummary): GameDetail | "unavailable" | null {
 
 export function Game({ game }: { game: GameSummary }) {
 	const platform = useApp((s) => s.platform);
+	const saves = saveLabel(
+		useApp((s) => s.saves.find((x) => x.gameId === game.id)),
+		useApp((s) => s.saveSync),
+	);
 	const loaded = useDetail(game);
 	const detail = typeof loaded === "object" ? loaded : null;
 	const status = useGameStatus(game, detail?.versions);
@@ -103,10 +108,12 @@ export function Game({ game }: { game: GameSummary }) {
 						["LAST PLAYED", formatWhen(game.lastPlayedAt)],
 						["PLAYTIME", game.minutesPlayed ? formatHours(game.minutesPlayed) : "—"],
 						["PROGRESS", PROGRESS_LABEL[game.progressState]],
-					].map(([term, value]) => (
+						// Saves only exist for a game that is installed here.
+						...(install ? [["SAVES", saves.text, saves.alert ? "text-amber" : ""]] : []),
+					].map(([term, value, tone]) => (
 						<div key={term} className="flex flex-col gap-0.5">
 							<dt className="font-mono text-[10.5px] tracking-[0.12em] text-muted">{term}</dt>
-							<dd className="font-semibold">{value}</dd>
+							<dd className={`font-semibold ${tone ?? ""}`}>{value}</dd>
 						</div>
 					))}
 				</dl>
@@ -186,6 +193,8 @@ export function Game({ game }: { game: GameSummary }) {
 							)}
 						</dl>
 					</section>
+
+					{install && <SavesCard game={game} running={status.running} />}
 
 					<section aria-labelledby="h-ver" className={`${card} flex flex-col`}>
 						<h2 id="h-ver" className="mb-2.5 text-sm font-bold">Versions</h2>

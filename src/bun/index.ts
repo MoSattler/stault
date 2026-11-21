@@ -9,6 +9,8 @@ import { Installs } from "./installs";
 import { Launcher } from "./launcher";
 import { Library } from "./library";
 import { MediaProxy } from "./media";
+import { Saves } from "./saves";
+import { Ludusavi } from "./saves/ludusavi";
 import { createSecretStore } from "./secrets";
 import { Session } from "./session";
 import { SettingsFile } from "./settings";
@@ -44,11 +46,12 @@ const settings = new SettingsFile(join(dataDir, "settings.json"), {
 	deviceName: hostname().replace(/\.local$/, ""),
 	libraryFolders: [join(homedir(), "Games", "Stault")],
 	speedLimitKib: 0,
+	saveSync: true,
 });
 const media = new MediaProxy(join(Utils.paths.userCache, "media"));
 const library = new Library(join(dataDir, "library.json"), media);
 
-const installs = new Installs((list) =>
+const installs = new Installs((list) => {
 	patchState({
 		installs: list,
 		// "Completed" on the Downloads page: the most recent installs.
@@ -61,8 +64,9 @@ const installs = new Installs((list) =>
 				at: i.installedAt,
 				sizeBytes: i.sizeBytes,
 			})),
-	}),
-);
+	});
+	saves.publish();
+});
 
 const session: Session = new Session(
 	settings,
@@ -74,6 +78,8 @@ const session: Session = new Session(
 			installs.scan(settings.get().libraryFolders, serverUrl);
 			downloads.start();
 			for (const install of getState().installs) void launcher.flush(install.gameId);
+			saves.reset();
+			saves.catchUp();
 		},
 		async signingOut() {
 			launcher.stopAll();
@@ -96,6 +102,8 @@ const launcher = new Launcher({
 	onProgress: (gameId, progress) => library.applyProgress(gameId, progress),
 	onRunning: (running) => patchState({ running }),
 	notify: toast,
+	beforePlay: (gameId) => saves.beforePlay(gameId),
+	afterExit: (gameId) => saves.changed(gameId),
 	async pickFile(startIn) {
 		const [picked] = await Utils.openFileDialog({
 			startingFolder: startIn,
@@ -107,9 +115,39 @@ const launcher = new Launcher({
 	},
 });
 
+const bundled = (...path: string[]) => join(PATHS.RESOURCES_FOLDER, "app", ...path);
+const sevenZip = bundled("7zip", platform === "windows" ? "7z.exe" : "7zz");
+
+const saves: Saves = new Saves({
+	platform,
+	ludusavi: new Ludusavi(
+		bundled("ludusavi", platform === "windows" ? "ludusavi.exe" : "ludusavi"),
+		join(dataDir, "ludusavi"),
+		homedir(),
+	),
+	sevenZip,
+	installs,
+	home: homedir(),
+	prefixesDir: join(dataDir, "prefixes"),
+	enabled: () => settings.get().saveSync,
+	deviceName: () => settings.get().deviceName,
+	client: () => session.client,
+	userId: () => session.userId,
+	// The metadata provider's title is the game's proper name; the other comes from the file name.
+	titles: (gameId) => {
+		const game = library.raw(gameId);
+		const names = [game?.metadata?.title, game?.title, installs.get(gameId)?.manifest.title];
+		return [...new Set(names.filter((name): name is string => !!name))];
+	},
+	running: () => getState().running?.gameId ?? null,
+	onChange: (list, serverOff) =>
+		patchState({ saves: list, saveSync: { enabled: settings.get().saveSync, serverOff } }),
+	notify: toast,
+});
+
 const downloads = new Downloads({
 	queuePath: join(dataDir, "downloads.json"),
-	sevenZip: join(PATHS.RESOURCES_FOLDER, "app", "7zip", platform === "windows" ? "7z.exe" : "7zz"),
+	sevenZip,
 	installs,
 	client: () => session.client,
 	serverUrl: () => session.serverUrl,
@@ -120,6 +158,8 @@ const downloads = new Downloads({
 	onInstalled: (item) => {
 		toast(`${item.title} is ready to play`, `Installed to ${item.dir}`);
 		void refreshFolders();
+		// A fresh install picks up the saves the server already has.
+		saves.changed(item.gameId);
 	},
 });
 
@@ -180,6 +220,7 @@ patchState({
 	lastSignIn: settings.get().lastSignIn,
 	deviceName: settings.get().deviceName,
 	speedLimitKib: settings.get().speedLimitKib,
+	saveSync: { enabled: settings.get().saveSync, serverOff: false },
 });
 
 const rpc = BrowserView.defineRPC<AppRPC>({
@@ -202,6 +243,16 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			play: ({ gameId }) => launcher.play(gameId),
 			setExecutable: ({ gameId, path }) => launcher.setExecutable(gameId, path),
 			stop: ({ gameId }) => launcher.stop(gameId),
+			syncSaves: async ({ gameId, direction }) => {
+				await saves.sync(gameId, direction);
+			},
+			findSaveGames: ({ gameId, query }) => saves.search(gameId, query),
+			setSaveGame: ({ gameId, name }) => saves.setName(gameId, name),
+			setSaveSync: ({ on }) => {
+				settings.update({ saveSync: on });
+				saves.publish();
+				if (on) saves.catchUp();
+			},
 			addLibraryFolder: async () => {
 				const [picked] = await Utils.openFileDialog({
 					startingFolder: homedir(),
@@ -264,5 +315,6 @@ setInterval(async () => {
 	await session.refreshLibrary().catch(() => {});
 	if (getState().online) {
 		for (const install of getState().installs) void launcher.flush(install.gameId);
+		saves.catchUp();
 	}
 }, 60_000);

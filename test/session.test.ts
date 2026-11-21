@@ -29,7 +29,7 @@ function boot() {
 	const events: string[] = [];
 	const make = () => {
 		const settings = new SettingsFile(join(dir, "settings.json"), {
-			account: null, lastSignIn: null, deviceName: "Test rig", libraryFolders: [], speedLimitKib: 0,
+			account: null, lastSignIn: null, deviceName: "Test rig", libraryFolders: [], speedLimitKib: 0, saveSync: true,
 		});
 		const media = new MediaProxy(join(dir, "media"));
 		const library = new Library(join(dir, "library.json"), media);

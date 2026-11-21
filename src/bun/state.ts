@@ -22,6 +22,8 @@ let state: AppState = {
 	running: null,
 	folders: [],
 	speedLimitKib: 0,
+	saves: [],
+	saveSync: { enabled: true, serverOff: false },
 };
 
 type Sink = {

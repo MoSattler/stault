@@ -110,6 +110,41 @@ export interface Running {
 	startedAt: string;
 }
 
+export type SaveState =
+	/** Not looked up yet. */
+	| "unknown"
+	/** Ludusavi knows no save location for this game, or sync is off for it. */
+	| "unsupported"
+	/** Nothing is waiting: in step with the server, or nothing to sync yet. */
+	| "idle"
+	/** Saves on this device still have to reach the server. */
+	| "pending"
+	/** Saves changed here and on the server; the user has to choose. */
+	| "conflict"
+	| "syncing";
+
+/** Both sides changed. What the user needs to see to choose one. */
+export interface SaveConflict {
+	/** ISO time the server's save was uploaded. */
+	serverAt: string;
+	/** The device that uploaded it, when it said so (the official client doesn't). */
+	serverDevice: string | null;
+	/** ISO time this device's saves were last changed, when it can be told. */
+	localAt: string | null;
+}
+
+/** Where one installed game's saves stand. */
+export interface SaveSync {
+	gameId: number;
+	state: SaveState;
+	/** The Ludusavi entry this game was matched to. */
+	name: string | null;
+	/** ISO time the save this device last synced was uploaded. */
+	syncedAt: string | null;
+	/** Present while the state is "conflict". */
+	conflict?: SaveConflict;
+}
+
 export interface Toast {
 	id: number;
 	text: string;
@@ -136,6 +171,14 @@ export interface AppState {
 	folders: LibraryFolder[];
 	/** Download speed limit in KiB/s, 0 for unlimited. */
 	speedLimitKib: number;
+	/** One entry per installed game. */
+	saves: SaveSync[];
+	saveSync: {
+		/** The user's setting. */
+		enabled: boolean;
+		/** True once the server has said that save files are switched off there. */
+		serverOff: boolean;
+	};
 }
 
 export interface ServerCheck {
@@ -149,4 +192,6 @@ export interface ServerCheck {
 export type PlayResult =
 	| { status: "started" }
 	/** Several executables fit; the user has to choose one. */
-	| { status: "pick"; candidates: string[] };
+	| { status: "pick"; candidates: string[] }
+	/** Saves changed here and on the server; the user has to choose which to keep. */
+	| { status: "save-conflict" };

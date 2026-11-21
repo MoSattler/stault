@@ -33,6 +33,10 @@ export interface LauncherDeps {
 	notify(text: string, sub?: string): void;
 	/** Native file picker, for when the game's program can't be found. */
 	pickFile(startIn: string): Promise<string | null>;
+	/** Brings the saves up to date. A result means the user has to decide something first. */
+	beforePlay(gameId: number): Promise<PlayResult | null>;
+	/** The game has closed and its saves may have changed. */
+	afterExit(gameId: number): void;
 }
 
 function findUmu(): string | null {
@@ -149,6 +153,10 @@ export class Launcher {
 		}
 		const resolved = await this.resolve(gameId);
 		if (typeof resolved !== "string") return { status: "pick", candidates: resolved.candidates };
+		const undecided = await this.deps.beforePlay(gameId);
+		if (undecided) return undecided;
+		// Syncing saves took a moment; a second click may have started the game meanwhile.
+		if (this.current) return { status: "started" };
 
 		const meta = this.deps.game(gameId)?.metadata;
 		const needsUmu = this.deps.platform === "linux" && resolved.toLowerCase().endsWith(".exe");
@@ -184,6 +192,7 @@ export class Launcher {
 			clearInterval(ticker);
 			if (this.current?.child === child) this.current = null;
 			this.deps.onRunning(null);
+			this.deps.afterExit(gameId);
 			if (code !== 0 && code !== null && Date.now() - startedAt < 5000) {
 				this.deps.notify(`${title} closed right away`, `Launch log: ${logPath}`);
 			}

@@ -2,8 +2,8 @@ import { Electroview } from "electrobun/view";
 import type { AppRPC, Pushes } from "../../shared/rpc";
 import type { StaultApi } from "./index";
 
-/** Requests that wait on the user (a native dialog) and so must not time out. */
-const NO_TIMEOUT = new Set(["addLibraryFolder"]);
+/** Requests that wait on the user (a native dialog) or move files of any size, and so must not time out. */
+const NO_TIMEOUT = new Set(["addLibraryFolder", "syncSaves"]);
 
 export function createRpcApi(): StaultApi {
 	const handlers: { [K in keyof Pushes]?: (payload: Pushes[K]) => void } = {};

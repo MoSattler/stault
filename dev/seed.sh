@@ -12,7 +12,7 @@ DEV_PASSWORD=stault-dev-only
 FILES=.data/files
 WORK=.data/work
 rm -rf "$WORK"
-mkdir -p "$FILES" "$WORK" .data/media .data/db
+mkdir -p "$FILES" "$WORK" .data/media .data/db .data/savefiles
 
 # pack <archive name> <folder>: zip the folder's contents without compression.
 pack() {
@@ -21,6 +21,7 @@ pack() {
 }
 
 # A real, launchable Mac app: shows a dialog and stays open until dismissed.
+# Each run adds a line to save.txt beside the app, so save sync has something to move.
 APP="$WORK/mac/Stault Sample.app/Contents"
 mkdir -p "$APP/MacOS"
 cat > "$APP/Info.plist" <<'PLIST'
@@ -35,12 +36,13 @@ cat > "$APP/Info.plist" <<'PLIST'
 PLIST
 cat > "$APP/MacOS/sample" <<'SH'
 #!/bin/sh
+date >> "$(dirname "$0")/../../../save.txt"
 osascript -e 'display dialog "Stault Sample is running. Quit to end the session." buttons {"Quit"} default button 1 with title "Stault Sample"' >/dev/null 2>&1
 SH
 chmod +x "$APP/MacOS/sample"
-pack "Harbor Lights (v1.0.0) (2024).zip" "$WORK/mac"
 
 # The same app with 200 MB of ballast: a download long enough to pause and resume.
+# (Copied before Harbor Lights gets its save description, so this one has no synced saves.)
 BIG="Deep Current (v0.9.0) (2022).zip"
 if [ ! -f "$FILES/$BIG" ]; then
 	mkdir -p "$WORK/mac-big"
@@ -48,6 +50,15 @@ if [ ! -f "$FILES/$BIG" ]; then
 	head -c 209715200 /dev/urandom > "$WORK/mac-big/assets.bin"
 	pack "$BIG" "$WORK/mac-big"
 fi
+
+# Ludusavi has never heard of Harbor Lights, so the game says itself where its save is.
+cat > "$WORK/mac/.ludusavi.yaml" <<'YAML'
+Harbor Lights:
+  files:
+    <base>/save.txt: {}
+YAML
+pack "Harbor Lights (v1.0.0) (2024).zip" "$WORK/mac"
+
 
 # Placeholders for the other build types. They are not real programs.
 mkdir -p "$WORK/portable/Pixel_Data" "$WORK/portable-old" "$WORK/setup" "$WORK/linux" "$WORK/big"

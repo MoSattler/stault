@@ -13,6 +13,8 @@ export interface Settings {
 	deviceName: string;
 	libraryFolders: string[];
 	speedLimitKib: number;
+	/** Keep game saves in step with the server. */
+	saveSync: boolean;
 }
 
 export class SettingsFile {

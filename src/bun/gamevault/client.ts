@@ -44,6 +44,18 @@ export function normalizeServerUrl(input: string): string {
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
+/** A save on the server: when it was uploaded, and by which install of the game. */
+export interface ServerSave {
+	uploadedAt: number;
+	installationId: string;
+}
+
+/** The server names a save "<upload time in ms>_<installation id>.zip". */
+export function parseSaveName(contentDisposition: string | null): ServerSave | null {
+	const match = contentDisposition?.match(/filename="?(\d+)_([0-9a-f-]+)\.zip/i);
+	return match ? { uploadedAt: Number(match[1]), installationId: match[2] } : null;
+}
+
 /**
  * Finds the GameVault server behind what the user typed. An address without
  * a scheme is tried over HTTPS first, then plain HTTP (common on a home LAN).
@@ -244,6 +256,39 @@ export class GameVaultClient {
 		return this.request(`/api/game/${gameId}/versions/${versionId}`, {
 			headers,
 			signal: options.signal,
+		});
+	}
+
+	/**
+	 * The newest save the server holds for a game, without downloading it.
+	 * Null when there is none. A server with save files switched off answers 405.
+	 */
+	async newestSave(userId: number, gameId: number, signal?: AbortSignal): Promise<ServerSave | null> {
+		try {
+			const response = await this.request(`/api/savefiles/user/${userId}/game/${gameId}`, {
+				method: "HEAD",
+				signal,
+			});
+			return parseSaveName(response.headers.get("Content-Disposition"));
+		} catch (error) {
+			if (error instanceof ApiError && error.status === 404) return null;
+			throw error;
+		}
+	}
+
+	/** Downloads the newest save: a zip, named as parseSaveName() expects. */
+	downloadSave(userId: number, gameId: number, signal?: AbortSignal): Promise<Response> {
+		return this.request(`/api/savefiles/user/${userId}/game/${gameId}`, { signal });
+	}
+
+	/** Uploads a save, which becomes the newest. The server keeps a few older ones. */
+	async uploadSave(userId: number, gameId: number, zip: Blob, installationId: string): Promise<void> {
+		const body = new FormData();
+		body.append("file", zip, "save.zip");
+		await this.request(`/api/savefiles/user/${userId}/game/${gameId}`, {
+			method: "POST",
+			headers: { "X-Installation-Id": installationId },
+			body,
 		});
 	}
 
