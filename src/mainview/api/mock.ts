@@ -49,6 +49,7 @@ function game(
 	progressState: ProgressState,
 	addedDays: number,
 	description: string,
+	publisher?: string,
 ): GameDetail & { installed: boolean } {
 	return {
 		id,
@@ -69,12 +70,13 @@ function game(
 		progressState,
 		bookmarked: false,
 		description,
+		publishers: publisher ? [publisher] : [],
 		installed,
 	};
 }
 
 const seed = [
-	game(1, "Saltmarsh", "Low Tide Co.", 2024, ["Adventure", "Exploration"], [win("1.4.2", "P", 3.2), linux("1.4.2", 3.0)], true, 41.5, 1, "PLAYING", 1, "Sail a flooded coastline in a hand-built skiff, mapping tide pools and trading with the stilt towns that survived the rising water."),
+	game(1, "Saltmarsh", "Low Tide Co.", 2024, ["Adventure", "Exploration"], [win("1.4.2", "P", 3.2), linux("1.4.2", 3.0)], true, 41.5, 1, "PLAYING", 1, "Sail a flooded coastline in a hand-built skiff, mapping tide pools and trading with the stilt towns that survived the rising water.", "Harbour Light Publishing"),
 	game(2, "Hollow Signal", "Kestrel Works", 2023, ["Horror", "Puzzle"], [win("2.0.1", "S", 11.8)], true, 12.2, 3, "PLAYING", 4, "A numbers station keeps broadcasting from an island that sank in 1962. Tune, decode and survive the night shift alone."),
 	game(3, "Orbital Gardens", "Paperplane Labs", 2025, ["Simulation", "Building"], [win("0.9.7", "P", 1.1, true), win("0.9.5", "P", 1.0, true)], true, 87, 8, "PLAYING", 2, "Grow a greenhouse ring around a dying moon. Balance light, water and a crew that keeps naming the tomatoes."),
 	game(4, "Northbound", "Fieldnote Games", 2021, ["Strategy", "Survival"], [win("1.12", "S", 24.6), win("1.12", "P", 22.9), win("1.0", "S", 18.1)], false, 19, 240, "ABORTED_TEMPORARY", 6, "Lead a caravan across a frozen continent. Every mile costs fuel, food or a friend."),

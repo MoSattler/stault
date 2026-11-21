@@ -53,11 +53,11 @@ test("metadata supplies title, art and genres", () => {
 			cover: { id: 11 }, background: { id: 12 },
 			launch_executable: null, launch_parameters: null, installer_executable: null, installer_parameters: null,
 			umu_game_id: null, umu_store: null, umu_proton_path: null,
-			genres: [{ name: "Racing" }], developers: [{ name: "Halfstep" }],
+			genres: [{ name: "Racing" }], developers: [{ name: "Halfstep" }], publishers: [{ name: "Night Owl" }],
 		},
 	};
 	const detail = toDetail(withMeta, userGameData({ id: 1, username: "sam" }), mediaUrl);
-	expect(detail).toMatchObject({ title: "Pixel Drift Deluxe", coverUrl: "media:11", backgroundUrl: "media:12", genres: ["Racing"], developers: ["Halfstep"], releaseYear: 2024, description: "Drift." });
+	expect(detail).toMatchObject({ title: "Pixel Drift Deluxe", coverUrl: "media:11", backgroundUrl: "media:12", genres: ["Racing"], developers: ["Halfstep"], publishers: ["Night Owl"], releaseYear: 2024, description: "Drift." });
 });
 
 test("versions list the server default first, then newest to oldest", () => {

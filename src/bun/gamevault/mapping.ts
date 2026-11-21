@@ -84,6 +84,7 @@ export function toDetail(
 	return {
 		...toSummary(game, user, mediaUrl),
 		description: game.metadata?.description ?? null,
+		publishers: (game.metadata?.publishers ?? []).map((p) => p.name),
 		versions,
 	};
 }
