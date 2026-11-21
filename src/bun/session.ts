@@ -1,10 +1,11 @@
 import { findServer, GameVaultClient, SignedOutError } from "./gamevault/client";
+import type { ApiTokens } from "./gamevault/types";
 import type { Library } from "./library";
 import type { MediaProxy } from "./media";
 import type { SecretStore } from "./secrets";
 import type { SettingsFile } from "./settings";
 import { getState, patchState } from "./state";
-import type { ServerCheck } from "../shared/model";
+import type { ServerCheck, SignInMethod } from "../shared/model";
 
 /** Oldest server whose API Stault is written against (versions, save files). */
 const MIN_SERVER_MAJOR = 17;
@@ -22,6 +23,11 @@ export interface SessionHooks {
 	signedIn(serverUrl: string): void;
 	/** The session is about to be dropped. */
 	signingOut(): Promise<void>;
+	/**
+	 * Shows the server's single sign-on page and waits for the user. Resolves
+	 * with the tokens the server hands over, or null when the user gave up.
+	 */
+	ssoLogin(serverUrl: string): Promise<ApiTokens | null>;
 }
 
 export class Session {
@@ -67,7 +73,15 @@ export class Session {
 		try {
 			const { serverUrl, status } = await findServer(url);
 			checkVersion(status.version);
-			return { ok: true, serverUrl, version: status.version };
+			// A server that names no methods takes passwords.
+			const named = status.available_authentication_methods ?? [];
+			const methods = (["basic", "sso"] satisfies SignInMethod[]).filter((m) => named.includes(m));
+			return {
+				ok: true,
+				serverUrl,
+				version: status.version,
+				methods: methods.length ? methods : ["basic"],
+			};
 		} catch (error) {
 			return { ok: false, error: (error as Error).message };
 		}
@@ -107,13 +121,41 @@ export class Session {
 	}) {
 		const username = input.username.trim();
 		if (!username || !input.password) throw new Error("Enter your username and password.");
+		await this.start(input, (client) => client.login(username, input.password));
+	}
+
+	/** Signs in through the server's identity provider. False when the user gave up. */
+	signInWithSso(input: { serverUrl: string; deviceName: string }): Promise<boolean> {
+		return this.start(input, async (client) => {
+			const tokens = await this.hooks.ssoLogin(client.serverUrl);
+			if (tokens) await client.adopt(tokens);
+		});
+	}
+
+	/**
+	 * Signs in. `authenticate` gets the client its first tokens. When it gets
+	 * none (the user gave up), everything stays as it was and the answer is false.
+	 */
+	private async start(
+		input: { serverUrl: string; deviceName: string },
+		authenticate: (client: GameVaultClient) => Promise<void>,
+	): Promise<boolean> {
 		const { serverUrl, status } = await findServer(input.serverUrl);
 		checkVersion(status.version);
 
-		const client = this.connect(serverUrl, username, null);
+		// Whose tokens these are is known only once the server has been asked,
+		// so they are stored after that.
+		const issued: ApiTokens[] = [];
+		const guest = new GameVaultClient(serverUrl, null, {
+			onTokens: (tokens) => void issued.push(tokens),
+		});
+		await authenticate(guest);
+		if (!issued.length) return false;
+		const me = await guest.me();
+
+		const client = this.connect(serverUrl, me.username, null);
 		try {
-			await client.login(username, input.password);
-			const me = await client.me();
+			await client.adopt(issued.at(-1)!);
 			const account = {
 				serverUrl,
 				serverVersion: status.version,
@@ -131,6 +173,7 @@ export class Session {
 			throw error;
 		}
 		await this.refreshLibrary();
+		return true;
 	}
 
 	async signOut() {
