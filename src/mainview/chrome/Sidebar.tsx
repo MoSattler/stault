@@ -27,10 +27,10 @@ function Row({ game, selected }: { game: GameSummary; selected: boolean }) {
 				<Cover
 					title={game.title}
 					url={game.coverUrl}
-					className={`h-9 w-[26px] flex-none rounded-[3px] ${here ? "" : "opacity-40 grayscale-[.6]"}`}
+					className={`h-9 w-[26px] flex-none rounded-[3px] ${here ? "" : "opacity-55 grayscale-[.6]"}`}
 				/>
 				<span className="flex min-w-0 flex-auto flex-col gap-px">
-					<span className={`truncate text-[13px] font-semibold ${tone ?? (here ? "text-ink" : "text-faint")}`}>{game.title}</span>
+					<span className={`truncate text-[13px] font-semibold ${tone ?? (here ? "text-ink" : "text-[#8f969f]")}`}>{game.title}</span>
 					<span className={`whitespace-nowrap font-mono text-[10.5px] ${tone ?? "text-faint"}`}>{status.line}</span>
 				</span>
 			</button>
