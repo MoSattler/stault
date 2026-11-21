@@ -5,7 +5,8 @@ name: Release
 #
 #   Push to main         opens or updates the release PR: next version, changelog
 #   Release PR merged    tags the version and publishes the GitHub release, then
-#                        builds stable installers and attaches them to it
+#                        builds stable installers, attaches them to it and
+#                        points the Homebrew cask at the new macOS installer
 #   Manual run           canary installers, kept on the run for testing
 #   PR touching the      the same canary build, as a check that packaging
 #   packaging files      still works
@@ -123,3 +124,43 @@ jobs:
           ls -l artifacts
           gh release upload "$TAG" artifacts/* --clobber
           gh release edit "$TAG" --title "Stault $TAG"
+
+  # Points the cask in MoSattler/homebrew-tap at the new DMG, so that
+  # `brew install --cask mosattler/tap/stault` and `brew upgrade` get this
+  # release.
+  homebrew:
+    name: Update the Homebrew cask
+    needs: [release-please, publish]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: stault-stable-macOS-ARM64
+          path: artifacts
+
+      # HOMEBREW_TAP_DEPLOY_KEY is the private half of a deploy key with
+      # write access on the tap repository.
+      - uses: actions/checkout@v7
+        with:
+          repository: MoSattler/homebrew-tap
+          ssh-key: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+          path: tap
+
+      - name: Set the cask's version and checksum
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          version="${TAG#v}"
+          sha256="$(sha256sum artifacts/macos-arm64-Stault.dmg | cut -d' ' -f1)"
+          cd tap
+          sed -i -E \
+            -e "s/^  version \".*\"$/  version \"$version\"/" \
+            -e "s/^  sha256 \".*\"$/  sha256 \"$sha256\"/" \
+            Casks/stault.rb
+          # Nothing to commit when the workflow is re-run for the same release.
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "stault $version"
+          git push
