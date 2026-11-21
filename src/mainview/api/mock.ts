@@ -109,6 +109,7 @@ const FOLDERS: Record<Platform, AppState["folders"]> = {
 export function createMockApi(): StaultApi {
 	const platform = (params.get("platform") as Platform) ?? "windows";
 	const handlers: { [K in keyof Pushes]?: (payload: Pushes[K]) => void } = {};
+	const sep = platform === "windows" ? "\\" : "/";
 	const session = {
 		serverUrl: "https://vault.lan",
 		serverVersion: "17.2.0",
@@ -146,7 +147,7 @@ export function createMockApi(): StaultApi {
 			versionId: g.versions[0].id,
 			version: g.versions[0].version,
 			type: g.versions[0].type,
-			path: `${FOLDERS[platform][0].path}/${g.title}`,
+			path: `${FOLDERS[platform][0].path}${sep}${g.title}`,
 			sizeBytes: g.versions[0].sizeBytes * 1.15,
 			installedAt: ago(g.id),
 		})),
@@ -221,7 +222,7 @@ export function createMockApi(): StaultApi {
 			patch({
 				downloads: state.downloads.filter((_, i) => i !== index),
 				completed: [{ gameId: d.gameId, title: d.title, at: new Date().toISOString(), sizeBytes: d.totalBytes * 1.15 }, ...state.completed],
-				installs: [...state.installs, { gameId: d.gameId, versionId: d.versionId, version: d.version, type: d.type, path: `${folder}/${d.title}`, sizeBytes: d.totalBytes * 1.15, installedAt: new Date().toISOString() }],
+				installs: [...state.installs, { gameId: d.gameId, versionId: d.versionId, version: d.version, type: d.type, path: `${folder}${sep}${d.title}`, sizeBytes: d.totalBytes * 1.15, installedAt: new Date().toISOString() }],
 				saves: [...state.saves.filter((s) => s.gameId !== d.gameId), save(d.gameId, "idle")],
 			});
 			toast(`${d.title} is ready to play`, `Installed to ${folder}`);
