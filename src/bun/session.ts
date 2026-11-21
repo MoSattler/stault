@@ -21,6 +21,13 @@ function checkVersion(version: string) {
 	}
 }
 
+export interface SessionHooks {
+	/** A session exists (restored or just signed in). */
+	signedIn(serverUrl: string): void;
+	/** The session is about to be dropped. */
+	signingOut(): Promise<void>;
+}
+
 export class Session {
 	private current: GameVaultClient | null = null;
 
@@ -29,7 +36,12 @@ export class Session {
 		private readonly secrets: SecretStore,
 		private readonly media: MediaProxy,
 		private readonly library: Library,
+		private readonly hooks: SessionHooks,
 	) {}
+
+	get serverUrl(): string {
+		return this.client.serverUrl;
+	}
 
 	/** The signed-in client. Throws when nobody is signed in. */
 	get client(): GameVaultClient {
@@ -76,6 +88,7 @@ export class Session {
 		this.connect(account.serverUrl, account.username, token);
 		this.library.loadCache();
 		patchState({ ready: true, session: account });
+		this.hooks.signedIn(account.serverUrl);
 		await this.refreshLibrary();
 	}
 
@@ -115,6 +128,7 @@ export class Session {
 			const deviceName = input.deviceName.trim() || getState().deviceName;
 			this.settings.update({ account, deviceName });
 			patchState({ session: account, deviceName, online: true });
+			this.hooks.signedIn(serverUrl);
 		} catch (error) {
 			this.current = null;
 			this.media.use(null);
@@ -130,6 +144,7 @@ export class Session {
 
 	/** Drops the local session without talking to the server. */
 	private async forget() {
+		await this.hooks.signingOut();
 		const { account } = this.settings.get();
 		if (account) await this.secrets.delete(`${account.serverUrl}#${account.username}`);
 		this.settings.update({ account: null });

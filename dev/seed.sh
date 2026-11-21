@@ -40,6 +40,15 @@ SH
 chmod +x "$APP/MacOS/sample"
 pack "Harbor Lights (v1.0.0) (2024).zip" "$WORK/mac"
 
+# The same app with 200 MB of ballast: a download long enough to pause and resume.
+BIG="Deep Current (v0.9.0) (2022).zip"
+if [ ! -f "$FILES/$BIG" ]; then
+	mkdir -p "$WORK/mac-big"
+	cp -R "$WORK/mac/Stault Sample.app" "$WORK/mac-big/Deep Current.app"
+	head -c 209715200 /dev/urandom > "$WORK/mac-big/assets.bin"
+	pack "$BIG" "$WORK/mac-big"
+fi
+
 # Placeholders for the other build types. They are not real programs.
 mkdir -p "$WORK/portable/Pixel_Data" "$WORK/portable-old" "$WORK/setup" "$WORK/linux" "$WORK/big"
 echo "not a real program" > "$WORK/portable/Pixel.exe"
@@ -69,6 +78,10 @@ echo " up."
 curl -s -o /dev/null -X POST "$SERVER/api/auth/basic/register" \
 	-H "Content-Type: application/json" \
 	-d "{\"username\":\"$DEV_USER\",\"password\":\"$DEV_PASSWORD\"}" || true
+
+# Have the server pick up new files now instead of at its next scheduled scan.
+TOKEN=$(curl -s -u "$DEV_USER:$DEV_PASSWORD" "$SERVER/api/auth/basic/login" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+curl -s -o /dev/null -X PUT -H "Authorization: Bearer $TOKEN" "$SERVER/api/games/reindex" || true
 
 echo "Server:   $SERVER"
 echo "Username: $DEV_USER"

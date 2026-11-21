@@ -42,6 +42,8 @@ export interface ApiMetadata {
 
 export interface ApiVersion {
 	id: number;
+	/** Path of the archive on the server. */
+	file_path: string;
 	version: string | null;
 	/** Bytes, as a decimal string. */
 	size: string;

@@ -22,7 +22,7 @@ function subscribeClock(listener: () => void) {
 	clockTimer ??= setInterval(() => {
 		clock = Date.now();
 		for (const l of clockListeners) l();
-	}, 20_000);
+	}, 10_000);
 	return () => {
 		clockListeners.delete(listener);
 		if (clockListeners.size === 0) {
