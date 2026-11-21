@@ -82,8 +82,14 @@ export function Game({ game }: { game: GameSummary }) {
 	return (
 		<div className={`flex flex-col ${rise}`}>
 			<div className="relative flex min-h-[340px] flex-col justify-between gap-6 px-8 pb-7 pt-5">
-				<Cover title={game.title} url={game.backgroundUrl ?? game.coverUrl} className="!absolute inset-0" />
-				<div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,16,19,.15)_0%,rgba(14,16,19,.35)_45%,rgba(14,16,19,.96)_100%),linear-gradient(90deg,rgba(14,16,19,.7)_0%,rgba(14,16,19,0)_65%)]" />
+				{/* Art is darkened with a filter, which keeps its contrast; a flat veil turns pale art into grey haze. */}
+				<Cover
+					title={game.title}
+					url={game.backgroundUrl ?? game.coverUrl}
+					className="!absolute inset-0 [&>img]:brightness-[.62] [&>img]:contrast-125 [&>img]:saturate-[1.3]"
+				/>
+				{/* The scrim sits only behind the title and fades into the panel below. */}
+				<div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(14,16,19,0)_40%,rgba(14,16,19,.6)_78%,rgba(14,16,19,.96)_100%),radial-gradient(ellipse_75%_85%_at_0%_100%,rgba(14,16,19,.8)_0%,rgba(14,16,19,0)_70%)]" />
 				<button type="button" onClick={() => go({ name: "home" })} className="relative flex min-h-[34px] items-center gap-1.5 self-start rounded-md bg-carbon/55 pl-2 pr-3 text-[13px] font-semibold hover:bg-hover">
 					<BackIcon />
 					Library
