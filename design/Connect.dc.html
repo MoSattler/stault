@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stault · Connect</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C0E}
+a{color:#C5F04A}a:hover{color:#E2FF8A}
+.cx *{box-sizing:border-box}
+.cx input,.cx button{font:inherit;color:inherit}
+.cx input:focus-visible,.cx button:focus-visible,.cx a:focus-visible{outline:2px solid #C5F04A !important;outline-offset:2px !important}
+.cx input::placeholder{color:#7D858F}
+</style>
+</helmet>
+<div class="cx" style="min-height: 100vh; display: flex; flex-wrap: wrap; background: #0B0C0E; color: #ECEEF0; font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.45">
+<div aria-hidden="true" style="flex: 1 1 520px; min-height: 320px; position: relative; overflow: hidden; background: #111316">
+<div style="position: absolute; inset: -40px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; transform: rotate(-8deg) scale(1.15); opacity: .55">
+<sc-for list="{{ wall }}" as="c" hint-placeholder-count="20"><span style="display: block; aspect-ratio: 5 / 7; border-radius: 6px; background: {{ c }}"></span></sc-for>
+</div>
+<div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,12,14,.2) 0%, rgba(11,12,14,.85) 85%, #0B0C0E 100%), linear-gradient(0deg, rgba(11,12,14,.9) 0%, rgba(11,12,14,0) 50%)"></div>
+<div style="position: absolute; left: 48px; bottom: 48px; display: flex; flex-direction: column; gap: 12px">
+<span style="display: flex; align-items: center; gap: 12px"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C5F04A" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="12" cy="12" r="4.2"></circle><path d="M12 5.8v2M12 16.2v2M5.8 12h2M16.2 12h2"></path></svg><span style="font-weight: 800; font-stretch: 125%; letter-spacing: 0.16em; font-size: 22px">STAULT</span></span>
+<span style="font-size: 18px; color: #D5D9DE; max-width: 26ch">Your GameVault library on every screen you play on.</span>
+</div>
+</div>
+<main style="flex: 1 1 440px; display: flex; align-items: center; justify-content: center; padding: 48px 24px">
+<form onSubmit="{{ noSubmit }}" style="width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; letter-spacing: 0.14em; color: #A9B0B8">STEP 1 OF 2 · SERVER</span>
+<h1 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 30px; line-height: 1.05; text-transform: uppercase">Connect to GameVault</h1>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="srv" style="font-weight: 600; font-size: 14px">Server address</label>
+<div style="display: flex; gap: 8px">
+<input id="srv" value="{{ url }}" onChange="{{ onUrl }}" placeholder="https://vault.lan" autocomplete="url" style="flex: 1 1 auto; min-width: 0; min-height: 46px; padding: 0 14px; border-radius: 6px; border: 1px solid #323840; background: #16191D; font-family: 'JetBrains Mono', monospace; font-size: 14px">
+<button type="button" onClick="{{ check }}" style="min-height: 46px; padding: 0 16px; border-radius: 6px; border: 1px solid #323840; background: #1D2126; font-weight: 600; font-size: 14px">Check</button>
+</div>
+<sc-if value="{{ found }}" hint-placeholder-val="{{ true }}">
+<p role="status" style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #C5F04A"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>GameVault server found · cloud saves enabled</p>
+</sc-if>
+<sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 13px; color: #A9B0B8">Include the port if it isn't 443, e.g. http://nas.local:8080</p>
+</sc-if>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="usr" style="font-weight: 600; font-size: 14px">Username</label><input id="usr" value="{{ user }}" onChange="{{ onUser }}" autocomplete="username" style="min-height: 46px; padding: 0 14px; border-radius: 6px; border: 1px solid #323840; background: #16191D"></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><label for="pwd" style="font-weight: 600; font-size: 14px">Password</label><input id="pwd" type="password" value="{{ pass }}" onChange="{{ onPass }}" autocomplete="current-password" style="min-height: 46px; padding: 0 14px; border-radius: 6px; border: 1px solid #323840; background: #16191D"></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="dev" style="font-weight: 600; font-size: 14px">Name this device</label>
+<input id="dev" value="{{ device }}" onChange="{{ onDevice }}" style="min-height: 46px; padding: 0 14px; border-radius: 6px; border: 1px solid #323840; background: #16191D">
+<span style="font-size: 13px; color: #A9B0B8">Shown next to every save this device uploads, so you can tell copies apart.</span>
+</div>
+<a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 6px; background: #C5F04A; color: #0B0C0E; text-decoration: none; font-weight: 750; font-size: 15px; letter-spacing: 0.05em; text-transform: uppercase; font-stretch: 112%">Sign in</a>
+<p style="margin: 0; font-size: 13px; color: #A9B0B8">Stault stores the session token in the system keychain, never the password.</p>
+</form>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { url: 'https://vault.lan', user: 'sam', pass: '', device: 'MacBook Pro', found: true };
+  }
+  renderVals() {
+    const s = this.state;
+    const covers = [
+      'radial-gradient(circle at 72% 30%, #ffd27a 0 9%, rgba(255,210,122,0) 9.5%), linear-gradient(180deg, #17324a 0%, #2f5e6b 50%, #c8955a 50.5%, #6e4b2a 100%)',
+      'repeating-radial-gradient(circle at 50% 115%, rgba(255,92,70,.85) 0 2px, rgba(0,0,0,0) 2.5px 16px), linear-gradient(180deg, #0d0a17 0%, #2a1238 100%)',
+      'radial-gradient(circle at 50% 58%, #9be38c 0 18%, rgba(0,0,0,0) 18.5%), linear-gradient(160deg, #0f2a2a 0%, #174241 100%)',
+      'linear-gradient(170deg, #e9eef2 0%, #c8d3dc 55%, #5d7487 55.5%, #2c3e50 100%)',
+      'linear-gradient(135deg, rgba(0,0,0,0) 0 46%, #ff7a2f 46% 54%, rgba(0,0,0,0) 54%), linear-gradient(180deg, #1a0f0a 0%, #3b1608 100%)',
+      'conic-gradient(from 200deg at 50% 60%, #7fd6ff, #c3a6ff, #ffb3d9, #7fd6ff)',
+      'radial-gradient(circle at 30% 25%, rgba(214,196,120,.5) 0 10%, rgba(0,0,0,0) 30%), linear-gradient(180deg, #1c2418 0%, #2e3b23 60%, #121710 100%)',
+      'repeating-linear-gradient(180deg, rgba(255,79,163,.9) 0 3px, rgba(0,0,0,0) 3px 11px), linear-gradient(180deg, #24125a 0%, #4b1a6e 100%)',
+      'radial-gradient(ellipse at 50% 100%, #ff9a3c 0 30%, rgba(0,0,0,0) 60%), linear-gradient(180deg, #2b1d16 0%, #4a2a18 100%)',
+      'radial-gradient(circle at 30% 40%, #ffcf6e 0 6%, rgba(255,207,110,.25) 6.5% 14%, rgba(0,0,0,0) 14.5%), linear-gradient(180deg, #14122b 0%, #2b2147 100%)'
+    ];
+    return {
+      wall: covers.concat(covers.slice(3), covers.slice(0, 3)),
+      url: s.url, user: s.user, pass: s.pass, device: s.device,
+      found: s.found, notFound: !s.found,
+      onUrl: e => this.setState({ url: e.target.value, found: false }),
+      onUser: e => this.setState({ user: e.target.value }),
+      onPass: e => this.setState({ pass: e.target.value }),
+      onDevice: e => this.setState({ device: e.target.value }),
+      check: () => this.setState({ found: /^https?:\/\/\S+/.test(s.url) }),
+      noSubmit: e => e.preventDefault()
+    };
+  }
+}
+</script>
+</body>
+</html>

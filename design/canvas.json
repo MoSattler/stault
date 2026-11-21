@@ -1,0 +1,21 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-21T13:20:00Z" },
+  "title": "Stault Client Design",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 1520, "y": 1100, "w": 1440, "h": 900, "title": "Desktop · Library prototype", "expand": "fill", "is_interactive": true },
+    "Connect.dc.html": { "x": 0, "y": 1100, "w": 1440, "h": 900, "title": "Desktop · First run", "expand": "fill", "is_interactive": true },
+    "Deck.dc.html": { "x": 0, "y": 2420, "w": 1280, "h": 800, "title": "Big Picture Mode · Steam Deck 1280×800", "is_interactive": true },
+    "DirVault.dc.html": { "x": 0, "y": 0, "w": 960, "h": 640, "title": "Visual direction · Vault" }
+  },
+  "order": ["Main.dc.html", "Connect.dc.html", "Deck.dc.html", "DirVault.dc.html"],
+  "notes": {
+    "t2": { "x": 0, "y": 800, "text": "Desktop — Windows · macOS · SteamOS desktop", "kind": "title1", "maxW": 2960 },
+    "t3": { "x": 0, "y": 2120, "text": "Big Picture Mode — Steam Deck & TV", "kind": "title1", "maxW": 2960 },
+    "s1": { "x": 3040, "y": 1100, "w": 400, "fill": "teal", "size": "m", "text": "Try in Play:\n• Play Saltmarsh: pulls the newer save from the Steam Deck first\n• Play Hollow Signal: save conflict, pick which copy wins\n• Install Northbound: download → extract → setup → play\n• Stop a game: the save uploads as a new version\n\nWindow chrome per OS: Tweaks › Platform\nBig Picture (top right) opens Big Picture Mode" },
+    "s2": { "x": 1360, "y": 2420, "w": 400, "fill": "teal", "size": "m", "text": "Controller-first, touch works too.\nClick into the screen, then:\nArrows = D-pad · Enter = A · Esc = B\nM = ☰ Menu · V = ⧉ Quick access\nQ / E = L1 / R1 in Library\n\nFooter buttons are clickable. Menu › Exit Big Picture returns to the desktop prototype." }
+  },
+  "designSystems": []
+}

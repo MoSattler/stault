@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stault · Library</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C0E}
+a{color:#C5F04A}a:hover{color:#E2FF8A}
+.sv *{box-sizing:border-box}
+.sv button,.sv select,.sv input{font:inherit;color:inherit}
+.sv button{cursor:pointer}
+.sv button:focus-visible,.sv a:focus-visible,.sv input:focus-visible,.sv select:focus-visible{outline:2px solid #C5F04A !important;outline-offset:2px !important}
+.hv:hover{background:#1D2126 !important}
+.lift{transition:transform .18s ease,box-shadow .18s ease}
+.lift:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,0,0,.55)}
+.pbtn:hover{filter:brightness(1.08)}
+.sv ::-webkit-scrollbar{width:10px;height:10px}
+.sv ::-webkit-scrollbar-thumb{background:#2A2F36;border-radius:10px;border:2px solid #111316}
+.sv input::placeholder{color:#7D858F}
+@keyframes svspin{to{transform:rotate(360deg)}}
+@keyframes svpulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes svrise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.spin{animation:svspin 1s linear infinite}
+.pulse{animation:svpulse 1.4s ease-in-out infinite}
+.rise{animation:svrise .22s ease-out}
+@media (max-width: 1100px){.wide{display:none !important}}
+</style>
+</helmet>
+<div class="sv" style="min-height: 100vh; min-width: 940px; display: flex; flex-direction: column; background: #0B0C0E; color: #ECEEF0; font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.45; position: relative">
+<header style="min-height: 46px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; padding: 0 0 0 16px; background: #0B0C0E; border-bottom: 1px solid #1D2126">
+<sc-if value="{{ isMac }}" hint-placeholder-val="{{ true }}">
+<div aria-hidden="true" style="display: flex; gap: 8px; align-items: center; padding-right: 4px">
+<span style="display: block; width: 12px; height: 12px; border-radius: 50%; background: #FF5F57"></span>
+<span style="display: block; width: 12px; height: 12px; border-radius: 50%; background: #FEBC2E"></span>
+<span style="display: block; width: 12px; height: 12px; border-radius: 50%; background: #28C840"></span>
+</div>
+</sc-if>
+<div style="display: flex; align-items: center; gap: 10px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ A }}" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"></rect><circle cx="12" cy="12" r="4.2"></circle><path d="M12 5.8v2M12 16.2v2M5.8 12h2M16.2 12h2"></path></svg>
+<span style="font-weight: 800; font-stretch: 125%; letter-spacing: 0.16em; font-size: 13px">STAULT</span>
+</div>
+<nav aria-label="Sections" style="display: flex; align-items: stretch; gap: 2px; align-self: stretch">
+<button class="hv" onClick="{{ tabs.lib.go }}" aria-pressed="{{ tabs.lib.on }}" style="min-height: 46px; background: rgba(0,0,0,0); border: 0; padding: 0 14px; font-weight: 650; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-stretch: 112%; color: {{ tabs.lib.ink }}; box-shadow: inset 0 -2px 0 {{ tabs.lib.bar }}">Library</button>
+<button class="hv" onClick="{{ tabs.dl.go }}" aria-pressed="{{ tabs.dl.on }}" style="min-height: 46px; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0); border: 0; padding: 0 14px; font-weight: 650; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-stretch: 112%; color: {{ tabs.dl.ink }}; box-shadow: inset 0 -2px 0 {{ tabs.dl.bar }}">Downloads<sc-if value="{{ hasDl }}" hint-placeholder-val="{{ true }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: #0B0C0E; background: {{ A }}; border-radius: 3px; padding: 0 5px; letter-spacing: 0">{{ dlBadge }}</span></sc-if></button>
+<button class="hv" onClick="{{ tabs.sv.go }}" aria-pressed="{{ tabs.sv.on }}" style="min-height: 46px; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0); border: 0; padding: 0 14px; font-weight: 650; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-stretch: 112%; color: {{ tabs.sv.ink }}; box-shadow: inset 0 -2px 0 {{ tabs.sv.bar }}">Saves<sc-if value="{{ conflictDot }}" hint-placeholder-val="{{ true }}"><span aria-label="Needs attention" style="width: 7px; height: 7px; border-radius: 50%; background: #FFB648; display: block"></span></sc-if></button>
+</nav>
+<div style="flex: 1 1 0"></div>
+<div style="display: flex; align-items: center; gap: 6px; padding-right: 8px">
+<a class="hv" href="Deck.dc.html" aria-label="Big Picture" style="display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 12px; border: 1px solid #262B31; border-radius: 6px; background: #111316; color: #ECEEF0; text-decoration: none; font-size: 12.5px; font-weight: 650"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="1.5"></rect><path d="M8 20.5h8M12 17v3.5"></path></svg><span class="wide">Big Picture</span></a>
+<button class="hv" onClick="{{ openSettings }}" aria-label="Server vault.lan, connected" style="display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 10px; border: 1px solid #262B31; border-radius: 6px; background: #111316; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: {{ A }}; display: block"></span><span class="wide">vault.lan</span></button>
+<button class="hv" onClick="{{ openSettings }}" aria-label="Settings" style="width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 6px; background: rgba(0,0,0,0); color: #A9B0B8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"></path></svg></button>
+<span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; background: #262B31; font-weight: 700; font-size: 12px">S</span>
+</div>
+<sc-if value="{{ isWin }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-self: stretch">
+<button class="hv" aria-label="Minimize" style="width: 46px; border: 0; background: rgba(0,0,0,0); color: #A9B0B8; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h10" stroke="currentColor" stroke-width="1"></path></svg></button>
+<button class="hv" aria-label="Maximize" style="width: 46px; border: 0; background: rgba(0,0,0,0); color: #A9B0B8; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1"></rect></svg></button>
+<button class="hv" aria-label="Close" style="width: 46px; border: 0; background: rgba(0,0,0,0); color: #A9B0B8; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1"></path></svg></button>
+</div>
+</sc-if>
+<sc-if value="{{ isSteam }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 6px; align-items: center; padding-right: 10px">
+<button class="hv" aria-label="Minimize" style="width: 24px; height: 24px; border: 0; border-radius: 50%; background: rgba(0,0,0,0); color: #A9B0B8; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4"></path></svg></button>
+<button class="hv" aria-label="Maximize" style="width: 24px; height: 24px; border: 0; border-radius: 50%; background: rgba(0,0,0,0); color: #A9B0B8; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5L6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.4"></path></svg></button>
+<button class="hv" aria-label="Close" style="width: 24px; height: 24px; border: 0; border-radius: 50%; background: #262B31; color: #ECEEF0; display: grid; place-items: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.4"></path></svg></button>
+</div>
+</sc-if>
+</header>
+<div style="display: flex; flex-wrap: wrap; flex: 1 1 auto; min-height: 0; align-items: stretch">
+<aside aria-label="Game list" style="flex: 0 0 264px; background: #111316; border-right: 1px solid #1D2126; display: flex; flex-direction: column; gap: 12px; padding: 14px 10px 14px 12px">
+<label style="display: flex; align-items: center; gap: 8px; background: #16191D; border: 1px solid #262B31; border-radius: 6px; padding: 0 8px 0 10px; min-height: 38px; color: #A9B0B8">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+<input type="search" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search {{ allCount }} games" aria-label="Search library" style="flex: 1 1 auto; min-width: 0; background: rgba(0,0,0,0); border: 0; color: #ECEEF0; font-size: 13px; padding: 8px 0">
+<kbd style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #A9B0B8; border: 1px solid #323840; border-radius: 4px; padding: 1px 5px">{{ P.kbd }}</kbd>
+</label>
+<div role="group" aria-label="Show" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; background: #16191D; border-radius: 6px; padding: 2px">
+<button onClick="{{ fAll.go }}" aria-pressed="{{ fAll.on }}" style="min-height: 30px; border: 0; border-radius: 4px; background: {{ fAll.bg }}; color: {{ fAll.ink }}; font-size: 12.5px; font-weight: 600">All · {{ allCount }}</button>
+<button onClick="{{ fInst.go }}" aria-pressed="{{ fInst.on }}" style="min-height: 30px; border: 0; border-radius: 4px; background: {{ fInst.bg }}; color: {{ fInst.ink }}; font-size: 12.5px; font-weight: 600">Installed · {{ instCount }}</button>
+</div>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ side }}" as="item" hint-placeholder-count="8">
+<li>
+<button class="hv" onClick="{{ item.open }}" style="width: 100%; display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 6px; border: 0; border-radius: 6px; background: {{ item.rowBg }}; color: {{ item.rowInk }}; text-align: left">
+<span aria-hidden="true" style="display: block; width: 26px; height: 36px; border-radius: 3px; flex: 0 0 auto; background: {{ item.cover }}"></span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<span style="font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.title }}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #A9B0B8; white-space: nowrap">{{ item.sideMeta }}</span>
+</span>
+<sc-if value="{{ item.warn }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFB648" stroke-width="2" stroke-linejoin="round" role="img" aria-label="Save conflict"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg></sc-if>
+<span aria-hidden="true" style="display: block; flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%; background: {{ item.dot }}"></span>
+</button>
+</li>
+</sc-for>
+</ul>
+<sc-if value="{{ sideEmpty }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 4px 8px; font-size: 13px; color: #A9B0B8">No games match “{{ query }}”.</p>
+</sc-if>
+<p style="margin: auto 8px 0; padding-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #7D858F; line-height: 1.6">New games appear when they land in the server's /files folder.</p>
+</aside>
+<main style="flex: 999 1 560px; min-width: 0; background: #0E1013; display: flex; flex-direction: column">
+<sc-if value="{{ vHome }}" hint-placeholder-val="{{ true }}">
+<div class="rise" style="padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 40px; width: 100%; max-width: 1320px">
+<section aria-labelledby="h-cont" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="h-cont" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">Jump back in</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<article style="flex: 2 1 520px; min-height: 272px; border-radius: 8px; overflow: hidden; position: relative; display: flex; flex-direction: column; justify-content: flex-end; background: {{ cont.cover }}">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,12,14,.92) 0%, rgba(11,12,14,.55) 55%, rgba(11,12,14,0) 100%)"></div>
+<div style="position: relative; padding: 28px; display: flex; flex-direction: column; gap: 14px; max-width: 520px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #ECEEF0">{{ cont.hoursText }} PLAYED · LAST {{ cont.last }}</span>
+<button onClick="{{ cont.open }}" style="all: unset; cursor: pointer; font-weight: 800; font-stretch: 125%; font-size: 40px; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; color: #FFFFFF">{{ cont.title }}</button>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{ cont.sv.tone }}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"></path></svg>
+<span>{{ cont.sv.label }} <span style="color: #C9CED4">· {{ cont.sv.sub }}</span></span>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<button class="pbtn" onClick="{{ cont.act }}" style="position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px; min-height: 46px; min-width: 168px; padding: 0 22px; border: 0; border-radius: 6px; background: {{ cont.b.bg }}; color: {{ cont.b.ink }}; font-weight: 750; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; font-stretch: 112%">
+<span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{ cont.b.fill }}%; background: {{ A }}; opacity: .28"></span>
+<sc-if value="{{ cont.b.play }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><path d="M7 4.5v15l13-7.5z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{ cont.b.stop }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><rect x="5" y="5" width="14" height="14" rx="1.5" fill="currentColor"></rect></svg></sc-if>
+<span style="position: relative">{{ cont.b.label }}</span>
+<sc-if value="{{ cont.run }}" hint-placeholder-val="{{ false }}"><span style="position: relative; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; color: #A9B0B8">{{ cont.b.sub }}</span></sc-if>
+</button>
+<button class="hv" onClick="{{ cont.open }}" style="min-height: 46px; padding: 0 18px; border: 1px solid rgba(236,238,240,.25); border-radius: 6px; background: rgba(11,12,14,.4); font-weight: 600; font-size: 13px">Game details</button>
+</div>
+</div>
+</article>
+<sc-for list="{{ cont2 }}" as="item" hint-placeholder-count="2">
+<article class="lift" style="flex: 1 1 250px; min-height: 272px; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; background: #16191D; border: 1px solid #1D2126">
+<div aria-hidden="true" style="flex: 1 1 120px; background: {{ item.cover }}"></div>
+<div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+<button onClick="{{ item.open }}" style="all: unset; cursor: pointer; font-weight: 700; font-size: 16px">{{ item.title }}</button>
+<div style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: {{ item.sv.tone }}">
+<sc-if value="{{ item.sv.warn }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg></sc-if>
+<sc-if value="{{ item.sv.ok }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<span>{{ item.sv.label }}</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9B0B8">{{ item.hoursText }} · {{ item.last }}</span>
+<button class="pbtn" onClick="{{ item.act }}" style="min-height: 34px; padding: 0 14px; border: 0; border-radius: 5px; background: {{ item.b.bg }}; color: {{ item.b.ink }}; font-weight: 750; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase">{{ item.b.label }}</button>
+</div>
+</div>
+</article>
+</sc-for>
+</div>
+</section>
+<section aria-labelledby="h-new" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 12px">
+<h2 id="h-new" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">New on vault.lan</h2>
+<span style="font-size: 12.5px; color: #A9B0B8">Not installed on this device yet</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 18px">
+<sc-for list="{{ fresh }}" as="item" hint-placeholder-count="5">
+<button class="lift" onClick="{{ item.open }}" style="all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; border-radius: 4px">
+<span aria-hidden="true" style="display: flex; align-items: flex-end; aspect-ratio: 5 / 7; border-radius: 4px; padding: 12px; background: {{ item.cover }}"><span style="font-weight: 800; font-stretch: 125%; text-transform: uppercase; font-size: 16px; line-height: 1.02; color: {{ item.ink }}; text-wrap: balance">{{ item.title }}</span></span>
+<span style="font-weight: 600; font-size: 13px">{{ item.title }}</span>
+<span style="font-size: 12px; color: #A9B0B8; margin-top: -6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.genres }}</span>
+</button>
+</sc-for>
+</div>
+</section>
+<section aria-labelledby="h-all" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<h2 id="h-all" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">All games · {{ allCount }}</h2>
+<div style="flex: 1 1 0"></div>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #A9B0B8">Sort
+<select value="{{ sort }}" onChange="{{ onSort }}" style="min-height: 32px; background: #16191D; border: 1px solid #262B31; border-radius: 6px; padding: 0 8px; color: #ECEEF0; font-size: 12.5px">
+<option value="added">Recently added</option>
+<option value="name">Name</option>
+<option value="played">Most played</option>
+<option value="size">Size on server</option>
+</select>
+</label>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 22px 18px">
+<sc-for list="{{ grid }}" as="item" hint-placeholder-count="12">
+<button class="lift" onClick="{{ item.open }}" style="all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; border-radius: 4px">
+<span aria-hidden="true" style="position: relative; display: flex; align-items: flex-end; aspect-ratio: 5 / 7; border-radius: 4px; padding: 12px; background: {{ item.cover }}">
+<span style="font-weight: 800; font-stretch: 125%; text-transform: uppercase; font-size: 16px; line-height: 1.02; color: {{ item.ink }}; text-wrap: balance">{{ item.title }}</span>
+<sc-if value="{{ item.installed }}" hint-placeholder-val="{{ true }}"><span style="position: absolute; top: 8px; left: 8px; width: 20px; height: 20px; border-radius: 4px; display: grid; place-items: center; background: rgba(11,12,14,.78); color: #ECEEF0"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></sc-if>
+<sc-if value="{{ item.queued }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(11,12,14,.7)"><span style="display: block; height: 4px; width: {{ item.b.fill }}%; background: {{ A }}"></span></span></sc-if>
+</span>
+<span style="font-weight: 600; font-size: 13px">{{ item.title }}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #A9B0B8; margin-top: -6px">{{ item.sideMeta }}</span>
+</button>
+</sc-for>
+</div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{ vGame }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="display: flex; flex-direction: column">
+<div style="position: relative; min-height: 340px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 20px 32px 28px; background: {{ g.cover }}">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,16,19,.15) 0%, rgba(14,16,19,.35) 45%, rgba(14,16,19,.96) 100%), linear-gradient(90deg, rgba(14,16,19,.7) 0%, rgba(14,16,19,0) 65%)"></div>
+<button class="hv" onClick="{{ goHome }}" style="position: relative; align-self: flex-start; display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px 0 8px; border: 0; border-radius: 6px; background: rgba(11,12,14,.55); font-size: 13px; font-weight: 600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>Library</button>
+<div style="position: relative; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; padding: 3px 7px; border-radius: 3px; background: #ECEEF0; color: #0B0C0E">{{ g.heroTag }}</span>
+</div>
+<h1 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: clamp(34px, 5vw, 60px); line-height: 0.98; text-transform: uppercase; letter-spacing: 0.01em; color: #FFFFFF; text-wrap: balance">{{ g.title }}</h1>
+<p style="margin: 0; font-size: 14px; color: #D5D9DE">{{ g.dev }} · {{ g.year }} · {{ g.genres }}</p>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 18px 32px; padding: 18px 32px; background: #111316; border-bottom: 1px solid #1D2126">
+<button class="pbtn" onClick="{{ g.act }}" disabled="{{ g.b.off }}" style="position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; min-height: 54px; min-width: 220px; padding: 0 24px; border: 0; border-radius: 6px; background: {{ g.b.bg }}; color: {{ g.b.ink }}; text-align: left">
+<span aria-hidden="true" style="position: absolute; left: 0; top: 0; bottom: 0; width: {{ g.b.fill }}%; background: {{ A }}; opacity: .3"></span>
+<sc-if value="{{ g.b.play }}" hint-placeholder-val="{{ true }}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><path d="M7 4.5v15l13-7.5z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{ g.b.install }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="position: relative"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"></path></svg></sc-if>
+<sc-if value="{{ g.b.stop }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><rect x="5" y="5" width="14" height="14" rx="1.5" fill="currentColor"></rect></svg></sc-if>
+<sc-if value="{{ g.b.pause }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"></rect><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"></rect></svg></sc-if>
+<sc-if value="{{ g.b.resume }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="position: relative"><path d="M7 4.5v15l13-7.5z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{ g.b.busy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="position: relative"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+<span style="position: relative; display: flex; flex-direction: column; gap: 1px">
+<span style="font-weight: 750; font-size: 16px; letter-spacing: 0.05em; text-transform: uppercase; font-stretch: 112%">{{ g.b.label }}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: .8">{{ g.b.sub }}</span>
+</span>
+</button>
+<dl style="margin: 0; display: flex; flex-wrap: wrap; gap: 12px 32px">
+<div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; color: #A9B0B8">LAST PLAYED</dt><dd style="margin: 0; font-weight: 600">{{ g.last }}</dd></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; color: #A9B0B8">PLAYTIME</dt><dd style="margin: 0; font-weight: 600">{{ g.hoursText }}</dd></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.12em; color: #A9B0B8">PROGRESS</dt><dd style="margin: 0; font-weight: 600">{{ g.prog }}</dd></div>
+</dl>
+<div style="flex: 1 1 0"></div>
+<div style="display: flex; align-items: center; gap: 10px; color: {{ g.sv.tone }}">
+<sc-if value="{{ g.sv.ok }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{ g.sv.cloud }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 9v9M8.5 14.5L12 18l3.5-3.5"></path><path d="M7 16.5A4.5 4.5 0 0 1 7.6 7.6a5.5 5.5 0 0 1 10.6 1.6A3.7 3.7 0 0 1 17.5 16.5"></path></svg></sc-if>
+<sc-if value="{{ g.sv.warn }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg></sc-if>
+<sc-if value="{{ g.sv.busy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+<sc-if value="{{ g.sv.none }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17.5A4.5 4.5 0 0 1 7.6 8.6a5.5 5.5 0 0 1 10.6 1.6A3.7 3.7 0 0 1 17.5 17.5z"></path></svg></sc-if>
+<span style="display: flex; flex-direction: column; gap: 1px">
+<span style="font-weight: 650; font-size: 13.5px">{{ g.sv.label }}</span>
+<span style="font-size: 12px; color: #A9B0B8">{{ g.sv.sub }}</span>
+</span>
+</div>
+<button class="hv" onClick="{{ g.markIt }}" aria-pressed="{{ g.mark }}" aria-label="Bookmark" style="width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #262B31; border-radius: 6px; background: #16191D; color: #ECEEF0"><svg width="18" height="18" viewBox="0 0 24 24" fill="{{ g.markFill }}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v16l-5-3.5L7 20z"></path></svg></button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 28px; padding: 28px 32px 48px; max-width: 1320px">
+<div style="flex: 999 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+<sc-if value="{{ g.queued }}" hint-placeholder-val="{{ false }}">
+<section aria-label="Install progress" style="display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; border: 1px solid #262B31; border-radius: 8px; background: #111316">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px"><h2 style="margin: 0; font-size: 15px; font-weight: 700">Installing to {{ folder0 }}</h2><button onClick="{{ goDl }}" style="all: unset; cursor: pointer; font-size: 13px; color: {{ A }}">Open downloads</button></div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 26px">
+<sc-for list="{{ g.steps }}" as="st" hint-placeholder-count="4"><li style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{ st.ink }}"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{ st.dot }}; display: block"></span>{{ st.label }}</li></sc-for>
+</ol>
+<div style="height: 6px; border-radius: 3px; background: #262B31; overflow: hidden"><div style="height: 6px; width: {{ g.b.fill }}%; background: {{ A }}"></div></div>
+</section>
+</sc-if>
+<section aria-labelledby="h-about" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-about" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">About</h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; max-width: 62ch; color: #D5D9DE; text-wrap: pretty">{{ g.blurb }}</p>
+<p style="margin: 0; font-size: 12.5px; color: #A9B0B8">Description, art and tags come from the server's metadata provider.</p>
+</section>
+</div>
+<aside style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<section aria-labelledby="h-det" style="border: 1px solid #262B31; border-radius: 8px; background: #111316; padding: 18px 20px">
+<h2 id="h-det" style="margin: 0 0 12px; font-size: 14px; font-weight: 700">Details</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px 18px; font-size: 13px">
+<dt style="color: #A9B0B8">Developer</dt><dd style="margin: 0">{{ g.dev }}</dd>
+<dt style="color: #A9B0B8">Released</dt><dd style="margin: 0">{{ g.year }}</dd>
+<dt style="color: #A9B0B8">Runs with</dt><dd style="margin: 0">{{ g.runner }}</dd>
+</dl>
+</section>
+<section aria-labelledby="h-ver" style="border: 1px solid #262B31; border-radius: 8px; background: #111316; padding: 18px 20px; display: flex; flex-direction: column">
+<h2 id="h-ver" style="margin: 0 0 10px; font-size: 14px; font-weight: 700">Versions on vault.lan</h2>
+<sc-for list="{{ g.verRows }}" as="v" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid #1D2126">
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 600">{{ v.label }}<sc-if value="{{ v.def }}" hint-placeholder-val="{{ false }}"><span style="font-weight: 500; color: #A9B0B8"> · default</span></sc-if></span>
+<span style="font-size: 12.5px; color: #A9B0B8">{{ v.kind }} · {{ v.size }}</span>
+</span>
+<sc-if value="{{ v.cur }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: {{ A }}">INSTALLED</span></sc-if>
+<sc-if value="{{ v.can }}" hint-placeholder-val="{{ true }}"><button class="hv" onClick="{{ v.act }}" style="min-height: 30px; padding: 0 12px; border: 1px solid #323840; border-radius: 5px; background: #16191D; font-weight: 600; font-size: 12px">{{ v.actLabel }}</button></sc-if>
+<sc-if value="{{ v.cant }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #7D858F; white-space: nowrap">Can't run on {{ P.name }}</span></sc-if>
+</div>
+</sc-for>
+</section>
+<section aria-labelledby="h-cs" style="border: 1px solid #262B31; border-radius: 8px; background: #111316; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between"><h2 id="h-cs" style="margin: 0; font-size: 14px; font-weight: 700">Cloud saves</h2><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9B0B8">{{ g.saves }} / 10 versions</span></div>
+<p style="margin: 0; font-size: 13px; color: {{ g.sv.tone }}">{{ g.sv.label }} <span style="color: #A9B0B8">· {{ g.sv.sub }}</span></p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<button class="hv" onClick="{{ g.syncNow }}" style="min-height: 36px; padding: 0 14px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600; font-size: 13px">Sync now</button>
+<button class="hv" onClick="{{ g.history }}" style="min-height: 36px; padding: 0 14px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600; font-size: 13px">Version history</button>
+</div>
+</section>
+<sc-if value="{{ g.installed }}" hint-placeholder-val="{{ true }}">
+<button class="hv" onClick="{{ g.uninstall }}" style="align-self: flex-start; min-height: 36px; padding: 0 14px; border: 0; border-radius: 6px; background: rgba(0,0,0,0); color: #FF8A7E; font-weight: 600; font-size: 13px">Uninstall…</button>
+</sc-if>
+</aside>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ vDl }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 28px; width: 100%; max-width: 1100px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px">
+<h1 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Downloads</h1>
+<div style="flex: 1 1 0"></div>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #A9B0B8">Bandwidth
+<select value="{{ limit }}" onChange="{{ onLimit }}" style="min-height: 36px; background: #16191D; border: 1px solid #262B31; border-radius: 6px; padding: 0 8px; color: #ECEEF0; font-size: 13px">
+<option value="0">Unlimited</option>
+<option value="50">50 MB/s</option>
+<option value="20">20 MB/s</option>
+</select>
+</label>
+<button class="hv" onClick="{{ pauseAll }}" disabled="{{ noActive }}" style="min-height: 36px; padding: 0 16px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600; font-size: 13px">{{ pauseAllLabel }}</button>
+</div>
+<sc-if value="{{ hasActive }}" hint-placeholder-val="{{ true }}">
+<section aria-label="Current download" style="display: flex; flex-wrap: wrap; gap: 24px; padding: 22px; border: 1px solid #262B31; border-radius: 10px; background: #111316">
+<span aria-hidden="true" style="flex: 0 0 auto; width: 128px; aspect-ratio: 5 / 7; border-radius: 4px; display: flex; align-items: flex-end; padding: 10px; background: {{ active.cover }}"><span style="font-weight: 800; font-stretch: 125%; text-transform: uppercase; font-size: 14px; line-height: 1.02; color: {{ active.ink }}">{{ active.title }}</span></span>
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 14px; justify-content: center">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: {{ A }}">{{ activePhase }}</span>
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+<h2 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 26px; text-transform: uppercase; line-height: 1">{{ active.title }}</h2>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 600">{{ activePct }}%</span>
+</div>
+<div role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ activePct }}" style="height: 8px; border-radius: 4px; background: #262B31; overflow: hidden"><div style="height: 8px; width: {{ activePctW }}%; background: {{ A }}; transition: width .45s linear"></div></div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 28px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A9B0B8">
+<span>{{ gotText }}</span><span>{{ speedText }}</span><span>{{ etaText }}</span>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 24px">
+<sc-for list="{{ active.steps }}" as="st" hint-placeholder-count="4"><li style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{ st.ink }}"><span aria-hidden="true" style="display: block; width: 9px; height: 9px; border-radius: 50%; background: {{ st.dot }}"></span>{{ st.label }}</li></sc-for>
+</ol>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<sc-if value="{{ activeIsDl }}" hint-placeholder-val="{{ true }}"><button class="hv" onClick="{{ active.act }}" style="min-height: 38px; padding: 0 16px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600; font-size: 13px">{{ active.b.sub }}</button></sc-if>
+<button class="hv" onClick="{{ active.open }}" style="min-height: 38px; padding: 0 16px; border: 0; border-radius: 6px; background: rgba(0,0,0,0); color: #A9B0B8; font-weight: 600; font-size: 13px">View game</button>
+</div>
+</div>
+</section>
+</sc-if>
+<sc-if value="{{ noActive }}" hint-placeholder-val="{{ false }}">
+<section style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 28px; border: 1px dashed #323840; border-radius: 10px">
+<p style="margin: 0; font-size: 15px; color: #A9B0B8">Nothing downloading. Installs from your library show up here.</p>
+<button class="pbtn" onClick="{{ goHome }}" style="min-height: 40px; padding: 0 18px; border: 0; border-radius: 6px; background: {{ A }}; color: #0B0C0E; font-weight: 700; font-size: 13px">Browse library</button>
+</section>
+</sc-if>
+<sc-if value="{{ hasQueue }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="h-q" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-q" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">Up next</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ queueRest }}" as="item" hint-placeholder-count="1">
+<li style="display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 8px; background: #111316">
+<span aria-hidden="true" style="display: block; width: 30px; height: 42px; border-radius: 3px; background: {{ item.cover }}"></span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">{{ item.title }}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9B0B8">{{ item.pctText }} · {{ item.sizeText }}</span></span>
+<button class="hv" onClick="{{ item.up }}" aria-label="Move up" style="width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 6px; background: rgba(0,0,0,0); color: #A9B0B8"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg></button>
+<button class="hv" onClick="{{ item.remove }}" aria-label="Remove from queue" style="width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 6px; background: rgba(0,0,0,0); color: #A9B0B8"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</li>
+</sc-for>
+</ul>
+</section>
+</sc-if>
+<section aria-labelledby="h-done" style="display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-done" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">Completed</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{ doneList }}" as="item" hint-placeholder-count="2">
+<li style="display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 8px; background: #111316">
+<span aria-hidden="true" style="display: block; width: 30px; height: 42px; border-radius: 3px; background: {{ item.cover }}"></span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600">{{ item.title }}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9B0B8">Installed · {{ item.when }} · {{ item.diskText }}</span></span>
+<button class="pbtn" onClick="{{ item.act }}" style="min-height: 34px; padding: 0 14px; border: 0; border-radius: 5px; background: {{ item.b.bg }}; color: {{ item.b.ink }}; font-weight: 750; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase">{{ item.b.label }}</button>
+</li>
+</sc-for>
+</ul>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{ vSaves }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 28px; width: 100%; max-width: 1240px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Saves</h1>
+<p style="margin: 0; color: #A9B0B8; max-width: 70ch">Ludusavi finds each game's save files. vault.lan keeps the last 10 versions per game, so a sync never overwrites anything for good.</p>
+</div>
+<ul aria-label="Devices" style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{ devices }}" as="d" hint-placeholder-count="3">
+<li style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid #262B31; border-radius: 8px; background: #111316">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A9B0B8" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"></rect><path d="M9 20h6"></path></svg>
+<span style="display: flex; flex-direction: column; min-width: 0"><span style="font-weight: 650">{{ d.name }}</span><span style="font-size: 12px; color: #A9B0B8">{{ d.kind }}</span></span>
+<span style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: {{ d.ink }}; white-space: nowrap">{{ d.seen }}</span>
+</li>
+</sc-for>
+</ul>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section aria-labelledby="h-games" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+<h2 id="h-games" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: #A9B0B8">Games with saves</h2>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{ savesRows }}" as="item" hint-placeholder-count="8">
+<li class="hv" style="display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border-radius: 8px; background: {{ item.histBg }}">
+<button onClick="{{ item.pickHist }}" aria-pressed="{{ item.histSel }}" style="all: unset; cursor: pointer; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 30px; height: 42px; border-radius: 3px; background: {{ item.cover }}"></span>
+<span style="min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<span style="font-weight: 600">{{ item.title }}</span>
+<span style="font-size: 12.5px; color: {{ item.sv.tone }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.sv.label }} <span style="color: #A9B0B8">· {{ item.sv.sub }}</span></span>
+</span>
+</button>
+<sc-if value="{{ item.warn }}" hint-placeholder-val="{{ false }}"><button class="pbtn" onClick="{{ item.syncNow }}" style="flex: 0 0 auto; min-height: 34px; padding: 0 14px; border: 0; border-radius: 5px; background: #FFB648; color: #0B0C0E; font-weight: 700; font-size: 12.5px">Resolve</button></sc-if>
+<sc-if value="{{ item.sv.cloud }}" hint-placeholder-val="{{ false }}"><button class="hv" onClick="{{ item.syncNow }}" style="flex: 0 0 auto; min-height: 34px; padding: 0 14px; border: 1px solid #323840; border-radius: 5px; background: #16191D; font-weight: 600; font-size: 12.5px">Pull</button></sc-if>
+</li>
+</sc-for>
+</ul>
+</section>
+<section aria-labelledby="h-hist" style="flex: 1 1 340px; min-width: 0; border: 1px solid #262B31; border-radius: 10px; background: #111316; padding: 18px 18px 10px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 34px; height: 48px; border-radius: 3px; background: {{ hg.cover }}"></span>
+<div style="display: flex; flex-direction: column"><h2 id="h-hist" style="margin: 0; font-size: 15px; font-weight: 700">{{ hg.title }}</h2><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #A9B0B8">{{ histCount }} of 10 versions on server</span></div>
+</div>
+<sc-if value="{{ histEmpty }}" hint-placeholder-val="{{ false }}"><p style="margin: 0 0 10px; font-size: 13px; color: #A9B0B8">No versions yet. The first upload happens after you play.</p></sc-if>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{ hist }}" as="h" hint-placeholder-count="6">
+<li style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #1D2126">
+<span style="flex: 0 0 34px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600">{{ h.v }}</span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column"><span style="font-size: 13px">{{ h.when }}</span><span style="font-size: 12px; color: #A9B0B8">{{ h.dev }} · {{ h.size }}</span></span>
+<sc-if value="{{ h.cur }}" hint-placeholder-val="{{ false }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; color: {{ A }}">CURRENT</span></sc-if>
+<sc-if value="{{ h.old }}" hint-placeholder-val="{{ true }}"><button class="hv" onClick="{{ h.restore }}" style="min-height: 32px; padding: 0 12px; border: 1px solid #323840; border-radius: 5px; background: #16191D; font-weight: 600; font-size: 12px">Restore</button></sc-if>
+</li>
+</sc-for>
+</ol>
+</section>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ vSet }}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 1100px">
+<h1 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 28px; text-transform: uppercase; letter-spacing: 0.02em">Settings</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+<nav aria-label="Settings sections" style="flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{ setTabs }}" as="tb" hint-placeholder-count="6">
+<button class="hv" onClick="{{ tb.go }}" aria-pressed="{{ tb.on }}" style="text-align: left; min-height: 38px; padding: 0 12px; border: 0; border-radius: 6px; background: {{ tb.bg }}; color: {{ tb.ink }}; font-weight: 600; font-size: 13.5px; box-shadow: inset 2px 0 0 {{ tb.bar }}">{{ tb.label }}</button>
+</sc-for>
+</nav>
+<div style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column">
+<sc-if value="{{ st.library }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0 0 12px; color: #A9B0B8">Where installed games live on this {{ P.name }} device.</p>
+<sc-for list="{{ instFolders }}" as="f" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A9B0B8" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6l2 2h9v10h-17z"></path></svg>
+<span style="flex: 1 1 auto; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; overflow-wrap: anywhere">{{ f.path }}</span>
+<span style="font-size: 12.5px; color: #A9B0B8; white-space: nowrap">{{ f.free }}</span>
+</div>
+</sc-for>
+<button class="hv" style="align-self: flex-start; margin-top: 14px; min-height: 36px; padding: 0 14px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600; font-size: 13px">Add folder…</button>
+</sc-if>
+<sc-if value="{{ st.downloads }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<label for="bw" style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Bandwidth limit</span><span style="font-size: 12.5px; color: #A9B0B8">Applies to downloads from vault.lan.</span></label>
+<select id="bw" value="{{ limit }}" onChange="{{ onLimit }}" style="min-height: 36px; background: #16191D; border: 1px solid #262B31; border-radius: 6px; padding: 0 8px; color: #ECEEF0"><option value="0">Unlimited</option><option value="50">50 MB/s</option><option value="20">20 MB/s</option></select>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Verify files after download</span><span style="font-size: 12.5px; color: #A9B0B8">Checks the archive before extracting.</span></span>
+<button role="switch" aria-checked="{{ t.verify.on }}" aria-label="Verify files after download" onClick="{{ t.verify.flip }}" style="flex: 0 0 auto; width: 44px; height: 26px; border-radius: 13px; border: 0; padding: 0; position: relative; background: {{ t.verify.bg }}"><span aria-hidden="true" style="position: absolute; top: 3px; left: {{ t.verify.x }}; width: 20px; height: 20px; border-radius: 50%; background: {{ t.verify.knob }}; transition: left .15s"></span></button>
+</div>
+</sc-if>
+<sc-if value="{{ st.compat }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ isWin }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 14px 0; border-bottom: 1px solid #1D2126">Windows builds run natively. Linux-only builds are shown but can't be installed here.</p></sc-if>
+<sc-if value="{{ notWin }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<label for="rn" style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Default runner for Windows games</span><span style="font-size: 12.5px; color: #A9B0B8">Each game can override this in its properties.</span></label>
+<select id="rn" style="min-height: 36px; background: #16191D; border: 1px solid #262B31; border-radius: 6px; padding: 0 8px; color: #ECEEF0">
+<sc-for list="{{ runners }}" as="r" hint-placeholder-count="3"><option>{{ r }}</option></sc-for>
+</select>
+</div>
+<p style="margin: 14px 0 0; font-size: 13px; color: #A9B0B8">Saves inside the runner's prefix are mapped to the same Ludusavi entry as on Windows, so they sync across devices.</p>
+</sc-if>
+</sc-if>
+<sc-if value="{{ st.saves }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ saveToggles }}" as="o" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">{{ o.label }}</span><span style="font-size: 12.5px; color: #A9B0B8">{{ o.help }}</span></span>
+<button role="switch" aria-checked="{{ o.on }}" aria-label="{{ o.label }}" onClick="{{ o.flip }}" style="flex: 0 0 auto; width: 44px; height: 26px; border-radius: 13px; border: 0; padding: 0; position: relative; background: {{ o.bg }}"><span aria-hidden="true" style="position: absolute; top: 3px; left: {{ o.x }}; width: 20px; height: 20px; border-radius: 50%; background: {{ o.knob }}; transition: left .15s"></span></button>
+</div>
+</sc-for>
+<p style="margin: 14px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8; line-height: 1.7">Server: SAVEFILES_ENABLED=true · SAVEFILES_MAX_SAVES=10 · SAVEFILES_MAX_SIZE=1 GB</p>
+</sc-if>
+<sc-if value="{{ st.steam }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Add installed games to Steam</span><span style="font-size: 12.5px; color: #A9B0B8; max-width: 56ch">Creates non-Steam shortcuts with cover and hero art, so games launch from Gaming Mode. Stault wraps each launch to pull saves before and upload after.</span></span>
+<button role="switch" aria-checked="{{ t.steam.on }}" aria-label="Add installed games to Steam" onClick="{{ t.steam.flip }}" style="flex: 0 0 auto; width: 44px; height: 26px; border-radius: 13px; border: 0; padding: 0; position: relative; background: {{ t.steam.bg }}"><span aria-hidden="true" style="position: absolute; top: 3px; left: {{ t.steam.x }}; width: 20px; height: 20px; border-radius: 50%; background: {{ t.steam.knob }}; transition: left .15s"></span></button>
+</div>
+<p style="margin: 14px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8">Launch option written to each shortcut: stault run &lt;game-id&gt;</p>
+</sc-if>
+<sc-if value="{{ st.iface }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 0; border-bottom: 1px solid #1D2126">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Start in Big Picture Mode</span><span style="font-size: 12.5px; color: #A9B0B8">Controller-first layout for Steam Deck and TVs. On by default in SteamOS Gaming Mode.</span></span>
+<button role="switch" aria-checked="{{ t.bigpic.on }}" aria-label="Start in Big Picture Mode" onClick="{{ t.bigpic.flip }}" style="flex: 0 0 auto; width: 44px; height: 26px; border-radius: 13px; border: 0; padding: 0; position: relative; background: {{ t.bigpic.bg }}"><span aria-hidden="true" style="position: absolute; top: 3px; left: {{ t.bigpic.x }}; width: 20px; height: 20px; border-radius: 50%; background: {{ t.bigpic.knob }}; transition: left .15s"></span></button>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+</main>
+</div>
+<footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 2px 16px; min-height: 34px; padding: 0 10px; background: #0B0C0E; border-top: 1px solid #1D2126; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8">
+<button class="hv" onClick="{{ goDl }}" style="display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 8px; border: 0; border-radius: 4px; background: rgba(0,0,0,0); color: #A9B0B8; font-family: 'JetBrains Mono', monospace; font-size: 11.5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ dlTone }}" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"></path></svg>{{ dlSummary }}</button>
+<div style="flex: 1 1 0"></div>
+<button class="hv" onClick="{{ goSaves }}" style="display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 8px; border: 0; border-radius: 4px; background: rgba(0,0,0,0); color: {{ syncTone }}; font-family: 'JetBrains Mono', monospace; font-size: 11.5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"></path></svg>{{ syncSummary }}</button>
+<span style="padding: 0 8px">{{ P.name }} · {{ P.device }}</span>
+</footer>
+<sc-if value="{{ showInstall }}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; background: rgba(5,6,7,.72)">
+<section role="dialog" aria-modal="true" aria-labelledby="d-inst" class="rise" style="width: 100%; max-width: 560px; max-height: calc(100vh - 48px); border: 1px solid #323840; border-radius: 12px; background: #16191D; overflow: auto; box-shadow: 0 30px 80px rgba(0,0,0,.6)">
+<div style="display: flex; align-items: center; gap: 16px; padding: 20px; background: #111316; border-bottom: 1px solid #262B31">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 52px; height: 73px; border-radius: 4px; background: {{ dg.cover }}"></span>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: {{ A }}">{{ instTitle }}</span>
+<h2 id="d-inst" style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 22px; text-transform: uppercase; line-height: 1">{{ dg.title }}</h2>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8">{{ instV.desc }}</span>
+</div>
+</div>
+<div style="padding: 20px; display: flex; flex-direction: column; gap: 18px">
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="font-weight: 650; margin-bottom: 8px; padding: 0">Version</legend>
+<sc-for list="{{ instVers }}" as="v" hint-placeholder-count="2">
+<button onClick="{{ v.pick }}" aria-pressed="{{ v.on }}" disabled="{{ v.cant }}" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 14px; border: 1px solid {{ v.ring }}; border-radius: 8px; background: #111316; text-align: left; opacity: {{ v.op }}">
+<span aria-hidden="true" style="flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{ v.ring }}; display: grid; place-items: center"><span style="display: block; width: 6px; height: 6px; border-radius: 50%; background: {{ v.dotc }}"></span></span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 650">{{ v.label }}</span><span style="font-size: 12.5px; color: #A9B0B8">{{ v.kind }}</span></span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A9B0B8; white-space: nowrap">{{ v.note }}</span>
+</button>
+</sc-for>
+</fieldset>
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px">
+<legend style="font-weight: 650; margin-bottom: 8px; padding: 0">Install location</legend>
+<sc-for list="{{ instFolders }}" as="f" hint-placeholder-count="2">
+<button onClick="{{ f.pick }}" aria-pressed="{{ f.on }}" style="display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border: 1px solid {{ f.ring }}; border-radius: 8px; background: #111316; text-align: left">
+<span aria-hidden="true" style="flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid {{ f.ring }}; display: grid; place-items: center"><span style="display: block; width: 6px; height: 6px; border-radius: 50%; background: {{ f.dotc }}"></span></span>
+<span style="flex: 1 1 auto; min-width: 0; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; overflow-wrap: anywhere">{{ f.path }}</span>
+<span style="font-size: 12px; color: #A9B0B8; white-space: nowrap">{{ f.free }}</span>
+</button>
+</sc-for>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; gap: 8px 24px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #A9B0B8"><span>Download {{ instV.size }}</span><span>On disk ≈ {{ instV.disk }}</span></div>
+<sc-if value="{{ dg.sv.cloud }}" hint-placeholder-val="{{ true }}">
+<label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer"><input type="checkbox" checked="{{ instRestore }}" onChange="{{ flipRestore }}" style="accent-color: #C5F04A; width: 18px; height: 18px; margin: 1px 0 0"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Restore latest cloud save (v{{ dg.saves }})</span><span style="font-size: 12.5px; color: #A9B0B8">{{ dg.sv.sub }}</span></span></label>
+</sc-if>
+<label style="display: flex; align-items: center; gap: 10px; cursor: pointer"><input type="checkbox" checked="{{ instShortcut }}" onChange="{{ flipShortcut }}" style="accent-color: #C5F04A; width: 18px; height: 18px; margin: 0"><span style="font-weight: 600">{{ P.shortcut }}</span></label>
+<sc-if value="{{ instV.setup }}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 12px 14px; border-radius: 8px; background: #111316; font-size: 13px; color: #C9CED4">This build ships an installer. After extracting, Stault runs setup.exe and waits for it to finish before marking the game ready.</p>
+</sc-if>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; border-top: 1px solid #262B31">
+<button class="hv" onClick="{{ closeDialog }}" style="min-height: 42px; padding: 0 18px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600">Cancel</button>
+<button class="pbtn" onClick="{{ confirmInstall }}" style="min-height: 42px; padding: 0 22px; border: 0; border-radius: 6px; background: {{ A }}; color: #0B0C0E; font-weight: 750; letter-spacing: 0.04em; text-transform: uppercase">{{ instCta }}</button>
+</div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{ showConflict }}" hint-placeholder-val="{{ false }}">
+<div style="position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; background: rgba(5,6,7,.72)">
+<section role="dialog" aria-modal="true" aria-labelledby="d-conf" class="rise" style="width: 100%; max-width: 720px; border: 1px solid #323840; border-radius: 12px; background: #16191D; box-shadow: 0 30px 80px rgba(0,0,0,.6); padding: 24px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; gap: 14px; align-items: flex-start">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFB648" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto; margin-top: 2px"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 id="d-conf" style="margin: 0; font-size: 20px; font-weight: 750">Which save should {{ dg.title }} use?</h2>
+<p style="margin: 0; color: #A9B0B8">Both copies changed since the last sync. The one you don't pick stays on the server as a version you can restore.</p>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px">
+<button class="hv" onClick="{{ pickLocal }}" style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid #323840; border-radius: 10px; background: #111316; text-align: left">
+<span style="display: flex; justify-content: space-between; gap: 10px; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #A9B0B8">THIS DEVICE</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 3px; background: {{ A }}; color: #0B0C0E">NEWER</span></span>
+<span style="font-size: 18px; font-weight: 700">{{ P.device }}</span>
+<span style="font-size: 13px; color: #C9CED4">Saved today, 08:14</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8">2.4 MB · 12.2 h played</span>
+<span style="margin-top: 6px; font-weight: 700; color: {{ A }}">Keep this save →</span>
+</button>
+<button class="hv" onClick="{{ pickCloud }}" style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid #323840; border-radius: 10px; background: #111316; text-align: left">
+<span style="display: flex; justify-content: space-between; gap: 10px; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: #A9B0B8">ON VAULT.LAN</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; padding: 2px 6px; border-radius: 3px; border: 1px solid #A9B0B8; color: #ECEEF0">MORE ITEMS</span></span>
+<span style="font-size: 18px; font-weight: 700">{{ P.other }}</span>
+<span style="font-size: 13px; color: #C9CED4">Saved yesterday, 23:52</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #A9B0B8">2.6 MB · 11.6 h played</span>
+<span style="margin-top: 6px; font-weight: 700; color: {{ A }}">Use this save →</span>
+</button>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<span style="font-size: 12.5px; color: #A9B0B8">Compared by file time and playtime. File diffs aren't available for binary saves.</span>
+<button class="hv" onClick="{{ closeDialog }}" style="min-height: 40px; padding: 0 18px; border: 1px solid #323840; border-radius: 6px; background: #16191D; font-weight: 600">Decide later</button>
+</div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-live="polite" class="rise" style="position: fixed; right: 20px; bottom: 52px; z-index: 60; max-width: 380px; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border: 1px solid #323840; border-radius: 10px; background: #1D2126; box-shadow: 0 18px 40px rgba(0,0,0,.5)">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: {{ A }}"></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 650; font-size: 13.5px">{{ toast.text }}</span><span style="font-size: 12.5px; color: #A9B0B8">{{ toast.sub }}</span></span>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"platform":{"editor":"enum","options":["macos","windows","steamos"],"default":"macos","section":"Prototype"},"accent":{"editor":"color","options":["#C5F04A","#5BE7C4","#FFB648","#8AB4FF"],"default":"#C5F04A","section":"Prototype"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      view: 'home', gameId: 'saltmarsh', filter: 'all', query: '', sort: 'added',
+      games: this.seed(),
+      queue: [{ id: 'ironwood', pct: 46, phase: 'download', paused: false }],
+      done: [{ id: 'glasswing', when: 'Today, 09:12' }, { id: 'cartographer', when: 'Yesterday, 22:40' }],
+      running: null, syncing: null, dialog: null, toast: null, limit: '0',
+      setTab: 'saves', savesSel: 'saltmarsh',
+      opt: { autoUp: true, pull: true, notify: true, steam: true, bigpic: false, verify: true, offline: true },
+      inst: { restore: true, shortcut: true, folder: 0 }
+    };
+  }
+
+  seed() {
+    const G = (id, title, dev, year, genres, type, size, ver, installed, hours, last, prog, save, saves, when, from, added, cover, ink, blurb) =>
+      ({ id, title, dev, year, genres, type, size, ver, installed, hours, last, prog, save, saves, when, from, added, cover, ink, blurb, mark: false });
+    const list = [
+      G('saltmarsh', 'Saltmarsh', 'Low Tide Co.', 2024, 'Adventure · Exploration', 'WINDOWS_PORTABLE', 3.2, '1.4.2', true, 41.5, 'Yesterday', 'Playing', 'cloud', 9, '2 h ago', 'other', 1,
+        'radial-gradient(circle at 72% 30%, #ffd27a 0 9%, rgba(255,210,122,0) 9.5%), linear-gradient(180deg, #17324a 0%, #2f5e6b 50%, #c8955a 50.5%, #6e4b2a 100%)', '#FFF4E0',
+        'Sail a flooded coastline in a hand-built skiff, mapping tide pools and trading with the stilt towns that survived the rising water.'),
+      G('hollow', 'Hollow Signal', 'Kestrel Works', 2023, 'Horror · Puzzle', 'WINDOWS_SETUP', 11.8, '2.0.1', true, 12.2, '3 days ago', 'Playing', 'conflict', 6, 'Today 08:14', 'other', 4,
+        'repeating-radial-gradient(circle at 50% 115%, rgba(255,92,70,.85) 0 2px, rgba(0,0,0,0) 2.5px 16px), linear-gradient(180deg, #0d0a17 0%, #2a1238 100%)', '#FFD9D2',
+        'A numbers station keeps broadcasting from an island that sank in 1962. Tune, decode and survive the night shift alone.'),
+      G('orbital', 'Orbital Gardens', 'Paperplane Labs', 2025, 'Simulation · Building', 'WINDOWS_PORTABLE', 1.1, '0.9.7', true, 87.0, 'Last week', 'Playing', 'synced', 10, 'Last week', 'self', 2,
+        'radial-gradient(circle at 50% 58%, #9be38c 0 18%, rgba(0,0,0,0) 18.5%), radial-gradient(circle at 50% 58%, rgba(0,0,0,0) 0 27%, rgba(155,227,140,.35) 27.5% 28.5%, rgba(0,0,0,0) 29%), linear-gradient(160deg, #0f2a2a 0%, #174241 100%)', '#E8FFE0',
+        'Grow a greenhouse ring around a dying moon. Balance light, water and a crew that keeps naming the tomatoes.'),
+      G('northbound', 'Northbound', 'Fieldnote Games', 2021, 'Strategy · Survival', 'WINDOWS_SETUP', 24.6, '1.12', false, 19.0, 'March', 'Paused', 'cloud', 4, 'March 3', 'other', 6,
+        'linear-gradient(170deg, #e9eef2 0%, #c8d3dc 55%, #5d7487 55.5%, #2c3e50 100%)', '#12202C',
+        'Lead a caravan across a frozen continent. Every mile costs fuel, food or a friend.'),
+      G('ember', 'Ember Protocol', 'Redline Studio', 2022, 'Action · Roguelite', 'WINDOWS_PORTABLE', 2.4, '1.0.6', false, 0, 'Never', 'Unplayed', 'none', 0, '', 'self', 3,
+        'linear-gradient(135deg, rgba(0,0,0,0) 0 46%, #ff7a2f 46% 54%, rgba(0,0,0,0) 54%), linear-gradient(180deg, #1a0f0a 0%, #3b1608 100%)', '#FFE7D6',
+        'Breach a burning arcology floor by floor. Runs are short, upgrades are permanent, the fire is not.'),
+      G('glasswing', 'Glasswing', 'Moth & Lamp', 2024, 'Platformer', 'WINDOWS_PORTABLE', 0.9, '1.2.0', true, 14.3, 'Today', 'Completed', 'synced', 5, 'Today 09:40', 'self', 5,
+        'conic-gradient(from 200deg at 50% 60%, #7fd6ff, #c3a6ff, #ffb3d9, #7fd6ff)', '#1B1430',
+        'A precision platformer about a moth that refuses to fly toward the light.'),
+      G('ironwood', 'Ironwood Keep', 'Old Oak Interactive', 2020, 'RPG', 'WINDOWS_SETUP', 38.2, '3.1.4', false, 0, 'Never', 'Unplayed', 'none', 0, '', 'self', 7,
+        'radial-gradient(circle at 30% 25%, rgba(214,196,120,.5) 0 10%, rgba(0,0,0,0) 30%), linear-gradient(180deg, #1c2418 0%, #2e3b23 60%, #121710 100%)', '#EFE6C4',
+        'A slow, systemic fantasy RPG set inside one enormous castle and the forest growing through it.'),
+      G('lowdiner', 'Low Orbit Diner', 'Night Owl Co-op', 2024, 'Management · Cozy', 'LINUX_PORTABLE', 0.7, '1.1.0', false, 0, 'Never', 'Unplayed', 'none', 0, '', 'self', 8,
+        'radial-gradient(circle at 70% 25%, #fff 0 1.5%, rgba(0,0,0,0) 2%), radial-gradient(circle at 25% 55%, #fff 0 1%, rgba(0,0,0,0) 1.5%), linear-gradient(180deg, #0b1d3a 0%, #1f4e8c 60%, #ff8fa3 100%)', '#FFFFFF',
+        'Flip pancakes for astronauts on a station that is very slowly falling. Native Linux build.'),
+      G('cartographer', 'Cartographer', 'Inkwell', 2022, 'Puzzle', 'WINDOWS_PORTABLE', 0.4, '1.0.3', true, 6.1, 'Yesterday', 'Playing', 'unknown', 0, '', 'self', 9,
+        'repeating-linear-gradient(0deg, rgba(60,40,20,.18) 0 1px, rgba(0,0,0,0) 1px 18px), repeating-linear-gradient(90deg, rgba(60,40,20,.18) 0 1px, rgba(0,0,0,0) 1px 18px), linear-gradient(180deg, #efe2c6 0%, #d9c39a 100%)', '#3A2614',
+        'Redraw the map and the world follows. Fold, cut and rotate the paper to open new paths.'),
+      G('staticbloom', 'Static Bloom', 'Halfstep', 2025, 'Rhythm · Early access', 'WINDOWS_PORTABLE', 1.6, '0.4.0', false, 0, 'Never', 'Unplayed', 'none', 0, '', 'self', 0,
+        'repeating-linear-gradient(180deg, rgba(255,79,163,.9) 0 3px, rgba(0,0,0,0) 3px 11px), linear-gradient(180deg, #24125a 0%, #4b1a6e 100%)', '#FFE3F1',
+        'A rhythm game played on a broken TV. Find the beat between the channels.'),
+      G('kiln', 'Kiln', 'Clayworks', 2023, 'Crafting · Survival', 'WINDOWS_PORTABLE', 5.3, '1.6.0', false, 33.0, 'January', 'Paused', 'cloud', 7, 'Jan 12', 'other', 10,
+        'radial-gradient(ellipse at 50% 100%, #ff9a3c 0 30%, rgba(0,0,0,0) 60%), linear-gradient(180deg, #2b1d16 0%, #4a2a18 100%)', '#FFE9D0',
+        'Fire pottery, trade it downriver, keep the kiln burning through winter.'),
+      G('lanterns', 'Paper Lanterns', 'Two Rivers', 2019, 'Narrative', 'WINDOWS_PORTABLE', 1.9, '1.0.0', true, 9.4, 'Last month', 'Completed', 'synced', 3, 'Oct 30', 'self', 11,
+        'radial-gradient(circle at 30% 40%, #ffcf6e 0 6%, rgba(255,207,110,.25) 6.5% 14%, rgba(0,0,0,0) 14.5%), radial-gradient(circle at 68% 62%, #ffcf6e 0 5%, rgba(255,207,110,.22) 5.5% 12%, rgba(0,0,0,0) 12.5%), linear-gradient(180deg, #14122b 0%, #2b2147 100%)', '#FFF1D6',
+        'One night, one river festival, and the letters your grandmother never sent.')
+    ];
+    const W = (v, kind, size, ea) => ({ v, os: 'Windows', kind, size, ea: !!ea });
+    const Lx = (v, size) => ({ v, os: 'Linux', kind: 'Portable', size, ea: false });
+    const V = {
+      saltmarsh: [W('1.4.2', 'Portable', 3.2), Lx('1.4.2', 3.0)],
+      hollow: [W('2.0.1', 'Setup', 11.8)],
+      orbital: [W('0.9.7', 'Portable', 1.1, true), W('0.9.5', 'Portable', 1.0, true)],
+      northbound: [W('1.12', 'Setup', 24.6), W('1.12', 'Portable', 22.9), W('1.0', 'Setup', 18.1)],
+      ember: [W('1.0.6', 'Portable', 2.4)],
+      glasswing: [W('1.2.0', 'Portable', 0.9), Lx('1.2.0', 0.8)],
+      ironwood: [W('3.1.4', 'Setup', 38.2), W('3.0.0', 'Setup', 36.9)],
+      lowdiner: [Lx('1.1.0', 0.7)],
+      cartographer: [W('1.0.3', 'Portable', 0.4)],
+      staticbloom: [W('0.4.0', 'Portable', 1.6, true)],
+      kiln: [W('1.6.0', 'Portable', 5.3), Lx('1.6.0', 5.1)],
+      lanterns: [W('1.0.0', 'Portable', 1.9)]
+    };
+    return list.map(g => Object.assign(g, { versions: V[g.id], vi: 0 }));
+  }
+
+  componentDidMount() { this.timer = setInterval(() => this.tick(), 500); }
+  componentWillUnmount() { clearInterval(this.timer); clearTimeout(this.toastTimer); }
+
+  plat() {
+    const p = this.props.platform || 'macos';
+    if (p === 'windows') return { key: p, name: 'Windows', device: 'Desktop PC', other: 'Steam Deck', runner: 'Native', folders: ['D:\\Games\\Stault', 'C:\\Users\\sam\\Games'], free: [612, 88], kbd: 'Ctrl K', shortcut: 'Create desktop shortcut' };
+    if (p === 'steamos') return { key: p, name: 'SteamOS', device: 'Steam Deck', other: 'Desktop PC', runner: 'Proton 10', folders: ['/home/deck/Games', 'microSD · /run/media/deck/sd'], free: [142, 390], kbd: 'Ctrl K', shortcut: 'Add to Steam library' };
+    return { key: 'macos', name: 'macOS', device: 'MacBook Pro', other: 'Steam Deck', runner: 'Wine 10 (bundled)', folders: ['~/Games/Stault', '/Volumes/Archive/Games'], free: [318, 1460], kbd: '⌘K', shortcut: 'Add to Applications' };
+  }
+
+  acc() { return this.props.accent || '#C5F04A'; }
+
+  upd(id, patch) { return this.state.games.map(g => (g.id === id ? Object.assign({}, g, patch) : g)); }
+  find(id) { return this.state.games.find(g => g.id === id); }
+  compat(v) { return v.os === 'Windows' || this.plat().key === 'steamos'; }
+  typeOf(v) { return v.os === 'Linux' ? 'LINUX_PORTABLE' : v.kind === 'Setup' ? 'WINDOWS_SETUP' : 'WINDOWS_PORTABLE'; }
+  pickVersion(id, vi) {
+    const g = this.find(id);
+    this.setState({ dialog: { type: 'install', id }, inst: { restore: g.save === 'cloud' && !g.installed, shortcut: true, folder: 0, vi } });
+  }
+
+  toast(text, sub) {
+    clearTimeout(this.toastTimer);
+    this.setState({ toast: { text, sub: sub || '' } });
+    this.toastTimer = setTimeout(() => this.setState({ toast: null }), 4200);
+  }
+
+  tick() {
+    const s = this.state, ch = {};
+    const qi = s.queue.findIndex(d => !d.paused);
+    if (qi > -1) {
+      const q = s.queue.slice(), d = Object.assign({}, q[qi]), g = this.find(d.id);
+      const rate = s.limit === '20' ? 0.9 : s.limit === '50' ? 1.7 : 2.6;
+      if (d.phase === 'download') { d.pct += rate; if (d.pct >= 100) { d.pct = 0; d.phase = 'extract'; } }
+      else if (d.phase === 'extract') { d.pct += 11; if (d.pct >= 100) { d.pct = 0; d.phase = g.type === 'WINDOWS_SETUP' ? 'setup' : 'ready'; } }
+      else if (d.phase === 'setup') { d.pct += 9; if (d.pct >= 100) d.phase = 'ready'; }
+      if (d.phase === 'ready') {
+        q.splice(qi, 1);
+        ch.queue = q;
+        ch.done = [{ id: d.id, when: 'Just now' }].concat(s.done);
+        const restored = g.save === 'cloud' && s.inst.restore;
+        ch.games = this.upd(d.id, restored ? { installed: true, save: 'synced' } : { installed: true });
+        setTimeout(() => this.toast(g.title + ' is ready to play', restored ? 'Restored save v' + g.saves + ' from the server' : 'Installed to ' + this.plat().folders[0]), 0);
+      } else { q[qi] = d; ch.queue = q; }
+    }
+    if (s.running) ch.running = { id: s.running.id, min: s.running.min + 1 };
+    if (s.syncing) {
+      const t = s.syncing.t + 1;
+      if (t >= 4) {
+        const g = this.find(s.syncing.id), n = Math.min(10, g.saves + 1);
+        ch.games = (ch.games || s.games).map(x => (x.id === g.id ? Object.assign({}, x, { save: 'synced', saves: n, when: 'Just now', from: 'self' }) : x));
+        ch.syncing = null;
+        setTimeout(() => this.toast('Save uploaded · ' + g.title, 'Version ' + n + ' of 10 kept on vault.lan'), 0);
+      } else ch.syncing = { id: s.syncing.id, t };
+    }
+    if (Object.keys(ch).length) this.setState(ch);
+  }
+
+  launch(id) {
+    const g = this.find(id);
+    this.setState({ running: { id, min: 0 }, dialog: null });
+    if (g.save === 'cloud' && this.state.opt.pull) {
+      this.setState({ games: this.upd(id, { save: 'synced' }) });
+      this.toast('Pulled newer save from ' + this.plat().other, 'Version ' + g.saves + ' · ' + g.when + ' · launching ' + g.title);
+    } else this.toast('Launching ' + g.title, g.type === 'LINUX_PORTABLE' || this.plat().key === 'windows' ? 'Playtime is tracked on the server' : 'Via ' + this.plat().runner);
+  }
+
+  primary(id) {
+    const s = this.state, g = this.find(id), P = this.plat();
+    if (s.running && s.running.id === id) {
+      const hrs = Math.round((g.hours + s.running.min / 60) * 10) / 10;
+      this.setState({ running: null, games: this.upd(id, { hours: hrs, last: 'Just now', prog: g.prog === 'Unplayed' ? 'Playing' : g.prog }), syncing: s.opt.autoUp && g.save !== 'unknown' ? { id, t: 0 } : null });
+      return;
+    }
+    if (s.syncing && s.syncing.id === id) return;
+    const q = s.queue.find(d => d.id === id);
+    if (q) { this.setState({ queue: s.queue.map(d => (d.id === id ? Object.assign({}, d, { paused: !d.paused }) : d)) }); return; }
+    if (!g.installed) {
+      const vi = g.versions.findIndex(v => this.compat(v));
+      if (vi < 0) return;
+      this.setState({ dialog: { type: 'install', id }, inst: { restore: g.save === 'cloud', shortcut: true, folder: 0, vi } });
+      return;
+    }
+    if (s.running) { this.toast('One game at a time', 'Stop ' + this.find(s.running.id).title + ' first'); return; }
+    if (g.save === 'conflict') { this.setState({ dialog: { type: 'conflict', id } }); return; }
+    this.launch(id);
+  }
+
+  resolve(choice) {
+    const s = this.state, id = s.dialog.id, g = this.find(id), P = this.plat();
+    const games = this.upd(id, { save: 'synced', saves: Math.min(10, g.saves + 1), when: 'Just now', from: choice === 'local' ? 'self' : 'other' });
+    this.setState({ games, dialog: null });
+    this.toast(choice === 'local' ? 'Kept the save from this ' + (P.key === 'steamos' ? 'Deck' : 'device') : 'Using the save from ' + P.other, 'The other copy is kept as version ' + Math.min(10, g.saves + 1) + ' in history');
+    setTimeout(() => this.launch(id), 900);
+  }
+
+  confirmInstall() {
+    const s = this.state, id = s.dialog.id, g = this.find(id);
+    const vi = s.inst.vi || 0, v = g.versions[vi] || g.versions[0];
+    const wasEmpty = s.queue.filter(d => !d.paused).length === 0;
+    const games = this.upd(id, { vi, ver: v.v, size: v.size, type: this.typeOf(v), installed: false });
+    this.setState({ games, queue: s.queue.filter(d => d.id !== id).concat([{ id, pct: 0, phase: 'download', paused: false }]), dialog: null });
+    this.toast((wasEmpty ? 'Downloading ' : 'Queued ') + g.title + ' v' + v.v, v.os + ' · ' + v.kind.toLowerCase() + ' · ' + v.size.toFixed(1) + ' GB from vault.lan');
+  }
+
+  saveInfo(g) {
+    const s = this.state, P = this.plat(), A = this.acc();
+    const from = g.from === 'self' ? P.device : P.other;
+    if (s.syncing && s.syncing.id === g.id) return { label: 'Uploading save…', sub: 'Compressing with Ludusavi', tone: A, busy: true, ok: false, warn: false, cloud: false, none: false };
+    if (g.save === 'synced') return { label: 'Saves synced', sub: 'v' + g.saves + ' · ' + g.when + ' · ' + from, tone: '#A9B0B8', ok: true, warn: false, cloud: false, none: false, busy: false };
+    if (g.save === 'cloud') return { label: 'Newer save on server', sub: 'From ' + from + ' · ' + g.when + (g.installed ? ' · pulls before launch' : ' · restored on install'), tone: A, cloud: true, ok: false, warn: false, none: false, busy: false };
+    if (g.save === 'conflict') return { label: 'Save conflict', sub: 'Changed here and on ' + P.other + ' since the last sync', tone: '#FFB648', warn: true, ok: false, cloud: false, none: false, busy: false };
+    if (g.save === 'unknown') return { label: 'Save location unknown', sub: 'Not in the Ludusavi manifest · set a path', tone: '#A9B0B8', none: true, ok: false, warn: false, cloud: false, busy: false };
+    return { label: 'No cloud saves yet', sub: 'First upload after you play', tone: '#A9B0B8', none: true, ok: false, warn: false, cloud: false, busy: false };
+  }
+
+  enrich(g) {
+    const s = this.state, P = this.plat(), A = this.acc();
+    const q = s.queue.find(d => d.id === g.id);
+    const run = !!(s.running && s.running.id === g.id);
+    const up = !!(s.syncing && s.syncing.id === g.id);
+    const linux = g.type === 'LINUX_PORTABLE';
+    const can = g.installed || g.versions.some(v => this.compat(v));
+    const typeLabel = { WINDOWS_PORTABLE: 'WIN · PORTABLE', WINDOWS_SETUP: 'WIN · SETUP', LINUX_PORTABLE: 'LINUX · NATIVE' }[g.type];
+    const runner = linux ? (P.key === 'steamos' ? 'Native' : 'Linux build only') : P.runner;
+    let b = { label: 'Play', sub: '', bg: A, ink: '#0B0C0E', fill: 0, play: true, install: false, stop: false, busy: false, pause: false, resume: false, off: false };
+    if (run) b = { label: 'Stop', sub: 'Playing · ' + s.running.min + ' min', bg: '#1D2126', ink: '#ECEEF0', fill: 0, stop: true };
+    else if (up) b = { label: 'Syncing save', sub: 'Uploading to vault.lan', bg: '#1D2126', ink: '#ECEEF0', fill: 0, busy: true };
+    else if (q && q.phase === 'download') b = { label: (q.paused ? 'Paused ' : 'Downloading ') + Math.floor(q.pct) + '%', sub: q.paused ? 'Resume' : 'Pause', bg: '#1D2126', ink: '#ECEEF0', fill: q.pct, pause: !q.paused, resume: q.paused };
+    else if (q && q.phase === 'extract') b = { label: 'Extracting', sub: Math.floor(q.pct) + '%', bg: '#1D2126', ink: '#ECEEF0', fill: q.pct, busy: true };
+    else if (q && q.phase === 'setup') b = { label: 'Running installer', sub: 'setup.exe · waiting', bg: '#1D2126', ink: '#ECEEF0', fill: q.pct, busy: true };
+    else if (!g.installed && !can) b = { label: 'Not on ' + P.name, sub: 'Linux build', bg: '#16191D', ink: '#7D858F', fill: 0, off: true };
+    else if (!g.installed) b = { label: 'Install', sub: g.versions.length > 1 ? g.versions.length + ' versions · choose next' : g.size.toFixed(1) + ' GB', bg: A, ink: '#0B0C0E', fill: 0, install: true };
+    ['play', 'install', 'stop', 'busy', 'pause', 'resume', 'off'].forEach(k => { b[k] = !!b[k]; });
+    const phase = q ? q.phase : (g.installed ? 'ready' : 'none');
+    const order = ['download', 'extract', 'setup', 'ready'];
+    const steps = order.filter(p => p !== 'setup' || g.type === 'WINDOWS_SETUP').map(p => {
+      const di = order.indexOf(p), pi = order.indexOf(phase);
+      const doneS = phase !== 'none' && pi > di, cur = phase === p && phase !== 'ready';
+      return { label: { download: 'Download', extract: 'Extract', setup: 'Run setup', ready: 'Ready' }[p], dot: doneS || (p === 'ready' && phase === 'ready') ? A : cur ? '#ECEEF0' : '#323840', ink: doneS || cur || (p === 'ready' && phase === 'ready') ? '#ECEEF0' : '#7D858F' };
+    });
+    const sv = this.saveInfo(g);
+    return Object.assign({}, g, {
+      typeLabel, runner, can, run, up, b, steps, sv, queued: !!q, isSetup: g.type === 'WINDOWS_SETUP',
+      sizeText: g.size.toFixed(1) + ' GB', diskText: (g.size * 1.35).toFixed(1) + ' GB',
+      hoursText: g.hours ? g.hours.toFixed(1) + ' h' : '—',
+      sel: s.gameId === g.id && s.view === 'game',
+      open: () => this.setState({ view: 'game', gameId: g.id }),
+      act: () => this.primary(g.id),
+      mark: g.mark, markIt: () => this.setState({ games: this.upd(g.id, { mark: !g.mark }) }),
+      uninstall: () => { this.setState({ games: this.upd(g.id, { installed: false }) }); this.toast(g.title + ' uninstalled', 'Saves stay on the server'); },
+      dot: run ? A : q ? A : g.installed ? '#A9B0B8' : 'rgba(0,0,0,0)',
+      rowBg: s.gameId === g.id && s.view === 'game' ? '#1D2126' : 'rgba(0,0,0,0)',
+      rowInk: g.installed || q ? '#ECEEF0' : '#A9B0B8',
+      warn: g.save === 'conflict',
+      sideMeta: run ? 'Playing now' : q ? (q.phase === 'download' ? (q.paused ? 'Paused · ' : 'Downloading · ') + Math.floor(q.pct) + '%' : q.phase === 'extract' ? 'Extracting…' : 'Installing…') : g.installed ? 'Installed · ' + (g.hours ? g.hours.toFixed(1) + ' h' : 'new') : 'Not installed',
+      markFill: g.mark ? 'currentColor' : 'none',
+      heroTag: g.installed ? 'INSTALLED · v' + g.ver : g.versions.length > 1 ? g.versions.length + ' VERSIONS ON SERVER' : 'v' + g.ver + ' ON SERVER',
+      verRows: g.versions.map((v, i) => {
+        const ok = this.compat(v), cur = g.installed && g.vi === i;
+        return { label: 'v' + v.v, def: i === 0, kind: v.os + ' · ' + v.kind.toLowerCase() + (v.ea ? ' · early access' : ''), size: v.size.toFixed(1) + ' GB', cur, can: ok && !cur && !q, cant: !ok, act: () => this.pickVersion(g.id, i), actLabel: g.installed ? 'Switch' : 'Install' };
+      }),
+      history: () => this.setState({ view: 'saves', savesSel: g.id }),
+      histSel: s.savesSel === g.id,
+      histBg: s.savesSel === g.id ? '#1D2126' : 'rgba(0,0,0,0)',
+      pickHist: () => this.setState({ savesSel: g.id }),
+      syncNow: () => {
+        if (g.save === 'conflict') { this.setState({ dialog: { type: 'conflict', id: g.id } }); return; }
+        if (g.save === 'cloud' && g.installed) { this.setState({ games: this.upd(g.id, { save: 'synced' }) }); this.toast('Pulled save · ' + g.title, 'From ' + P.other); return; }
+        if (g.installed && g.save !== 'unknown') this.setState({ syncing: { id: g.id, t: 0 } });
+      }
+    });
+  }
+
+  renderVals() {
+    const s = this.state, P = this.plat(), A = this.acc();
+    const all = s.games.map(g => this.enrich(g));
+    const ql = s.query.trim().toLowerCase();
+    const side = all.filter(g => (s.filter === 'all' || g.installed || g.queued) && (!ql || g.title.toLowerCase().includes(ql)));
+    const sorters = {
+      added: (a, b) => a.added - b.added,
+      name: (a, b) => a.title.localeCompare(b.title),
+      played: (a, b) => b.hours - a.hours,
+      size: (a, b) => b.size - a.size
+    };
+    const grid = all.filter(g => !ql || g.title.toLowerCase().includes(ql)).sort(sorters[s.sort]);
+    const sel = all.find(g => g.id === s.gameId) || all[0];
+    const tab = (v, label) => ({ label, on: s.view === v || (v === 'home' && s.view === 'game'), ink: s.view === v || (v === 'home' && s.view === 'game') ? '#ECEEF0' : '#A9B0B8', bar: s.view === v || (v === 'home' && s.view === 'game') ? A : 'rgba(0,0,0,0)', go: () => this.setState({ view: v }) });
+    const active = s.queue[0] ? Object.assign({}, all.find(g => g.id === s.queue[0].id), { q: s.queue[0] }) : null;
+    const speed = s.limit === '20' ? 20 : s.limit === '50' ? 50 : 48.2;
+    const anyRunning = s.queue.some(d => !d.paused);
+    let dlSummary = 'No downloads';
+    if (active) {
+      const ph = active.q.phase;
+      dlSummary = ph === 'download' ? (active.q.paused ? 'Paused · ' : 'Downloading · ') + active.title + ' · ' + Math.floor(active.q.pct) + '%' + (active.q.paused ? '' : ' · ' + speed.toFixed(1) + ' MB/s') : ph === 'extract' ? 'Extracting · ' + active.title : 'Installer running · ' + active.title;
+    }
+    const conflicts = all.filter(g => g.save === 'conflict').length;
+    const pending = all.filter(g => g.save === 'cloud' && g.installed).length;
+    const syncSummary = s.syncing ? 'Uploading save…' : conflicts ? conflicts + ' save conflict' : pending ? pending + ' save to pull' : 'All saves synced';
+    const remain = active && active.q.phase === 'download' ? active.size * (1 - active.q.pct / 100) : 0;
+    const etaMin = Math.max(1, Math.round((remain * 1024) / speed / 60));
+    const histGame = all.find(g => g.id === s.savesSel) || all[0];
+    const devs = [P.device, P.other, P.key === 'windows' ? 'MacBook Pro' : P.key === 'macos' ? 'Desktop PC' : 'MacBook Pro'];
+    const hist = [];
+    for (let i = histGame.saves; i >= 1 && hist.length < 10; i--) {
+      const k = histGame.saves - i;
+      hist.push({
+        v: 'v' + i, cur: k === 0, old: k !== 0, when: k === 0 ? histGame.when : ['Yesterday 23:10', 'Nov 18, 21:44', 'Nov 16, 19:02', 'Nov 12, 22:31', 'Nov 9, 18:20', 'Nov 3, 20:05', 'Oct 28, 17:48', 'Oct 21, 21:15', 'Oct 14, 16:30'][k - 1],
+        dev: k === 0 ? (histGame.from === 'self' ? P.device : P.other) : devs[k % 3], size: (2.1 + ((i * 37) % 9) / 10).toFixed(1) + ' MB',
+        restore: () => this.toast('Restored ' + histGame.title + ' v' + i, 'Your current save was kept as a new version first')
+      });
+    }
+    const setTabs = [['library', 'Library folders'], ['downloads', 'Downloads'], ['compat', 'Compatibility'], ['saves', 'Cloud saves'], ['steam', 'Steam'], ['interface', 'Interface']].map(([k, label]) => ({
+      label, on: s.setTab === k, bg: s.setTab === k ? '#1D2126' : 'rgba(0,0,0,0)', ink: s.setTab === k ? '#ECEEF0' : '#A9B0B8', bar: s.setTab === k ? A : 'rgba(0,0,0,0)', go: () => this.setState({ setTab: k })
+    }));
+    const tg = k => ({ on: s.opt[k], flip: () => this.setState({ opt: Object.assign({}, s.opt, { [k]: !s.opt[k] }) }), bg: s.opt[k] ? A : '#323840', x: s.opt[k] ? '18px' : '2px', knob: s.opt[k] ? '#0B0C0E' : '#A9B0B8' });
+    const dlg = s.dialog;
+    const dg = all.find(g => g.id === (dlg ? dlg.id : s.gameId)) || all[0];
+    const it = s.inst;
+    const ivi = it.vi || 0, iv = dg.versions[ivi] || dg.versions[0];
+    const instVers = dg.versions.map((v, i) => {
+      const ok = this.compat(v), on = ivi === i;
+      return { label: 'v' + v.v + (i === 0 ? ' · default' : '') + (v.ea ? ' · early access' : ''), kind: v.os + ' · ' + v.kind.toLowerCase() + ' · ' + (v.os === 'Linux' || P.key === 'windows' ? 'native' : 'runs with ' + P.runner), note: ok ? v.size.toFixed(1) + ' GB' : 'Can\'t run on ' + P.name, on, cant: !ok, ring: on ? A : '#323840', dotc: on ? A : 'rgba(0,0,0,0)', op: ok ? '1' : '.55', pick: () => this.setState({ inst: Object.assign({}, it, { vi: i }) }) };
+    });
+    return {
+      A, P, folder0: P.folders[0], isMac: P.key === 'macos', isWin: P.key === 'windows', isSteam: P.key === 'steamos', notMac: P.key !== 'macos',
+      tabs: { lib: tab('home', 'Library'), dl: tab('downloads', 'Downloads'), sv: tab('saves', 'Saves') },
+      settingsOn: s.view === 'settings', openSettings: () => this.setState({ view: 'settings' }),
+      dlBadge: s.queue.length, hasDl: s.queue.length > 0, conflictDot: conflicts > 0,
+      query: s.query, onQuery: e => this.setState({ query: e.target.value }),
+      fAll: { bg: s.filter === 'all' ? '#262B31' : 'rgba(0,0,0,0)', ink: s.filter === 'all' ? '#ECEEF0' : '#A9B0B8', go: () => this.setState({ filter: 'all' }), on: s.filter === 'all' },
+      fInst: { bg: s.filter === 'installed' ? '#262B31' : 'rgba(0,0,0,0)', ink: s.filter === 'installed' ? '#ECEEF0' : '#A9B0B8', go: () => this.setState({ filter: 'installed' }), on: s.filter === 'installed' },
+      side, sideEmpty: side.length === 0, allCount: all.length, instCount: all.filter(g => g.installed).length,
+      vHome: s.view === 'home', vGame: s.view === 'game', vDl: s.view === 'downloads', vSaves: s.view === 'saves', vSet: s.view === 'settings',
+      goHome: () => this.setState({ view: 'home' }), goDl: () => this.setState({ view: 'downloads' }), goSaves: () => this.setState({ view: 'saves' }),
+      cont: all.find(g => g.id === 'saltmarsh'), cont2: [all.find(g => g.id === 'hollow'), all.find(g => g.id === 'orbital')],
+      fresh: all.filter(g => !g.installed).sort((a, b) => a.added - b.added).slice(0, 5),
+      grid, sort: s.sort, onSort: e => this.setState({ sort: e.target.value }),
+      g: sel,
+      active: active || Object.assign({}, all[0], { q: { pct: 0, phase: 'download', paused: true } }), hasActive: !!active, noActive: !active, queueRest: s.queue.slice(1).map((d, i) => Object.assign({}, all.find(g => g.id === d.id), { q: d, pctText: d.paused ? 'Paused · ' + Math.floor(d.pct) + '%' : 'Queued', up: () => { const q = s.queue.slice(); const j = i + 1; [q[j - 1], q[j]] = [q[j], q[j - 1]]; this.setState({ queue: q }); }, remove: () => this.setState({ queue: s.queue.filter(x => x.id !== d.id) }) })),
+      hasQueue: s.queue.length > 1,
+      doneList: s.done.map(d => Object.assign({}, all.find(g => g.id === d.id), { when: d.when })),
+      activePct: active ? Math.floor(active.q.pct) : 0, activePctW: active ? active.q.pct.toFixed(1) : '0',
+      activePhase: active ? { download: active.q.paused ? 'Paused' : 'Downloading', extract: 'Extracting archive', setup: 'Running setup.exe' }[active.q.phase] : '',
+      activeIsDl: !!(active && active.q.phase === 'download'),
+      speedText: anyRunning && active && active.q.phase === 'download' ? speed.toFixed(1) + ' MB/s' : '—',
+      etaText: active && active.q.phase === 'download' && !active.q.paused ? etaMin + ' min left' : active ? (active.q.paused ? 'Paused' : 'Almost there') : '',
+      gotText: active ? (active.size * active.q.pct / 100).toFixed(1) + ' of ' + active.sizeText : '',
+      pauseAll: () => this.setState({ queue: s.queue.map(d => Object.assign({}, d, { paused: anyRunning })) }), pauseAllLabel: anyRunning ? 'Pause all' : 'Resume all',
+      limit: s.limit, onLimit: e => this.setState({ limit: e.target.value }),
+      dlSummary, syncSummary, syncTone: conflicts ? '#FFB648' : s.syncing || pending ? A : '#A9B0B8', syncWarn: conflicts > 0, syncBusy: !!s.syncing, syncOk: !conflicts && !s.syncing,
+      dlBusy: anyRunning,
+      savesRows: all.filter(g => g.installed || g.saves > 0),
+      hg: histGame, hist, histEmpty: hist.length === 0, histCount: hist.length,
+      devices: [
+        { name: P.device, kind: 'This device', seen: 'Online now', ink: A },
+        { name: P.other, kind: P.other === 'Steam Deck' ? 'SteamOS · Proton 10' : 'Windows 11', seen: 'Synced 2 h ago', ink: '#A9B0B8' },
+        { name: devs[2], kind: devs[2] === 'MacBook Pro' ? 'macOS · Wine 10' : 'Windows 11', seen: 'Last seen Nov 12', ink: '#A9B0B8' }
+      ],
+      notWin: P.key !== 'windows',
+      runners: P.key === 'steamos' ? ['Proton 10 (default)', 'Proton Experimental', 'GE-Proton (installed)'] : ['Wine 10 (bundled)', 'CrossOver (detected)', 'Game Porting Toolkit'],
+      saveToggles: [
+        Object.assign({ label: 'Upload saves when a game closes', help: 'After at least a minute of play.' }, tg('autoUp')),
+        Object.assign({ label: 'Pull newer saves before launch', help: 'Checks the server version first. Adds about a second.' }, tg('pull')),
+        Object.assign({ label: 'Ask me when saves conflict', help: 'Otherwise the newest file wins and the other is kept as a version.' }, tg('notify')),
+        Object.assign({ label: 'Play offline, sync later', help: 'Queues uploads until vault.lan is reachable again.' }, tg('offline'))
+      ],
+      setTabs, st: { library: s.setTab === 'library', downloads: s.setTab === 'downloads', compat: s.setTab === 'compat', saves: s.setTab === 'saves', steam: s.setTab === 'steam', iface: s.setTab === 'interface' },
+      t: { autoUp: tg('autoUp'), pull: tg('pull'), notify: tg('notify'), steam: tg('steam'), bigpic: tg('bigpic'), verify: tg('verify'), offline: tg('offline') },
+      showInstall: !!(dlg && dlg.type === 'install'), showConflict: !!(dlg && dlg.type === 'conflict'), dg,
+      closeDialog: () => this.setState({ dialog: null }),
+      dlTone: anyRunning ? A : '#A9B0B8',
+      instFolders: P.folders.map((f, i) => ({ path: f, free: P.free[i] + ' GB free', on: it.folder === i, ring: it.folder === i ? A : '#323840', dotc: it.folder === i ? A : 'rgba(0,0,0,0)', pick: () => this.setState({ inst: Object.assign({}, it, { folder: i }) }) })),
+      instVers, instTitle: dg.installed ? 'SWITCH VERSION' : 'INSTALL', instCta: dg.installed ? 'Switch' : 'Install',
+      instV: { size: iv.size.toFixed(1) + ' GB', disk: (iv.size * 1.35).toFixed(1) + ' GB', setup: iv.kind === 'Setup', desc: dg.versions.length + (dg.versions.length > 1 ? ' versions' : ' version') + ' on vault.lan' },
+      instRestore: it.restore, flipRestore: () => this.setState({ inst: Object.assign({}, it, { restore: !it.restore }) }),
+      instShortcut: it.shortcut, flipShortcut: () => this.setState({ inst: Object.assign({}, it, { shortcut: !it.shortcut }) }),
+      confirmInstall: () => this.confirmInstall(),
+      pickLocal: () => this.resolve('local'), pickCloud: () => this.resolve('cloud'),
+      toast: s.toast || { text: '', sub: '' }, hasToast: !!s.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

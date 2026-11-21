@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stault · Big Picture Mode</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B0C0E}
+a{color:#C5F04A}a:hover{color:#E2FF8A}
+.bp *{box-sizing:border-box}
+.bp button,.bp a{font:inherit;color:inherit;cursor:pointer}
+.bp:focus{outline:none}
+.bp button:focus-visible,.bp a:focus-visible{outline:3px solid #C5F04A !important;outline-offset:3px !important}
+.tile{transition:transform .16s ease,box-shadow .16s ease}
+.shelf{transition:transform .22s ease}
+@keyframes bpspin{to{transform:rotate(360deg)}}
+@keyframes bprise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes bpleft{from{transform:translateX(-100%)}to{transform:none}}
+@keyframes bpright{from{transform:translateX(100%)}to{transform:none}}
+@keyframes bpfade{from{opacity:0}to{opacity:1}}
+.spin{animation:bpspin 1s linear infinite}
+.rise{animation:bprise .24s ease-out}
+.slidel{animation:bpleft .2s ease-out}
+.slider{animation:bpright .2s ease-out}
+.fade{animation:bpfade .2s ease-out}
+</style>
+</helmet>
+<div class="bp" tabindex="0" ref="{{ setRoot }}" onKeyDown="{{ onKey }}" aria-label="Stault Big Picture Mode. Arrow keys move, Enter selects, Escape goes back, M opens the menu, V opens quick access." style="width: 1280px; height: 800px; position: relative; overflow: hidden; display: flex; flex-direction: column; background: #0B0C0E; color: #ECEEF0; font-family: 'Archivo', system-ui, sans-serif; font-size: 18px; line-height: 1.4">
+<div aria-hidden="true" style="position: absolute; inset: -60px; background: {{ ambient }}; filter: blur(36px) saturate(1.15); opacity: .5; transition: background .3s"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,12,14,.55) 0%, rgba(11,12,14,.82) 45%, #0B0C0E 100%)"></div>
+<header style="position: relative; z-index: 2; height: 56px; flex: 0 0 auto; display: flex; align-items: center; gap: 14px; padding: 0 36px">
+<sc-if value="{{ notHome }}" hint-placeholder-val="{{ false }}"><span style="font-weight: 750; font-stretch: 112%; font-size: 17px; letter-spacing: 0.08em; text-transform: uppercase; color: #C9CED4">{{ topTitle }}</span></sc-if>
+<sc-if value="{{ sLib }}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Library tabs" style="display: flex; align-items: center; gap: 8px; margin-left: 14px">
+<button onClick="{{ pL }}" aria-label="Previous tab (L1)" style="min-width: 44px; height: 30px; border-radius: 8px; border: 1px solid #4A515A; background: rgba(0,0,0,0); color: #C9CED4; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600">L1</button>
+<sc-for list="{{ ltabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.go }}" aria-pressed="{{ t.on }}" style="min-height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-radius: 20px; border: 0; background: {{ t.bg }}; color: {{ t.ink }}; font-weight: 700; font-size: 17px">{{ t.label }}<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; opacity: .7">{{ t.n }}</span></button>
+</sc-for>
+<button onClick="{{ pR }}" aria-label="Next tab (R1)" style="min-width: 44px; height: 30px; border-radius: 8px; border: 1px solid #4A515A; background: rgba(0,0,0,0); color: #C9CED4; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600">R1</button>
+</nav>
+</sc-if>
+<div style="flex: 1 1 0"></div>
+<sc-if value="{{ hasDlTop }}" hint-placeholder-val="{{ true }}"><span style="display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: {{ A }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"></path></svg>{{ dlTop }}</span></sc-if>
+<span style="display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: {{ syncTone }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"></path></svg>{{ syncTop }}</span>
+<span aria-hidden="true" style="width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: #262B31; font-weight: 700; font-size: 15px">S</span>
+</header>
+<div style="position: relative; flex: 1 1 auto; min-height: 0">
+<sc-if value="{{ sHome }}" hint-placeholder-val="{{ true }}">
+<div class="fade" style="position: absolute; inset: 0; padding: 6px 0 0 40px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.16em; color: #C9CED4">RECENT GAMES</h2>
+<div style="margin-left: -10px; overflow: hidden">
+<div class="shelf" style="display: flex; gap: 20px; align-items: flex-end; padding: 12px 10px; transform: {{ shelfX }}">
+<sc-if value="{{ hasR0 }}" hint-placeholder-val="{{ true }}">
+<button class="tile" onClick="{{ r0.pick }}" style="flex: 0 0 auto; width: 470px; height: 264px; display: flex; flex-direction: column; justify-content: flex-end; gap: 8px; padding: 22px; border: 0; border-radius: 10px; position: relative; overflow: hidden; background: {{ r0.cover }}; box-shadow: {{ r0.ring }}; transform: {{ r0.scale }}; transform-origin: 0 100%; text-align: left">
+<span aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,12,14,0) 35%, rgba(11,12,14,.85) 100%)"></span>
+<span style="position: relative; font-weight: 800; font-stretch: 125%; font-size: 34px; line-height: 1; text-transform: uppercase; color: #FFFFFF">{{ r0.title }}</span>
+<span style="position: relative; font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.08em; color: #D5D9DE">LAST PLAYED · {{ r0.last }}</span>
+</button>
+</sc-if>
+<sc-for list="{{ rRest }}" as="t" hint-placeholder-count="4">
+<button class="tile" onClick="{{ t.pick }}" style="flex: 0 0 auto; width: 176px; height: 264px; display: flex; align-items: flex-end; padding: 12px; border: 0; border-radius: 10px; position: relative; overflow: hidden; background: {{ t.cover }}; box-shadow: {{ t.ring }}; transform: {{ t.scale }}; transform-origin: 50% 100%; text-align: left">
+<span style="font-weight: 800; font-stretch: 125%; font-size: 17px; line-height: 1.02; text-transform: uppercase; color: {{ t.ink }}">{{ t.title }}</span>
+<sc-if value="{{ t.warn }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: rgba(11,12,14,.8)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFB648" stroke-width="2.2" stroke-linejoin="round" role="img" aria-label="Save conflict"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg></span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+<div class="rise" style="display: flex; flex-direction: column; gap: 4px; min-height: 76px; padding-right: 40px">
+<span style="font-weight: 750; font-size: 26px; line-height: 1.15">{{ hf.title }}</span>
+<span style="display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 16px"><span style="color: #C9CED4">{{ hf.metaLine }}</span><span style="color: {{ hf.sv.tone }}">{{ hf.sv.label }}</span></span>
+</div>
+<h2 style="margin: 4px 0 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.16em; color: #C9CED4">NEW ON VAULT.LAN</h2>
+<div style="margin-left: -10px; display: flex; gap: 18px; align-items: flex-end; padding: 10px">
+<sc-for list="{{ fresh }}" as="t" hint-placeholder-count="5">
+<button class="tile" onClick="{{ t.pick }}" style="flex: 0 0 auto; width: 132px; height: 185px; display: flex; align-items: flex-end; padding: 10px; border: 0; border-radius: 8px; position: relative; overflow: hidden; background: {{ t.cover }}; box-shadow: {{ t.ring }}; transform: {{ t.scale }}; transform-origin: 50% 100%; text-align: left">
+<span style="font-weight: 800; font-stretch: 125%; font-size: 13px; line-height: 1.02; text-transform: uppercase; color: {{ t.ink }}">{{ t.title }}</span>
+<sc-if value="{{ t.queued }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(11,12,14,.75)"><span style="display: block; height: 6px; width: {{ t.bar }}%; background: {{ A }}"></span></span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ sLib }}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="position: absolute; inset: 0; padding: 14px 40px 0; overflow: hidden">
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 22px 24px; padding: 6px 4px">
+<sc-for list="{{ lib }}" as="t" hint-placeholder-count="10">
+<button class="tile" onClick="{{ t.pick }}" style="display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: rgba(0,0,0,0); text-align: left; transform: {{ t.scale }}; transform-origin: 50% 100%">
+<span aria-hidden="true" style="position: relative; display: flex; align-items: flex-end; width: 100%; aspect-ratio: 5 / 7; border-radius: 8px; padding: 10px; overflow: hidden; background: {{ t.cover }}; box-shadow: {{ t.ring }}"><span style="font-weight: 800; font-stretch: 125%; font-size: 15px; line-height: 1.02; text-transform: uppercase; color: {{ t.ink }}">{{ t.title }}</span><sc-if value="{{ t.queued }}" hint-placeholder-val="{{ false }}"><span style="position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(11,12,14,.75)"><span style="display: block; height: 6px; width: {{ t.bar }}%; background: {{ A }}"></span></span></sc-if></span>
+<span style="font-weight: 650; font-size: 16px; color: {{ t.capInk }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ t.title }}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: #A9B0B8; margin-top: -4px">{{ t.meta }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ sGame }}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="position: absolute; inset: 0; display: flex; flex-direction: column">
+<div style="position: relative; flex: 0 0 auto; height: 300px; margin-top: -56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 0 40px 24px; background: {{ g.cover }}">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,12,14,.55) 0%, rgba(11,12,14,0) 30%, rgba(11,12,14,.9) 100%)"></div>
+<div style="position: relative; display: flex; gap: 10px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 4px; background: #ECEEF0; color: #0B0C0E">{{ g.heroTag }}</span>
+<sc-if value="{{ g.showRunner }}" hint-placeholder-val="{{ true }}"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(236,238,240,.45)">{{ g.runner }}</span></sc-if>
+</div>
+<h1 style="position: relative; margin: 0; font-weight: 800; font-stretch: 125%; font-size: 60px; line-height: 0.95; text-transform: uppercase; color: #FFFFFF">{{ g.title }}</h1>
+</div>
+<div style="position: relative; display: flex; align-items: center; gap: 30px; padding: 18px 40px; background: rgba(11,12,14,.78); border-bottom: 1px solid #1D2126">
+<button onClick="{{ gb0.go }}" style="min-width: 230px; height: 62px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 26px; border: 0; border-radius: 10px; background: {{ A }}; color: #0B0C0E; box-shadow: {{ gb0.ring }}; font-weight: 800; font-size: 21px; letter-spacing: 0.05em; text-transform: uppercase; font-stretch: 112%">
+<sc-if value="{{ pPlay }}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"></path></svg></sc-if>
+<sc-if value="{{ pPause }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"></rect><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"></rect></svg></sc-if>
+<sc-if value="{{ pDown }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"></path></svg></sc-if>
+<sc-if value="{{ pBusy }}" hint-placeholder-val="{{ false }}"><svg class="spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg></sc-if>
+{{ prim.label }}
+</button>
+<dl style="margin: 0; display: flex; gap: 30px">
+<div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #A9B0B8">LAST PLAYED</dt><dd style="margin: 0; font-weight: 650; font-size: 17px">{{ g.last }}</dd></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #A9B0B8">PLAY TIME</dt><dd style="margin: 0; font-weight: 650; font-size: 17px">{{ g.hoursText }}</dd></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><dt style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.12em; color: #A9B0B8">SAVES</dt><dd style="margin: 0; font-weight: 650; font-size: 17px; color: {{ g.sv.tone }}">{{ g.sv.label }}</dd></div>
+</dl>
+<div style="flex: 1 1 0"></div>
+<button onClick="{{ gb1.go }}" aria-label="Cloud saves" style="width: 56px; height: 56px; display: grid; place-items: center; border: 0; border-radius: 10px; background: #1D2126; box-shadow: {{ gb1.ring }}; color: #ECEEF0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"></path></svg></button>
+<button onClick="{{ gb2.go }}" aria-label="Steam library shortcut" aria-pressed="{{ g.steam }}" style="width: 56px; height: 56px; display: grid; place-items: center; border: 0; border-radius: 10px; background: #1D2126; box-shadow: {{ gb2.ring }}; color: #ECEEF0"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="2.5" y="7" width="19" height="10" rx="3"></rect><path d="M7 12h3M8.5 10.5v3"></path><circle cx="16" cy="11" r="1" fill="{{ g.steamFill }}"></circle><circle cx="18" cy="13" r="1" fill="{{ g.steamFill }}"></circle></svg></button>
+<button onClick="{{ gb3.go }}" aria-label="Properties" style="width: 56px; height: 56px; display: grid; place-items: center; border: 0; border-radius: 10px; background: #1D2126; box-shadow: {{ gb3.ring }}; color: #ECEEF0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8"></path></svg></button>
+</div>
+<div style="position: relative; flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; padding: 20px 40px">
+<section aria-label="Cloud saves" style="display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 12px; background: rgba(22,25,29,.85); border: 1px solid #262B31">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #A9B0B8">CLOUD SAVES</span>
+<span style="font-size: 17px; color: {{ g.sv.tone }}">{{ g.sv.label }} <span style="color: #A9B0B8">· {{ g.sv.sub }}</span></span>
+<sc-if value="{{ gNoVers }}" hint-placeholder-val="{{ false }}"><span style="font-size: 15px; color: #A9B0B8">The first upload happens after you play.</span></sc-if>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{ gVers }}" as="v" hint-placeholder-count="3"><li style="display: flex; gap: 14px; padding: 8px 0; border-top: 1px solid #262B31; font-size: 15px"><span style="flex: 0 0 40px; font-family: 'JetBrains Mono', monospace; font-weight: 600">{{ v.v }}</span><span style="flex: 1 1 auto">{{ v.when }}</span><span style="color: #A9B0B8">{{ v.dev }}</span></li></sc-for>
+</ol>
+</section>
+<section aria-label="About" style="display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 12px; background: rgba(22,25,29,.85); border: 1px solid #262B31">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #A9B0B8">ABOUT</span>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #D5D9DE">{{ g.blurb }}</p>
+<span style="font-size: 15px; color: #A9B0B8">{{ g.dev }} · {{ g.steamText }}</span>
+</section>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ sDl }}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="position: absolute; inset: 0; padding: 14px 40px; display: flex; flex-direction: column; gap: 18px">
+<sc-if value="{{ hasCur }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ dlCur.act }}" style="display: flex; gap: 26px; padding: 18px; border: 0; border-radius: 14px; background: {{ dlCur.bg }}; box-shadow: {{ dlCur.ring }}; text-align: left">
+<span aria-hidden="true" style="flex: 0 0 auto; width: 340px; height: 190px; border-radius: 10px; display: flex; align-items: flex-end; padding: 16px; background: {{ dlCur.cover }}"><span style="font-weight: 800; font-stretch: 125%; font-size: 26px; line-height: 1; text-transform: uppercase; color: {{ dlCur.ink }}">{{ dlCur.title }}</span></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 14px">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.14em; color: {{ A }}">{{ dlCur.stageText }}</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px"><span style="font-weight: 800; font-stretch: 125%; font-size: 30px; text-transform: uppercase; line-height: 1">{{ dlCur.title }}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 600">{{ dlCur.pct }}%</span></span>
+<span style="display: block; height: 12px; border-radius: 6px; background: #262B31; overflow: hidden"><span style="display: block; height: 12px; width: {{ dlCur.w }}%; background: {{ A }}; transition: width .45s linear"></span></span>
+<span style="display: flex; justify-content: space-between; gap: 16px; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #A9B0B8"><span>{{ dlCur.got }}</span><span>A · {{ dlCur.hint }}</span></span>
+</span>
+</button>
+</sc-if>
+<sc-if value="{{ noCur }}" hint-placeholder-val="{{ false }}"><p style="margin: 0; padding: 30px; border-radius: 14px; border: 1px dashed #3A4048; font-size: 18px; color: #A9B0B8">Nothing downloading. Pick a game under New on vault.lan and press A.</p></sc-if>
+<sc-if value="{{ hasRest }}" hint-placeholder-val="{{ false }}">
+<h2 style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: 0.16em; color: #C9CED4">UP NEXT</h2>
+<sc-for list="{{ dlRest }}" as="d" hint-placeholder-count="1">
+<button onClick="{{ d.act }}" style="display: flex; align-items: center; gap: 18px; padding: 10px 18px 10px 10px; border: 0; border-radius: 12px; background: {{ d.bg }}; box-shadow: {{ d.ring }}; text-align: left">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 52px; height: 72px; border-radius: 5px; background: {{ d.cover }}"></span>
+<span style="flex: 1 1 auto; font-weight: 700; font-size: 18px">{{ d.title }}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #A9B0B8">{{ d.stageText }} · {{ d.pct }}%</span>
+</button>
+</sc-for>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ sSv }}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="position: absolute; inset: 0; padding: 12px 40px; display: flex; gap: 28px">
+<ul aria-label="Games with saves" style="list-style: none; margin: 0; padding: 4px; flex: 1 1 0; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{ sl }}" as="r" hint-placeholder-count="7">
+<li><button onClick="{{ r.act }}" style="width: 100%; min-height: 64px; display: flex; align-items: center; gap: 16px; padding: 6px 18px 6px 8px; border: 0; border-radius: 10px; background: {{ r.bg }}; box-shadow: {{ r.ring }}; text-align: left">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 38px; height: 52px; border-radius: 4px; background: {{ r.cover }}"></span>
+<span style="flex: 1 1 auto; min-width: 0; font-weight: 700; font-size: 18px">{{ r.title }}</span>
+<span style="font-size: 16px; color: {{ r.sv.tone }}">{{ r.sv.label }}</span>
+</button></li>
+</sc-for>
+</ul>
+<section aria-label="Save details" style="flex: 0 0 440px; align-self: flex-start; display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 12px; background: rgba(22,25,29,.9); border: 1px solid #262B31">
+<div style="display: flex; gap: 16px; align-items: center">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 64px; height: 90px; border-radius: 5px; background: {{ sel.cover }}"></span>
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 22px; line-height: 1.05; text-transform: uppercase">{{ sel.title }}</h2><span style="font-size: 16px; color: {{ sel.sv.tone }}">{{ sel.sv.label }}</span><span style="font-size: 14px; color: #A9B0B8">{{ sel.sv.sub }}</span></div>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{ selVers }}" as="v" hint-placeholder-count="3"><li style="display: flex; gap: 14px; padding: 10px 0; border-top: 1px solid #1D2126; font-size: 15px"><span style="flex: 0 0 40px; font-family: 'JetBrains Mono', monospace; font-weight: 600">{{ v.v }}</span><span style="flex: 1 1 auto">{{ v.when }}</span><span style="color: #A9B0B8">{{ v.dev }}</span></li></sc-for>
+</ol>
+<p style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #A9B0B8">vault.lan keeps the last 10 versions</p>
+</section>
+</div>
+</sc-if>
+</div>
+<footer style="position: relative; z-index: 3; height: 52px; flex: 0 0 auto; display: flex; align-items: center; gap: 22px; padding: 0 30px; background: rgba(11,12,14,.94); border-top: 1px solid #1D2126">
+<button onClick="{{ pMenu }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border: 0; background: rgba(0,0,0,0); font-size: 16px; font-weight: 600; color: #C9CED4"><span aria-hidden="true" style="width: 34px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: #3A4048; color: #ECEEF0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h14"></path></svg></span>Menu</button>
+<button onClick="{{ pQuick }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border: 0; background: rgba(0,0,0,0); font-size: 16px; font-weight: 600; color: #C9CED4"><span aria-hidden="true" style="width: 34px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: #3A4048; color: #ECEEF0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="11" height="11" rx="2"></rect><rect x="9" y="9" width="11" height="11" rx="2"></rect></svg></span>Quick access</button>
+<div style="flex: 1 1 0"></div>
+<sc-if value="{{ showTabs }}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: #C9CED4"><span aria-hidden="true" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 6px; border-radius: 6px; border: 1px solid #4A515A">L1</span><span aria-hidden="true" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 6px; border-radius: 6px; border: 1px solid #4A515A">R1</span>Switch tab</span></sc-if>
+<button onClick="{{ pA }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border: 0; background: rgba(0,0,0,0); font-size: 16px; font-weight: 600"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #ECEEF0; color: #0B0C0E; font-size: 14px; font-weight: 800">A</span>{{ hintA }}</button>
+<button onClick="{{ pB }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border: 0; background: rgba(0,0,0,0); font-size: 16px; font-weight: 600"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #3A4048; color: #ECEEF0; font-size: 14px; font-weight: 800">B</span>Back</button>
+<sc-if value="{{ showX }}" hint-placeholder-val="{{ false }}"><button onClick="{{ pX }}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 6px; border: 0; background: rgba(0,0,0,0); font-size: 16px; font-weight: 600"><span aria-hidden="true" style="width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #3A4048; color: #ECEEF0; font-size: 14px; font-weight: 800">X</span>Saves</button></sc-if>
+</footer>
+<sc-if value="{{ anyPanel }}" hint-placeholder-val="{{ false }}"><button class="fade" onClick="{{ closePanel }}" aria-label="Close panel" style="position: absolute; inset: 0; z-index: 10; border: 0; padding: 0; background: rgba(5,6,7,.62); cursor: default"></button></sc-if>
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<nav class="slidel" aria-label="Main menu" style="position: absolute; z-index: 11; left: 0; top: 0; bottom: 0; width: 380px; display: flex; flex-direction: column; gap: 6px; padding: 26px 16px 20px; background: #111316; border-right: 1px solid #262B31; box-shadow: 30px 0 60px rgba(0,0,0,.5)">
+<div style="display: flex; align-items: center; gap: 14px; padding: 0 12px 20px">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 10px; display: grid; place-items: center; background: #262B31; font-weight: 800; font-size: 20px">S</span>
+<span style="display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 19px">sam</span><span style="display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #A9B0B8"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{ A }}; display: block"></span>vault.lan</span></span>
+</div>
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="4">
+<button onClick="{{ m.go }}" style="min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 0 18px; border: 0; border-radius: 10px; background: {{ m.bg }}; box-shadow: inset 4px 0 0 {{ m.bar }}; font-weight: 700; font-size: 20px; text-align: left">
+<span style="flex: 1 1 auto">{{ m.label }}</span>
+<sc-if value="{{ m.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="min-width: 26px; height: 26px; padding: 0 7px; border-radius: 13px; display: grid; place-items: center; background: {{ A }}; color: #0B0C0E; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700">{{ m.badge }}</span></sc-if>
+</button>
+</sc-for>
+<div style="flex: 1 1 auto"></div>
+<a href="Main.dc.html" ref="{{ setExit }}" style="min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-radius: 10px; background: {{ exitBg }}; box-shadow: inset 4px 0 0 {{ exitBar }}; color: #C9CED4; text-decoration: none; font-weight: 700; font-size: 18px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"></rect><path d="M9 20h6"></path></svg>Exit Big Picture</a>
+</nav>
+</sc-if>
+<sc-if value="{{ quickOpen }}" hint-placeholder-val="{{ false }}">
+<aside class="slider" aria-label="Quick access" style="position: absolute; z-index: 11; right: 0; top: 0; bottom: 0; width: 430px; display: flex; flex-direction: column; gap: 10px; padding: 26px 18px 20px; background: #111316; border-left: 1px solid #262B31; box-shadow: -30px 0 60px rgba(0,0,0,.5)">
+<h2 style="margin: 0 8px 8px; font-weight: 800; font-stretch: 125%; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase">Quick access</h2>
+<span style="margin: 4px 8px 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #A9B0B8">DOWNLOADING</span>
+<button onClick="{{ qf0.go }}" style="display: flex; align-items: center; gap: 14px; padding: 10px 12px; border: 0; border-radius: 10px; background: {{ qf0.bg }}; box-shadow: {{ qf0.ring }}; text-align: left">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 44px; height: 62px; border-radius: 4px; background: {{ q0.cover }}"></span>
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px">
+<span style="font-weight: 700; font-size: 17px">{{ q0.title }}</span>
+<sc-if value="{{ hasQ0 }}" hint-placeholder-val="{{ true }}"><span style="display: block; height: 6px; border-radius: 3px; background: #262B31; overflow: hidden"><span style="display: block; height: 6px; width: {{ q0.w }}%; background: {{ A }}"></span></span><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #A9B0B8">{{ q0.pct }}% · A · {{ q0.hint }}</span></sc-if>
+</span>
+</button>
+<span style="margin: 8px 8px 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #A9B0B8">SAVE SYNC</span>
+<button onClick="{{ qf1.go }}" style="display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px; border: 0; border-radius: 10px; background: {{ qf1.bg }}; box-shadow: {{ qf1.ring }}; text-align: left">
+<sc-if value="{{ hasCg }}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFB648" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg><span style="flex: 1 1 auto; display: flex; flex-direction: column"><span style="font-weight: 700; font-size: 17px; color: #FFB648">{{ cg.title }} · conflict</span><span style="font-size: 14px; color: #A9B0B8">A · choose which save to keep</span></span></sc-if>
+<sc-if value="{{ noCg }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A9B0B8" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg><span style="font-weight: 700; font-size: 17px; color: #C9CED4">All saves synced</span></sc-if>
+</button>
+<span style="margin: 8px 8px 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.14em; color: #A9B0B8">SETTINGS</span>
+<button role="switch" aria-checked="{{ tUp.on }}" onClick="{{ qf2.go }}" style="display: flex; align-items: center; gap: 14px; min-height: 54px; padding: 0 14px; border: 0; border-radius: 10px; background: {{ qf2.bg }}; box-shadow: {{ qf2.ring }}; text-align: left"><span style="flex: 1 1 auto; font-weight: 600; font-size: 16px">Upload saves when a game closes</span><span aria-hidden="true" style="position: relative; flex: 0 0 auto; width: 46px; height: 28px; border-radius: 14px; background: {{ tUp.bg }}"><span style="position: absolute; top: 3px; left: {{ tUp.x }}; width: 22px; height: 22px; border-radius: 50%; background: {{ tUp.knob }}; transition: left .15s"></span></span></button>
+<button role="switch" aria-checked="{{ tPull.on }}" onClick="{{ qf3.go }}" style="display: flex; align-items: center; gap: 14px; min-height: 54px; padding: 0 14px; border: 0; border-radius: 10px; background: {{ qf3.bg }}; box-shadow: {{ qf3.ring }}; text-align: left"><span style="flex: 1 1 auto; font-weight: 600; font-size: 16px">Pull newer saves before launch</span><span aria-hidden="true" style="position: relative; flex: 0 0 auto; width: 46px; height: 28px; border-radius: 14px; background: {{ tPull.bg }}"><span style="position: absolute; top: 3px; left: {{ tPull.x }}; width: 22px; height: 22px; border-radius: 50%; background: {{ tPull.knob }}; transition: left .15s"></span></span></button>
+<button role="switch" aria-checked="{{ tThrottle.on }}" onClick="{{ qf4.go }}" style="display: flex; align-items: center; gap: 14px; min-height: 54px; padding: 0 14px; border: 0; border-radius: 10px; background: {{ qf4.bg }}; box-shadow: {{ qf4.ring }}; text-align: left"><span style="flex: 1 1 auto; font-weight: 600; font-size: 16px">Slow downloads while playing</span><span aria-hidden="true" style="position: relative; flex: 0 0 auto; width: 46px; height: 28px; border-radius: 14px; background: {{ tThrottle.bg }}"><span style="position: absolute; top: 3px; left: {{ tThrottle.x }}; width: 22px; height: 22px; border-radius: 50%; background: {{ tThrottle.knob }}; transition: left .15s"></span></span></button>
+</aside>
+</sc-if>
+<sc-if value="{{ verOpen }}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(5,6,7,.82)">
+<section role="dialog" aria-modal="true" aria-labelledby="bp-ver" class="rise" style="width: 760px; display: flex; flex-direction: column; gap: 14px; padding: 28px; border-radius: 16px; background: #16191D; border: 1px solid #323840">
+<div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.14em; color: {{ A }}">CHOOSE A VERSION</span><h2 id="bp-ver" style="margin: 0; font-weight: 800; font-stretch: 125%; font-size: 30px; line-height: 1; text-transform: uppercase">{{ vg.title }}</h2></div>
+<sc-for list="{{ vrows }}" as="v" hint-placeholder-count="2">
+<button onClick="{{ v.go }}" style="display: flex; align-items: center; gap: 18px; min-height: 72px; padding: 12px 20px; border: 0; border-radius: 12px; background: {{ v.bg }}; box-shadow: {{ v.ring }}; text-align: left">
+<span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 750; font-size: 20px">{{ v.label }}</span><span style="font-size: 16px; color: #A9B0B8">{{ v.kind }}</span></span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 17px; color: #C9CED4">{{ v.size }}</span>
+</button>
+</sc-for>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 16px; color: #A9B0B8"><span>Up and down to choose · A to install</span><button onClick="{{ closeVersion }}" style="min-height: 44px; padding: 0 18px; border: 1px solid #323840; border-radius: 8px; background: #111316; font-size: 16px; font-weight: 600">B · Cancel</button></div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{ conflictOpen }}" hint-placeholder-val="{{ false }}">
+<div class="fade" style="position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(5,6,7,.82)">
+<section role="dialog" aria-modal="true" aria-labelledby="bp-conf" class="rise" style="width: 900px; display: flex; flex-direction: column; gap: 22px; padding: 30px; border-radius: 16px; background: #16191D; border: 1px solid #323840">
+<div style="display: flex; gap: 16px; align-items: flex-start">
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFB648" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 6px"><h2 id="bp-conf" style="margin: 0; font-size: 26px; font-weight: 750">Which save should {{ mg.title }} use?</h2><p style="margin: 0; font-size: 17px; color: #A9B0B8">Both copies changed since the last sync. The other one stays on vault.lan as a version.</p></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+<button onClick="{{ m0.go }}" style="display: flex; flex-direction: column; gap: 10px; padding: 22px; border: 0; border-radius: 12px; background: {{ m0.bg }}; box-shadow: {{ m0.ring }}; text-align: left">
+<span style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.14em; color: #A9B0B8">THIS DECK</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 4px; background: {{ A }}; color: #0B0C0E">NEWER</span></span>
+<span style="font-size: 24px; font-weight: 750">Today, 08:14</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #A9B0B8">2.4 MB · 12.2 h played</span>
+</button>
+<button onClick="{{ m1.go }}" style="display: flex; flex-direction: column; gap: 10px; padding: 22px; border: 0; border-radius: 12px; background: {{ m1.bg }}; box-shadow: {{ m1.ring }}; text-align: left">
+<span style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.14em; color: #A9B0B8">DESKTOP PC</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 4px; border: 1px solid #A9B0B8">MORE ITEMS</span></span>
+<span style="font-size: 24px; font-weight: 750">Yesterday, 23:52</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #A9B0B8">2.6 MB · 11.6 h played</span>
+</button>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px; color: #A9B0B8">
+<span>Left and right to compare · A to use</span>
+<button onClick="{{ closeConflict }}" style="min-height: 44px; padding: 0 18px; border: 1px solid #323840; border-radius: 8px; background: #111316; font-size: 16px; font-weight: 600">B · Decide later</button>
+</div>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{ hasPhase }}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; background: #0B0C0E">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: {{ pg.cover }}; opacity: .35"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(11,12,14,.55) 0%, rgba(11,12,14,.95) 75%)"></div>
+<span style="position: relative; font-family: 'JetBrains Mono', monospace; font-size: 15px; letter-spacing: 0.16em; color: {{ A }}"><sc-if value="{{ phLaunch }}" hint-placeholder-val="{{ true }}">LAUNCHING</sc-if><sc-if value="{{ phPlay }}" hint-placeholder-val="{{ false }}">NOW PLAYING · {{ playMin }} MIN</sc-if><sc-if value="{{ phUp }}" hint-placeholder-val="{{ false }}">GAME CLOSED</sc-if></span>
+<h2 style="position: relative; margin: 0; font-weight: 800; font-stretch: 125%; font-size: 64px; line-height: 1; text-transform: uppercase; color: #FFFFFF">{{ pg.title }}</h2>
+<sc-if value="{{ phLaunch }}" hint-placeholder-val="{{ true }}"><p role="status" style="position: relative; margin: 0; display: flex; align-items: center; gap: 12px; font-size: 20px; color: #D5D9DE"><svg class="spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>{{ launchLine }}</p></sc-if>
+<sc-if value="{{ phPlay }}" hint-placeholder-val="{{ false }}">
+<p style="position: relative; margin: 0; font-size: 18px; color: #C9CED4">The game has the screen. Stault syncs your save when it closes.</p>
+<button onClick="{{ quit }}" style="position: relative; min-height: 56px; padding: 0 28px; border: 0; border-radius: 10px; background: #ECEEF0; color: #0B0C0E; font-weight: 800; font-size: 18px; letter-spacing: 0.05em; text-transform: uppercase">Quit game</button>
+</sc-if>
+<sc-if value="{{ phUp }}" hint-placeholder-val="{{ false }}"><p role="status" style="position: relative; margin: 0; display: flex; align-items: center; gap: 12px; font-size: 20px; color: #D5D9DE"><svg class="spin" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>Uploading save to vault.lan…</p></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-live="polite" class="rise" style="position: absolute; right: 28px; bottom: 70px; z-index: 40; width: 420px; display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 12px; background: #1D2126; border: 1px solid #323840; box-shadow: 0 18px 40px rgba(0,0,0,.55)">
+<span aria-hidden="true" style="flex: 0 0 auto; display: block; width: 10px; height: 10px; margin-top: 7px; border-radius: 50%; background: {{ A }}"></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 700; font-size: 17px">{{ toast.text }}</span><span style="font-size: 15px; color: #A9B0B8">{{ toast.sub }}</span></span>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","options":["#C5F04A","#5BE7C4","#FFB648","#8AB4FF"],"default":"#C5F04A","section":"Prototype"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const G = (id, title, dev, type, size, installed, hours, last, rank, save, saves, when, from, added, cover, ink, blurb) =>
+      ({ id, title, dev, type, size, installed, hours, last, rank, save, saves, when, from, added, cover, ink, blurb, steam: installed });
+    this.state = {
+      screen: 'home', prev: 'home', overlay: null,
+      hz: 0, hi: [0, 0], lt: 0, li: 0, gf: 0, df: 0, sf: 0, mi: 0, qi: 0, mf: 0, vf: 0,
+      gameId: 'saltmarsh', phase: null, toast: null,
+      opt: { up: true, pull: true, throttle: true },
+      queue: [{ id: 'kiln', pct: 58, paused: false, stage: 'download' }],
+      games: [
+        G('saltmarsh', 'Saltmarsh', 'Low Tide Co.', 'WINDOWS_PORTABLE', 3.2, true, 41.5, '2 h ago', 1, 'synced', 9, 'Today 14:05', 'self', 9, 'radial-gradient(circle at 72% 30%, #ffd27a 0 9%, rgba(255,210,122,0) 9.5%), linear-gradient(180deg, #17324a 0%, #2f5e6b 50%, #c8955a 50.5%, #6e4b2a 100%)', '#FFF4E0', 'Sail a flooded coastline in a hand-built skiff, mapping tide pools and trading with the stilt towns.'),
+        G('glasswing', 'Glasswing', 'Moth & Lamp', 'WINDOWS_PORTABLE', 0.9, true, 14.3, 'Yesterday', 2, 'synced', 5, 'Yesterday 21:40', 'self', 8, 'conic-gradient(from 200deg at 50% 60%, #7fd6ff, #c3a6ff, #ffb3d9, #7fd6ff)', '#1B1430', 'A precision platformer about a moth that refuses to fly toward the light.'),
+        G('hollow', 'Hollow Signal', 'Kestrel Works', 'WINDOWS_SETUP', 11.8, true, 12.2, '3 days ago', 3, 'conflict', 6, 'Today 08:14', 'other', 7, 'repeating-radial-gradient(circle at 50% 115%, rgba(255,92,70,.85) 0 2px, rgba(0,0,0,0) 2.5px 16px), linear-gradient(180deg, #0d0a17 0%, #2a1238 100%)', '#FFD9D2', 'A numbers station keeps broadcasting from an island that sank in 1962.'),
+        G('orbital', 'Orbital Gardens', 'Paperplane Labs', 'WINDOWS_PORTABLE', 1.1, true, 87.0, 'Last week', 4, 'cloud', 10, 'Today 19:20', 'other', 6, 'radial-gradient(circle at 50% 58%, #9be38c 0 18%, rgba(0,0,0,0) 18.5%), radial-gradient(circle at 50% 58%, rgba(0,0,0,0) 0 27%, rgba(155,227,140,.35) 27.5% 28.5%, rgba(0,0,0,0) 29%), linear-gradient(160deg, #0f2a2a 0%, #174241 100%)', '#E8FFE0', 'Grow a greenhouse ring around a dying moon.'),
+        G('lanterns', 'Paper Lanterns', 'Two Rivers', 'WINDOWS_PORTABLE', 1.9, true, 9.4, 'Last month', 5, 'synced', 3, 'Oct 30', 'self', 10, 'radial-gradient(circle at 30% 40%, #ffcf6e 0 6%, rgba(255,207,110,.25) 6.5% 14%, rgba(0,0,0,0) 14.5%), radial-gradient(circle at 68% 62%, #ffcf6e 0 5%, rgba(255,207,110,.22) 5.5% 12%, rgba(0,0,0,0) 12.5%), linear-gradient(180deg, #14122b 0%, #2b2147 100%)', '#FFF1D6', 'One night, one river festival, and the letters your grandmother never sent.'),
+        G('kiln', 'Kiln', 'Clayworks', 'WINDOWS_PORTABLE', 5.3, false, 33.0, 'January', 9, 'cloud', 7, 'Jan 12', 'other', 1, 'radial-gradient(ellipse at 50% 100%, #ff9a3c 0 30%, rgba(0,0,0,0) 60%), linear-gradient(180deg, #2b1d16 0%, #4a2a18 100%)', '#FFE9D0', 'Fire pottery, trade it downriver, keep the kiln burning through winter.'),
+        G('lowdiner', 'Low Orbit Diner', 'Night Owl Co-op', 'LINUX_PORTABLE', 0.7, false, 0, 'Never', 9, 'none', 0, '', 'self', 2, 'radial-gradient(circle at 70% 25%, #fff 0 1.5%, rgba(0,0,0,0) 2%), radial-gradient(circle at 25% 55%, #fff 0 1%, rgba(0,0,0,0) 1.5%), linear-gradient(180deg, #0b1d3a 0%, #1f4e8c 60%, #ff8fa3 100%)', '#FFFFFF', 'Flip pancakes for astronauts on a station that is very slowly falling. Native Linux build.'),
+        G('northbound', 'Northbound', 'Fieldnote Games', 'WINDOWS_SETUP', 24.6, false, 19.0, 'March', 9, 'cloud', 4, 'March 3', 'other', 3, 'linear-gradient(170deg, #e9eef2 0%, #c8d3dc 55%, #5d7487 55.5%, #2c3e50 100%)', '#12202C', 'Lead a caravan across a frozen continent. Every mile costs fuel, food or a friend.'),
+        G('ember', 'Ember Protocol', 'Redline Studio', 'WINDOWS_PORTABLE', 2.4, false, 0, 'Never', 9, 'none', 0, '', 'self', 4, 'linear-gradient(135deg, rgba(0,0,0,0) 0 46%, #ff7a2f 46% 54%, rgba(0,0,0,0) 54%), linear-gradient(180deg, #1a0f0a 0%, #3b1608 100%)', '#FFE7D6', 'Breach a burning arcology floor by floor.'),
+        G('ironwood', 'Ironwood Keep', 'Old Oak Interactive', 'WINDOWS_SETUP', 38.2, false, 0, 'Never', 9, 'none', 0, '', 'self', 5, 'radial-gradient(circle at 30% 25%, rgba(214,196,120,.5) 0 10%, rgba(0,0,0,0) 30%), linear-gradient(180deg, #1c2418 0%, #2e3b23 60%, #121710 100%)', '#EFE6C4', 'A slow, systemic fantasy RPG set inside one enormous castle.')
+      ]
+    };
+    const W = (v, kind, size, ea) => ({ v, os: 'Windows', kind, size, ea: !!ea });
+    const Lx = (v, size) => ({ v, os: 'Linux', kind: 'Portable', size, ea: false });
+    const V = {
+      saltmarsh: [W('1.4.2', 'Portable', 3.2), Lx('1.4.2', 3.0)], glasswing: [W('1.2.0', 'Portable', 0.9), Lx('1.2.0', 0.8)],
+      hollow: [W('2.0.1', 'Setup', 11.8)], orbital: [W('0.9.7', 'Portable', 1.1, true), W('0.9.5', 'Portable', 1.0, true)],
+      lanterns: [W('1.0.0', 'Portable', 1.9)], kiln: [W('1.6.0', 'Portable', 5.3), Lx('1.6.0', 5.1)], lowdiner: [Lx('1.1.0', 0.7)],
+      northbound: [W('1.12', 'Setup', 24.6), W('1.12', 'Portable', 22.9), W('1.0', 'Setup', 18.1)],
+      ember: [W('1.0.6', 'Portable', 2.4)], ironwood: [W('3.1.4', 'Setup', 38.2), W('3.0.0', 'Setup', 36.9)]
+    };
+    this.state.games = this.state.games.map(g => Object.assign(g, { versions: V[g.id], vi: 0, ver: V[g.id][0].v }));
+  }
+
+  componentDidMount() { this.timer = setInterval(() => this.tick(), 500); }
+  componentWillUnmount() { clearInterval(this.timer); clearTimeout(this.tt); }
+
+  acc() { return this.props.accent || '#C5F04A'; }
+  find(id) { return this.state.games.find(g => g.id === id); }
+  upd(id, patch, games) { return (games || this.state.games).map(g => (g.id === id ? Object.assign({}, g, patch) : g)); }
+  toast(text, sub) { clearTimeout(this.tt); this.setState({ toast: { text, sub: sub || '' } }); this.tt = setTimeout(() => this.setState({ toast: null }), 3800); }
+
+  lists() {
+    const g = this.state.games;
+    const recent = g.filter(x => x.installed).sort((a, b) => a.rank - b.rank);
+    const fresh = g.filter(x => !x.installed).sort((a, b) => a.added - b.added);
+    return { recent, fresh, lib: [recent, g.slice().sort((a, b) => a.title.localeCompare(b.title)), fresh] };
+  }
+  saveList() { return this.state.games.filter(g => g.installed || g.saves > 0); }
+  conflictGame() { return this.state.games.find(g => g.save === 'conflict'); }
+
+  tick() {
+    const s = this.state, ch = {};
+    const qi = s.queue.findIndex(d => !d.paused);
+    if (qi > -1) {
+      const q = s.queue.slice(), d = Object.assign({}, q[qi]), g = this.find(d.id);
+      const slow = s.opt.throttle && s.phase && s.phase.kind === 'playing';
+      if (d.stage === 'download') { d.pct += slow ? 0.4 : 2.4; if (d.pct >= 100) { d.pct = 0; d.stage = 'extract'; } }
+      else if (d.stage === 'extract') { d.pct += 12; if (d.pct >= 100) { d.pct = 0; d.stage = g.type === 'WINDOWS_SETUP' ? 'setup' : 'done'; } }
+      else if (d.stage === 'setup') { d.pct += 10; if (d.pct >= 100) d.stage = 'done'; }
+      if (d.stage === 'done') {
+        q.splice(qi, 1); ch.queue = q;
+        ch.games = this.upd(d.id, { installed: true, steam: true, rank: 0, last: 'Never', save: g.save === 'cloud' ? 'synced' : g.save });
+        setTimeout(() => this.toast(g.title + ' is ready to play', (g.save === 'cloud' ? 'Save v' + g.saves + ' restored · ' : '') + 'Added to your Steam library'), 0);
+      } else { q[qi] = d; ch.queue = q; }
+    }
+    if (s.phase) {
+      const p = Object.assign({}, s.phase, { t: s.phase.t + 1 });
+      if (p.kind === 'launch' && p.t >= 5) { p.kind = 'playing'; p.t = 0; }
+      if (p.kind === 'upload' && p.t >= 5) {
+        const g = this.find(p.id), n = Math.min(10, g.saves + 1);
+        ch.games = this.upd(p.id, { save: 'synced', saves: n, when: 'Just now', from: 'self', last: 'Just now', rank: 0 }, ch.games);
+        ch.phase = null;
+        setTimeout(() => this.toast('Save uploaded · ' + g.title, 'Version ' + n + ' of 10 on vault.lan'), 0);
+      } else ch.phase = p;
+    }
+    if (Object.keys(ch).length) this.setState(ch);
+  }
+
+  open(id, from) { this.setState({ screen: 'game', prev: from, gameId: id, gf: 0, overlay: null }); }
+
+  primary(id) {
+    const s = this.state, g = this.find(id);
+    const q = s.queue.find(d => d.id === id);
+    if (q) { this.setState({ queue: s.queue.map(d => (d.id === id ? Object.assign({}, d, { paused: !d.paused }) : d)) }); return; }
+    if (!g.installed) {
+      if (g.versions.length > 1) { this.setState({ overlay: 'version', vf: 0, gameId: id }); return; }
+      this.install(id, 0);
+      return;
+    }
+    if (g.save === 'conflict') { this.setState({ overlay: 'conflict', mf: 0, gameId: id }); return; }
+    this.setState({ phase: { kind: 'launch', id, t: 0, pulled: g.save === 'cloud' && s.opt.pull }, games: g.save === 'cloud' && s.opt.pull ? this.upd(id, { save: 'synced' }) : s.games });
+  }
+
+  install(id, vi) {
+    const s = this.state, g = this.find(id), v = g.versions[vi] || g.versions[0];
+    const type = v.os === 'Linux' ? 'LINUX_PORTABLE' : v.kind === 'Setup' ? 'WINDOWS_SETUP' : 'WINDOWS_PORTABLE';
+    this.setState({ overlay: null, games: this.upd(id, { vi, ver: v.v, size: v.size, type }), queue: s.queue.concat([{ id, pct: 0, paused: false, stage: 'download' }]) });
+    this.toast('Downloading ' + g.title + ' v' + v.v, v.os + ' · ' + v.kind.toLowerCase() + ' · ' + v.size.toFixed(1) + ' GB' + (g.save === 'cloud' ? ' · save v' + g.saves + ' restores after' : ''));
+  }
+
+  resolve(which) {
+    const g = this.find(this.state.gameId);
+    this.setState({ overlay: null, games: this.upd(g.id, { save: 'synced', saves: Math.min(10, g.saves + 1), when: 'Just now', from: which === 'local' ? 'self' : 'other' }) });
+    this.toast(which === 'local' ? 'Kept the save from this Deck' : 'Using the save from Desktop PC', 'The other copy stays on vault.lan as a version');
+  }
+
+  gameAction(i) {
+    const s = this.state, g = this.find(s.gameId);
+    this.setState({ gf: i });
+    if (i === 0) this.primary(g.id);
+    if (i === 1) this.setState({ screen: 'saves', sf: Math.max(0, this.saveList().findIndex(x => x.id === g.id)) });
+    if (i === 2) {
+      if (!g.installed) { this.toast('Install ' + g.title + ' first', 'Installed games are added to Steam automatically'); return; }
+      this.setState({ games: this.upd(g.id, { steam: !g.steam }) });
+      this.toast(g.steam ? 'Removed from Steam library' : 'Added to Steam library', g.steam ? 'Shortcut deleted' : 'Non-Steam shortcut with cover, hero and logo art');
+    }
+    if (i === 3) this.toast(g.type === 'LINUX_PORTABLE' ? 'Runs natively' : 'Runs with Proton 10', 'Change the runner per game in desktop mode');
+  }
+
+  saveAction(g) {
+    if (!g) return;
+    if (g.save === 'conflict') { this.setState({ overlay: 'conflict', mf: 0, gameId: g.id }); return; }
+    if (g.save === 'cloud' && g.installed) { this.setState({ games: this.upd(g.id, { save: 'synced' }) }); this.toast('Pulled save · ' + g.title, 'Version ' + g.saves + ' from Desktop PC'); return; }
+    if (g.save === 'cloud') { this.toast('Install ' + g.title + ' first', 'Its save restores automatically'); return; }
+    this.toast(g.title + ' is up to date', g.saves ? 'Version ' + g.saves + ' on vault.lan' : 'Nothing uploaded yet');
+  }
+
+  menuGo(i) {
+    const k = ['home', 'library', 'downloads', 'saves', 'exit'][i];
+    if (k === 'exit') { if (this.exitEl) this.exitEl.click(); return; }
+    this.setState({ screen: k, overlay: null, mi: i });
+  }
+
+  quickAct(i) {
+    const s = this.state, c = this.conflictGame();
+    this.setState({ qi: i });
+    if (i === 0 && s.queue[0]) this.primary(s.queue[0].id);
+    if (i === 1 && c) this.setState({ overlay: 'conflict', mf: 0, gameId: c.id });
+    const k = ['', '', 'up', 'pull', 'throttle'][i];
+    if (k) this.setState({ opt: Object.assign({}, s.opt, { [k]: !s.opt[k] }) });
+  }
+
+  press(btn) {
+    const s = this.state, L = this.lists();
+    if (s.phase) { if (s.phase.kind === 'playing' && (btn === 'a' || btn === 'b')) this.setState({ phase: { kind: 'upload', id: s.phase.id, t: 0 } }); return; }
+    if (s.overlay === 'conflict') {
+      if (btn === 'left' || btn === 'right') this.setState({ mf: s.mf ? 0 : 1 });
+      if (btn === 'a') this.resolve(s.mf === 0 ? 'local' : 'cloud');
+      if (btn === 'b') this.setState({ overlay: null });
+      return;
+    }
+    if (s.overlay === 'version') {
+      const n = this.find(s.gameId).versions.length;
+      if (btn === 'up') this.setState({ vf: Math.max(0, s.vf - 1) });
+      if (btn === 'down') this.setState({ vf: Math.min(n - 1, s.vf + 1) });
+      if (btn === 'a') this.install(s.gameId, s.vf);
+      if (btn === 'b') this.setState({ overlay: null });
+      return;
+    }
+    if (btn === 'menu') { this.setState({ overlay: s.overlay === 'menu' ? null : 'menu', mi: Math.max(0, ['home', 'library', 'downloads', 'saves'].indexOf(s.screen === 'game' ? s.prev : s.screen)) }); return; }
+    if (btn === 'quick') { this.setState({ overlay: s.overlay === 'quick' ? null : 'quick', qi: 0 }); return; }
+    if (s.overlay === 'menu') {
+      if (btn === 'up') this.setState({ mi: Math.max(0, s.mi - 1) });
+      if (btn === 'down') this.setState({ mi: Math.min(4, s.mi + 1) });
+      if (btn === 'a') this.menuGo(s.mi);
+      if (btn === 'b') this.setState({ overlay: null });
+      return;
+    }
+    if (s.overlay === 'quick') {
+      if (btn === 'up') this.setState({ qi: Math.max(0, s.qi - 1) });
+      if (btn === 'down') this.setState({ qi: Math.min(4, s.qi + 1) });
+      if (btn === 'a') this.quickAct(s.qi);
+      if (btn === 'b') this.setState({ overlay: null });
+      return;
+    }
+    if (s.screen === 'home') {
+      const rows = [L.recent, L.fresh], hi = s.hi.slice(), n = rows[s.hz].length;
+      if (btn === 'left') hi[s.hz] = Math.max(0, hi[s.hz] - 1);
+      if (btn === 'right') hi[s.hz] = Math.min(n - 1, hi[s.hz] + 1);
+      if (btn === 'up' || btn === 'down') { const z = btn === 'up' ? 0 : 1; if (rows[z].length) { hi[z] = Math.min(hi[z], rows[z].length - 1); this.setState({ hz: z, hi }); } return; }
+      if (btn === 'a') { const g = rows[s.hz][Math.min(hi[s.hz], n - 1)]; if (g) this.open(g.id, 'home'); return; }
+      this.setState({ hi });
+      return;
+    }
+    if (s.screen === 'library') {
+      const list = L.lib[s.lt], C = 6;
+      if (btn === 'l1' || btn === 'r1') { this.setState({ lt: (s.lt + (btn === 'r1' ? 1 : 2)) % 3, li: 0 }); return; }
+      if (btn === 'left') this.setState({ li: Math.max(0, s.li - 1) });
+      if (btn === 'right') this.setState({ li: Math.min(list.length - 1, s.li + 1) });
+      if (btn === 'up') this.setState({ li: Math.max(0, s.li - C) });
+      if (btn === 'down') this.setState({ li: Math.min(list.length - 1, s.li + C) });
+      if (btn === 'a' && list[s.li]) this.open(list[s.li].id, 'library');
+      if (btn === 'b') this.setState({ screen: 'home' });
+      return;
+    }
+    if (s.screen === 'game') {
+      if (btn === 'left') this.setState({ gf: Math.max(0, s.gf - 1) });
+      if (btn === 'right') this.setState({ gf: Math.min(3, s.gf + 1) });
+      if (btn === 'a') this.gameAction(s.gf);
+      if (btn === 'x') this.gameAction(1);
+      if (btn === 'b') this.setState({ screen: s.prev });
+      return;
+    }
+    if (s.screen === 'downloads') {
+      if (btn === 'up') this.setState({ df: Math.max(0, s.df - 1) });
+      if (btn === 'down') this.setState({ df: Math.min(Math.max(0, s.queue.length - 1), s.df + 1) });
+      if (btn === 'a' && s.queue[s.df]) this.primary(s.queue[s.df].id);
+      if (btn === 'b') this.setState({ screen: 'home' });
+      return;
+    }
+    if (s.screen === 'saves') {
+      const list = this.saveList();
+      if (btn === 'up') this.setState({ sf: Math.max(0, s.sf - 1) });
+      if (btn === 'down') this.setState({ sf: Math.min(list.length - 1, s.sf + 1) });
+      if (btn === 'a') this.saveAction(list[s.sf]);
+      if (btn === 'b') this.setState({ screen: 'home' });
+    }
+  }
+
+  saveInfo(g) {
+    const A = this.acc(), ph = this.state.phase;
+    if (ph && ph.kind === 'upload' && ph.id === g.id) return { label: 'Uploading save…', sub: 'Compressing with Ludusavi', tone: A, warn: false };
+    if (g.save === 'synced') return { label: 'Saves synced', sub: 'v' + g.saves + ' · ' + g.when + ' · ' + (g.from === 'self' ? 'this Deck' : 'Desktop PC'), tone: '#A9B0B8', warn: false };
+    if (g.save === 'cloud') return { label: 'Newer save on server', sub: 'v' + g.saves + ' from Desktop PC · ' + g.when, tone: A, warn: false };
+    if (g.save === 'conflict') return { label: 'Save conflict', sub: 'Changed here and on Desktop PC', tone: '#FFB648', warn: true };
+    return { label: 'No cloud saves yet', sub: 'Uploads after you play', tone: '#A9B0B8', warn: false };
+  }
+
+  renderVals() {
+    const s = this.state, A = this.acc(), L = this.lists();
+    const ring = on => (on ? '0 0 0 3px ' + A + ', 0 0 30px rgba(197,240,74,.32)' : '0 0 0 0 rgba(0,0,0,0)');
+    const qOf = id => s.queue.find(d => d.id === id);
+    const free = !s.overlay;
+    const tile = (g, on, pick) => {
+      const q = qOf(g.id);
+      return Object.assign({}, g, {
+        on, ring: ring(on), scale: on ? 'scale(1.06)' : 'scale(1)', capInk: on ? '#ECEEF0' : '#A9B0B8',
+        queued: !!q, bar: q ? (q.stage === 'download' ? q.pct : 100).toFixed(1) : '0',
+        meta: q ? (q.paused ? 'Paused · ' : 'Downloading · ') + Math.floor(q.stage === 'download' ? q.pct : 100) + '%' : g.installed ? g.last : 'Not installed',
+        warn: g.save === 'conflict', pick
+      });
+    };
+    const home = s.screen === 'home';
+    const recent = L.recent.map((g, i) => tile(g, home && free && s.hz === 0 && s.hi[0] === i, () => this.open(g.id, 'home')));
+    const fresh = L.fresh.map((g, i) => tile(g, home && free && s.hz === 1 && s.hi[1] === i, () => this.open(g.id, 'home')));
+    const hf = (s.hz === 0 ? L.recent[s.hi[0]] : L.fresh[s.hi[1]]) || L.recent[0] || s.games[0];
+    const i0 = s.hz === 0 ? s.hi[0] : 0;
+    const shift = i0 >= 1 ? Math.max(0, 490 + (i0 - 1) * 196 + 176 - 1160) : 0;
+    const libList = L.lib[s.lt];
+    const lib = libList.map((g, i) => tile(g, s.screen === 'library' && free && s.li === i, () => { this.setState({ li: i }); this.open(g.id, 'library'); }));
+    const ltabs = [['Installed', L.lib[0].length], ['All games', L.lib[1].length], ['Not installed', L.lib[2].length]].map(([label, n], i) => ({ label, n, on: s.lt === i, bg: s.lt === i ? '#ECEEF0' : 'rgba(0,0,0,0)', ink: s.lt === i ? '#0B0C0E' : '#C9CED4', go: () => this.setState({ lt: i, li: 0 }) }));
+    const g = this.find(s.gameId) || s.games[0], gq = qOf(g.id), run = s.phase && s.phase.id === g.id;
+    let prim = { label: 'Play', icon: 'play' };
+    if (run) prim = { label: 'Playing', icon: 'busy' };
+    else if (gq) prim = gq.stage === 'download' ? { label: (gq.paused ? 'Resume · ' : 'Pause · ') + Math.floor(gq.pct) + '%', icon: gq.paused ? 'play' : 'pause' } : { label: gq.stage === 'extract' ? 'Extracting…' : 'Installing…', icon: 'busy' };
+    else if (!g.installed) prim = { label: 'Install', icon: 'down' };
+    const gb = i => ({ ring: ring(s.screen === 'game' && free && s.gf === i), go: () => this.gameAction(i) });
+    const dls = s.queue.map((d, i) => {
+      const x = this.find(d.id), on = s.screen === 'downloads' && free && s.df === i;
+      const active = i === s.queue.findIndex(y => !y.paused);
+      return Object.assign({}, x, { pct: Math.floor(d.stage === 'download' ? d.pct : 100), w: (d.stage === 'download' ? d.pct : 100).toFixed(1), stageText: d.stage === 'download' ? (d.paused ? 'Paused' : active ? (s.opt.throttle && s.phase && s.phase.kind === 'playing' ? 'Downloading · limited while playing' : 'Downloading · 46.8 MB/s') : 'Queued') : d.stage === 'extract' ? 'Extracting' : 'Running installer', got: (x.size * (d.stage === 'download' ? d.pct : 100) / 100).toFixed(1) + ' of ' + x.size.toFixed(1) + ' GB', ring: ring(on), bg: on ? '#1D2126' : 'rgba(22,25,29,.85)', act: () => { this.setState({ df: i }); this.primary(d.id); }, hint: d.paused ? 'Resume' : 'Pause' });
+    });
+    const sl = this.saveList().map((x, i) => {
+      const on = s.screen === 'saves' && free && s.sf === i;
+      return Object.assign({}, x, { sv: this.saveInfo(x), ring: ring(on), bg: on ? '#1D2126' : 'rgba(22,25,29,.85)', act: () => { this.setState({ sf: i }); this.saveAction(x); } });
+    });
+    const sel = sl[Math.min(s.sf, sl.length - 1)] || sl[0];
+    const vers = x => Array.from({ length: Math.min(3, x.saves) }, (_, i) => ({ v: 'v' + (x.saves - i), when: i === 0 ? x.when : ['Nov 18, 21:44', 'Nov 16, 19:02'][i - 1], dev: i === 0 ? (x.from === 'self' ? 'This Deck' : 'Desktop PC') : i % 2 ? 'Desktop PC' : 'This Deck' }));
+    const menu = ['Home', 'Library', 'Downloads', 'Saves'].map((label, i) => ({ label, on: s.overlay === 'menu' && s.mi === i, bg: s.overlay === 'menu' && s.mi === i ? '#262B31' : 'rgba(0,0,0,0)', bar: s.overlay === 'menu' && s.mi === i ? A : 'rgba(0,0,0,0)', go: () => this.menuGo(i), badge: i === 2 && s.queue.length ? s.queue.length + '' : i === 3 && this.conflictGame() ? '!' : '', hasBadge: (i === 2 && s.queue.length > 0) || (i === 3 && !!this.conflictGame()) }));
+    const qf = i => ({ bg: s.overlay === 'quick' && s.qi === i ? '#262B31' : 'rgba(0,0,0,0)', ring: ring(s.overlay === 'quick' && s.qi === i), go: () => this.quickAct(i) });
+    const tg = k => ({ on: s.opt[k], bg: s.opt[k] ? A : '#3A4048', x: s.opt[k] ? '20px' : '2px', knob: s.opt[k] ? '#0B0C0E' : '#C9CED4' });
+    const q0 = s.queue[0] ? Object.assign({}, this.find(s.queue[0].id), { pct: Math.floor(s.queue[0].stage === 'download' ? s.queue[0].pct : 100), w: (s.queue[0].stage === 'download' ? s.queue[0].pct : 100).toFixed(1), hint: s.queue[0].paused ? 'Resume' : 'Pause' }) : null;
+    const cg = this.conflictGame();
+    const ph = s.phase, pg = ph ? this.find(ph.id) : g;
+    const titles = { library: 'Library', downloads: 'Downloads', saves: 'Saves', game: s.prev === 'library' ? 'Library' : 'Home' };
+    const press = b => () => this.press(b);
+    return {
+      A, setRoot: el => { this.root = el; }, setExit: el => { this.exitEl = el; },
+      onKey: e => {
+        const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Enter: 'a', Escape: 'b', Backspace: 'b', a: 'a', b: 'b', x: 'x', q: 'l1', e: 'r1', m: 'menu', v: 'quick' };
+        const k = map[e.key] || map[(e.key || '').toLowerCase()];
+        if (!k) return;
+        e.preventDefault(); e.stopPropagation(); this.press(k);
+      },
+      ambient: s.screen === 'home' ? hf.cover : s.screen === 'game' ? g.cover : 'linear-gradient(180deg, #111316 0%, #0B0C0E 100%)',
+      sHome: home, sLib: s.screen === 'library', sGame: s.screen === 'game', sDl: s.screen === 'downloads', sSv: s.screen === 'saves',
+      notHome: !home, topTitle: titles[s.screen] || '',
+      dlTop: s.queue.length ? Math.floor(s.queue[0].stage === 'download' ? s.queue[0].pct : 100) + '%' : '', hasDlTop: s.queue.length > 0,
+      syncTop: cg ? '1 conflict' : 'Synced', syncTone: cg ? '#FFB648' : '#A9B0B8',
+      r0: recent[0] || tile(s.games[0], false, () => {}), rRest: recent.slice(1), hasR0: recent.length > 0, shelfX: 'translateX(-' + shift + 'px)',
+      fresh, hf: Object.assign({}, hf, { sv: this.saveInfo(hf), metaLine: hf.installed ? (hf.hours ? hf.hours.toFixed(1) + ' h played · last played ' + hf.last : 'Not played yet') : (qOf(hf.id) ? 'Downloading from vault.lan' : 'On vault.lan · not installed') }),
+      ltabs, lib, libEmpty: lib.length === 0,
+      g: Object.assign({}, g, { sv: this.saveInfo(g), typeLabel: { WINDOWS_PORTABLE: 'WIN · PORTABLE', WINDOWS_SETUP: 'WIN · SETUP', LINUX_PORTABLE: 'LINUX · NATIVE' }[g.type], runner: g.type === 'LINUX_PORTABLE' ? 'Native Linux' : 'Proton 10', sizeText: g.size.toFixed(1) + ' GB', hoursText: g.hours ? g.hours.toFixed(1) + ' h' : '—', steamText: g.steam ? 'In Steam library' : 'Not in Steam library', steamFill: g.steam ? A : 'none', heroTag: g.installed ? 'INSTALLED · v' + g.ver : g.versions.length > 1 ? g.versions.length + ' VERSIONS ON SERVER' : 'v' + g.ver + ' ON SERVER', showRunner: g.installed }),
+      verOpen: s.overlay === 'version', vg: this.find(s.gameId) || s.games[0],
+      vrows: (this.find(s.gameId) || s.games[0]).versions.map((v, i) => ({ label: 'v' + v.v + (i === 0 ? ' · default' : '') + (v.ea ? ' · early access' : ''), kind: v.os + ' · ' + v.kind.toLowerCase() + ' · ' + (v.os === 'Linux' ? 'runs natively' : 'runs with Proton 10'), size: v.size.toFixed(1) + ' GB', ring: ring(s.overlay === 'version' && s.vf === i), bg: s.vf === i ? '#1D2126' : '#111316', go: () => this.install(s.gameId, i) })),
+      closeVersion: () => this.setState({ overlay: null }),
+      gVers: vers(g), gHasVers: g.saves > 0, gNoVers: !g.saves,
+      prim, pPlay: prim.icon === 'play', pPause: prim.icon === 'pause', pDown: prim.icon === 'down', pBusy: prim.icon === 'busy',
+      gb0: gb(0), gb1: gb(1), gb2: gb(2), gb3: gb(3),
+      dlCur: dls[0] || { title: '', cover: '', ink: '', stageText: '', pct: 0, w: '0', got: '', hint: '', bg: '', ring: '', act: () => {} }, dlRest: dls.slice(1), hasCur: dls.length > 0, noCur: dls.length === 0, hasRest: dls.length > 1,
+      sl, sel: sel || { sv: {}, title: '', cover: '' }, selVers: sel ? vers(sel) : [],
+      menuOpen: s.overlay === 'menu', quickOpen: s.overlay === 'quick', conflictOpen: s.overlay === 'conflict', anyPanel: s.overlay === 'menu' || s.overlay === 'quick',
+      menu, exitBg: s.overlay === 'menu' && s.mi === 4 ? '#262B31' : 'rgba(0,0,0,0)', exitBar: s.overlay === 'menu' && s.mi === 4 ? A : 'rgba(0,0,0,0)',
+      closePanel: () => this.setState({ overlay: null }),
+      qf0: qf(0), qf1: qf(1), qf2: qf(2), qf3: qf(3), qf4: qf(4),
+      q0: q0 || { title: 'Nothing downloading', pct: 0, w: '0', hint: '', cover: 'linear-gradient(#16191D,#16191D)' }, hasQ0: !!q0, noQ0: !q0,
+      cg: cg || { title: '' }, hasCg: !!cg, noCg: !cg,
+      tUp: tg('up'), tPull: tg('pull'), tThrottle: tg('throttle'),
+      mg: this.find(s.gameId) || s.games[0], m0: { ring: ring(s.mf === 0), bg: s.mf === 0 ? '#1D2126' : '#111316', go: () => this.resolve('local') }, m1: { ring: ring(s.mf === 1), bg: s.mf === 1 ? '#1D2126' : '#111316', go: () => this.resolve('cloud') },
+      closeConflict: () => this.setState({ overlay: null }),
+      hasPhase: !!ph, phLaunch: !!(ph && ph.kind === 'launch'), phPlay: !!(ph && ph.kind === 'playing'), phUp: !!(ph && ph.kind === 'upload'), pg,
+      launchLine: ph && ph.kind === 'launch' ? (ph.pulled && ph.t < 3 ? 'Pulling save v' + pg.saves + ' from Desktop PC…' : 'Starting with ' + (pg.type === 'LINUX_PORTABLE' ? 'the native runtime' : 'Proton 10') + '…') : '',
+      playMin: ph && ph.kind === 'playing' ? ph.t : 0, quit: press('b'),
+      toast: s.toast || { text: '', sub: '' }, hasToast: !!s.toast,
+      pA: press('a'), pB: press('b'), pX: press('x'), pL: press('l1'), pR: press('r1'), pMenu: press('menu'), pQuick: press('quick'),
+      hintA: s.overlay === 'version' ? 'Install' : s.overlay === 'conflict' ? 'Use save' : s.overlay ? 'Select' : s.screen === 'game' && s.gf === 0 ? prim.label.split(' ')[0] : s.screen === 'home' || s.screen === 'library' ? 'Open' : 'Select',
+      showX: s.screen === 'game' && !s.overlay, showTabs: s.screen === 'library' && !s.overlay
+    };
+  }
+}
+</script>
+</body>
+</html>
