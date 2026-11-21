@@ -17,6 +17,9 @@
 	--color-lime: #c5f04a;
 	--color-lime-hi: #e2ff8a;
 	--color-amber: #ffb648;
+	/* Game states in lists: downloading and playing. */
+	--color-sky: #6cb6ff;
+	--color-green: #5fd98a;
 	--color-danger: #ff7a6b;
 
 	--font-sans: "Archivo Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
