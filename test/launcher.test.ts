@@ -9,7 +9,7 @@ import {
 	splitArgs,
 	targetFor,
 } from "../src/bun/launcher/command";
-import { findExecutables, obviousChoice } from "../src/bun/launcher/detect";
+import { findExecutables, findInPrefix, obviousChoice } from "../src/bun/launcher/detect";
 
 const root = mkdtempSync(join(tmpdir(), "stault-launcher-"));
 afterAll(() => rmSync(root, { recursive: true, force: true }));
@@ -69,6 +69,24 @@ describe("finding the program that starts a game", () => {
 	test("an empty folder has no candidates", async () => {
 		const dir = tree("empty", { "data.bin": "x" });
 		expect(obviousChoice(await findExecutables(dir, "windows-exe"))).toBeNull();
+	});
+});
+
+describe("finding a game its installer put in the Wine prefix", () => {
+	test("skips what Wine itself puts on the C: drive", async () => {
+		const driveC = tree("prefix", {
+			"windows/system32/notepad.exe": "x",
+			"Program Files/Internet Explorer/iexplore.exe": "x",
+			"Program Files (x86)/Windows Media Player/wmplayer.exe": "x",
+			"Program Files/Windows NT/Accessories/wordpad.exe": "x",
+			"Program Files (x86)/Hollow Peak/Hollow Peak.exe": "x",
+			"Program Files (x86)/Hollow Peak/unins000.exe": "x",
+		});
+		expect(await findInPrefix(driveC)).toEqual([join("Program Files (x86)", "Hollow Peak", "Hollow Peak.exe")]);
+	});
+
+	test("finds nothing when the game has no prefix", async () => {
+		expect(await findInPrefix(join(root, "no-prefix", "drive_c"))).toEqual([]);
 	});
 });
 

@@ -60,13 +60,32 @@ YAML
 pack "Harbor Lights (v1.0.0) (2024).zip" "$WORK/mac"
 
 
-# Placeholders for the other build types. They are not real programs.
+# Real Windows programs where a compiler is at hand: mingw on this machine, or
+# the one in the Linux test image (dev/linux/up.sh). Otherwise placeholders that can't run.
+if command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+	mingw() { x86_64-w64-mingw32-gcc "$@"; }
+elif docker image inspect stault-linux >/dev/null 2>&1; then
+	mingw() { docker run --rm --platform linux/amd64 -v "$PWD:/seed" -w /seed stault-linux x86_64-w64-mingw32-gcc "$@"; }
+else
+	mingw() { return 1; }
+fi
+# winexe <game|setup> <output>
+winexe() {
+	mingw -O1 -mwindows -o "$2" "samples/$1.c" 2>/dev/null || echo "not a real program" > "$2"
+}
+
 mkdir -p "$WORK/portable/Pixel_Data" "$WORK/portable-old" "$WORK/setup" "$WORK/linux" "$WORK/big"
-echo "not a real program" > "$WORK/portable/Pixel.exe"
+winexe game "$WORK/portable/Pixel.exe"
 echo "data" > "$WORK/portable/Pixel_Data/level0"
-echo "not a real program" > "$WORK/portable-old/Pixel.exe"
-echo "not a real program" > "$WORK/setup/setup.exe"
-echo "data" > "$WORK/setup/data.bin"
+cat > "$WORK/portable/.ludusavi.yaml" <<'YAML'
+Pixel Drift:
+  files:
+    <base>/save.txt: {}
+YAML
+winexe game "$WORK/portable-old/Pixel.exe"
+# The installer copies game.exe to wherever it is told to install.
+winexe setup "$WORK/setup/setup.exe"
+winexe game "$WORK/setup/game.exe"
 printf '#!/bin/sh\necho "Tin Kettle running"; sleep 600\n' > "$WORK/linux/start.sh"
 chmod +x "$WORK/linux/start.sh"
 echo "not a real program" > "$WORK/big/Longhaul.exe"

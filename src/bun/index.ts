@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises";
 import { homedir, hostname } from "node:os";
 import { basename, join } from "node:path";
 import { BrowserView, PATHS, Updater, Utils } from "electrobun/main";
@@ -35,6 +36,8 @@ async function getMainViewUrl(): Promise<string> {
 }
 
 const dataDir = Utils.paths.userData;
+/** Where per-game Wine prefixes live (Linux). */
+const prefixesDir = join(dataDir, "prefixes");
 console.log(`Data folder: ${dataDir}`);
 const { platform } = getState();
 
@@ -93,7 +96,7 @@ const launcher = new Launcher({
 	platform,
 	installs,
 	logsDir: join(Utils.paths.logs, "com.mosattler.stault", "launch"),
-	prefixesDir: join(dataDir, "prefixes"),
+	prefixesDir,
 	client: () => session.client,
 	userId: () => session.userId,
 	game: (gameId) => library.raw(gameId),
@@ -128,7 +131,7 @@ const saves: Saves = new Saves({
 	sevenZip,
 	installs,
 	home: homedir(),
-	prefixesDir: join(dataDir, "prefixes"),
+	prefixesDir,
 	enabled: () => settings.get().saveSync,
 	deviceName: () => settings.get().deviceName,
 	client: () => session.client,
@@ -213,6 +216,8 @@ async function uninstall(gameId: number) {
 	// Credit any playtime still waiting before its record goes with the files.
 	await launcher.flush(gameId);
 	await installs.remove(gameId);
+	// On Linux a Windows game also has a Wine prefix, which may even hold the game itself.
+	await rm(join(prefixesDir, String(gameId)), { recursive: true, force: true });
 	await refreshFolders();
 }
 

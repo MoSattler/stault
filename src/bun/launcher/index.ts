@@ -15,7 +15,7 @@ import {
 	targetFor,
 	type UmuOptions,
 } from "./command";
-import { findExecutables, obviousChoice } from "./detect";
+import { findExecutables, findInPrefix, obviousChoice } from "./detect";
 
 export interface LauncherDeps {
 	platform: Platform;
@@ -48,6 +48,9 @@ function findUmu(): string | null {
 	];
 	return candidates.find((path) => path && existsSync(path)) ?? null;
 }
+
+/** Where umu-launcher keeps the runtime it downloads on first use. */
+const umuDataDir = () => join(process.env.XDG_DATA_HOME || join(homedir(), ".local", "share"), "umu");
 
 const NO_UMU =
 	"Windows games on Linux run through umu-launcher, which isn't installed. Install it from github.com/Open-Wine-Components/umu-launcher, then try again.";
@@ -96,6 +99,12 @@ export class Launcher {
 		if (this.deps.platform !== "linux") return undefined;
 		const umuRun = findUmu();
 		if (!umuRun) throw new Error(NO_UMU);
+		if (!existsSync(umuDataDir())) {
+			this.deps.notify(
+				"Getting Proton ready",
+				"umu-launcher downloads it for the first Windows game, which takes a few minutes.",
+			);
+		}
 		const meta = this.deps.game(gameId)?.metadata;
 		return {
 			umuRun,
@@ -124,11 +133,16 @@ export class Launcher {
 		if (preset && existsSync(join(root, preset))) return join(root, preset);
 
 		const ignored = await this.deps.client().ignoredExecutables().catch(() => []);
-		const candidates = await findExecutables(root, target, ignored);
+		let candidates = await findExecutables(root, target, ignored);
+		// An installer that wasn't told where to install puts the game on the prefix's C: drive.
+		if (!candidates.length && platform === "linux" && target === "windows-exe") {
+			const driveC = join(this.deps.prefixesDir, String(gameId), "drive_c");
+			candidates = (await findInPrefix(driveC, ignored)).map((path) => join(driveC, path));
+		}
 		const choice = obviousChoice(candidates);
 		if (choice) {
 			installs.update(gameId, { executable: choice });
-			return join(root, choice);
+			return within(choice);
 		}
 		if (candidates.length > 1) return { candidates };
 
@@ -193,7 +207,8 @@ export class Launcher {
 			if (this.current?.child === child) this.current = null;
 			this.deps.onRunning(null);
 			this.deps.afterExit(gameId);
-			if (code !== 0 && code !== null && Date.now() - startedAt < 5000) {
+			// Proton takes a while to get going, so a game that fails under it fails later.
+			if (code !== 0 && code !== null && Date.now() - startedAt < (needsUmu ? 30_000 : 5000)) {
 				this.deps.notify(`${title} closed right away`, `Launch log: ${logPath}`);
 			}
 		});

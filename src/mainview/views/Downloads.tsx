@@ -24,7 +24,7 @@ export function SpeedLimitSelect({ id }: { id?: string }) {
 			id={id}
 			value={limit}
 			onChange={(e) => attempt(api.setSpeedLimit({ kib: Number(e.target.value) }))}
-			className="min-h-9 rounded-md border border-line bg-raised px-2 text-[13px] text-ink"
+			className="min-h-9 rounded-md border border-line bg-raised pl-2 pr-7 text-[13px] text-ink"
 		>
 			{SPEED_LIMITS.map((o) => (
 				<option key={o.kib} value={o.kib}>

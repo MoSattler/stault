@@ -48,4 +48,12 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Screen-control tools cannot type into the password field. `hutch dev/sign-in.ts "<data folder>"` signs the dev build into the test server instead; the app prints its data folder on start.
 - When the app window is covered by another window (or the browser pane is hidden), CSS animations pause, so a screenshot can show a page still faded out. The content is there; check the accessibility tree or bring the window forward.
 - The running dev app holds Hutch's build lock. `hutch run build:canary` waits silently until the dev app is closed.
-- Only the macOS build has been run so far. Launching on Windows and Linux (umu-launcher, setup installers) is covered by unit tests of the command builders but has not been run on those systems.
+- The macOS and Linux builds have been run. Launching on Windows (setup installers) is covered by unit tests of the command builders but has not been run there.
+
+## Testing on Linux (`dev/linux/`)
+
+- `./dev/seed.sh`, then `./dev/linux/up.sh`, starts the container `stault-linux`: a Debian 13 desktop (Xvfb, openbox, keyring, umu-launcher) on the test server's Docker network. Inside it the server is `http://gamevault:8080`. `./dev/linux/run.sh` puts this checkout's code into the released Linux app there and starts it.
+- Drive it with `docker exec stault-linux xdotool …`; take a screenshot with `docker exec stault-linux import -window root /tmp/shot.png` and `docker cp`. The window sits at 80,50 on a 1440x900 screen. The user can watch at `vnc://127.0.0.1:5901`. xdotool can type into the password field.
+- A title-bar drag needs pauses between press, moves and release; Electrobun starts the move a moment after the press.
+- Once the image exists, `seed.sh` compiles the Windows samples (`dev/samples/*.c`) into real programs: Pixel Drift opens a message box, Setup Quest's installer copies a game to `/DIR=` or to `C:\Games\Setup Quest`.
+- On an Apple Silicon host the container runs through Rosetta, which can't start Hutch or the system `bwrap`, so nothing is built in the container and current Arch (GTK loads icons through `bwrap`) is no use as its base. Wine sometimes dies at start with an `xsave` assertion in the launch log; start the game again.

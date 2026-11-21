@@ -83,6 +83,18 @@ export async function findExecutables(
 		.map((c) => relative(root, c.path));
 }
 
+// What Wine itself puts on a new C: drive.
+const WINE_OWN =
+	/^(windows|Program Files( \(x86\))?[\\/](Common Files|Internet Explorer|Windows Media Player|Windows NT))[\\/]/i;
+
+/**
+ * Programs an installer added to the C: drive of a Wine prefix, best guess
+ * first. Paths are relative to `driveC`. Empty when the prefix doesn't exist.
+ */
+export async function findInPrefix(driveC: string, ignoredNames: string[] = []): Promise<string[]> {
+	return (await findExecutables(driveC, "windows-exe", ignoredNames)).filter((path) => !WINE_OWN.test(path));
+}
+
 /**
  * The one obvious choice, or null when the user has to decide:
  * a single candidate, or a single candidate at the shallowest level.

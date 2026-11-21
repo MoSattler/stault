@@ -73,6 +73,10 @@
 	#root {
 		height: 100%;
 	}
+	html {
+		/* Native parts (a select's list, scrollbars) follow the app, not the desktop's theme. */
+		color-scheme: dark;
+	}
 	body {
 		background-color: var(--color-carbon);
 		color: var(--color-ink);
@@ -93,6 +97,14 @@
 	button:not(:disabled),
 	select {
 		cursor: pointer;
+	}
+	/* WebKitGTK paints its own light box over a styled select, so the box and its arrow are drawn here. */
+	select {
+		appearance: none;
+		-webkit-appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%23a9b0b8' stroke-width='1.4'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 8px center;
 	}
 	input {
 		user-select: text;

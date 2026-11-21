@@ -209,7 +209,7 @@ export function Home() {
 					<div className="flex-1" />
 					<label className="flex items-center gap-2 text-[12.5px] text-muted">
 						Sort
-						<select value={sort} onChange={(e) => setUi({ sort: e.target.value as Sort })} className="min-h-8 rounded-md border border-line bg-raised px-2 text-[12.5px] text-ink">
+						<select value={sort} onChange={(e) => setUi({ sort: e.target.value as Sort })} className="min-h-8 rounded-md border border-line bg-raised pl-2 pr-7 text-[12.5px] text-ink">
 							<option value="added">Recently added</option>
 							<option value="name">Name</option>
 							<option value="played">Most played</option>
