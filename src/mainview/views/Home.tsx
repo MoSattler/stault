@@ -133,7 +133,7 @@ export function Home() {
 			<div className="flex max-w-[60ch] flex-col gap-2 p-8">
 				<h1 className="stretch-125 text-[28px] font-extrabold uppercase">No games yet</h1>
 				<p className="text-muted">
-					{host} has no games. Put game archives in the server's /files folder and they show up here.
+					{host} has no games.
 				</p>
 			</div>
 		);
