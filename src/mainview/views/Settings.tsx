@@ -97,7 +97,6 @@ function Account() {
 
 export function Settings() {
 	const [tab, setTab] = useState<Tab>("library");
-	const session = useApp((s) => s.session);
 	const rise = useRise();
 	return (
 		<div className={`flex w-full max-w-[1100px] flex-col gap-6 px-8 pb-12 pt-7 ${rise}`}>
@@ -119,7 +118,7 @@ export function Settings() {
 				<div className="flex min-w-0 flex-[999_1_480px] flex-col">
 					{tab === "library" && <LibraryFolders />}
 					{tab === "downloads" && (
-						<Row title="Bandwidth limit" help={`Applies to downloads from ${session ? serverHost(session.serverUrl) : "the server"}.`}>
+						<Row title="Bandwidth limit" help="Applies to all downloads.">
 							<SpeedLimitSelect />
 						</Row>
 					)}

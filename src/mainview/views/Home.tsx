@@ -8,7 +8,7 @@ import { BackIcon, CheckIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
-import { serverHost, useGameStatus } from "../state/derive";
+import { useGameStatus } from "../state/derive";
 import { go, setUi, type Sort, useApp, useUi } from "../state/store";
 
 const open = (game: GameSummary) => go({ name: "game", gameId: game.id });
@@ -102,7 +102,7 @@ const SORTERS: Record<Sort, (a: GameSummary, b: GameSummary) => number> = {
 const grid = "grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-x-[18px] gap-y-[22px]";
 
 /** One row of cards that runs off the right edge and pages sideways, with arrows shown only when it overflows. */
-function Shelf({ id, title, note, children }: { id: string; title: ReactNode; note?: string; children: ReactNode }) {
+function Shelf({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
 	const row = useRef<HTMLDivElement>(null);
 	const [back, setBack] = useState(false);
 	const [forward, setForward] = useState(false);
@@ -154,10 +154,8 @@ export function Home() {
 	const installs = useApp((s) => s.installs);
 	const downloads = useApp((s) => s.downloads);
 	const running = useApp((s) => s.running);
-	const session = useApp((s) => s.session);
 	const sort = useUi((s) => s.sort);
 	const rise = useRise();
-	const host = session ? serverHost(session.serverUrl) : "the server";
 
 	const { recent, fresh, all } = useMemo(() => {
 		const here = new Set([...installs.map((i) => i.gameId), ...downloads.map((d) => d.gameId)]);
@@ -181,9 +179,7 @@ export function Home() {
 		return (
 			<div className="flex max-w-[60ch] flex-col gap-2 p-8">
 				<h1 className="stretch-125 text-[28px] font-extrabold uppercase">No games yet</h1>
-				<p className="text-muted">
-					{host} has no games.
-				</p>
+				<p className="text-muted">Games added to the server show up here.</p>
 			</div>
 		);
 	}
@@ -200,7 +196,7 @@ export function Home() {
 			)}
 
 			{fresh.length > 0 && (
-				<Shelf id="h-new" title={<>New on {host}</>} note="Not installed on this device yet">
+				<Shelf id="h-new" title="Recently added" note="Not installed on this device yet">
 					{fresh.map((game) => (
 						<Tile key={game.id} game={game} caption="genres" className="w-[190px] flex-none" />
 					))}
