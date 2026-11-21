@@ -68,6 +68,8 @@ function LibraryFolders() {
 
 function Saves() {
 	const { enabled, serverOff } = useApp((s) => s.saveSync);
+	const deviceName = useApp((s) => s.deviceName);
+	const [name, setName] = useState(deviceName);
 	const session = useApp((s) => s.session);
 	const host = session ? serverHost(session.serverUrl) : "the server";
 	return (
@@ -87,6 +89,15 @@ function Saves() {
 					{enabled ? "On" : "Off"}
 				</button>
 			</Row>
+			<Row title="Device name" help="Stored with the saves this device uploads, so you can tell where a save came from.">
+				<input
+					aria-label="Device name"
+					value={name}
+					onChange={(e) => setName(e.target.value)}
+					onBlur={() => name.trim() && name !== deviceName && attempt(api.setDeviceName({ name }))}
+					className="min-h-9 w-56 rounded-md border border-line bg-raised px-2.5 text-[13px]"
+				/>
+			</Row>
 			{serverOff && (
 				<p className="pt-3.5 text-[13px] text-amber">
 					Save files are switched off on {host}. Whoever runs it can turn them on with{" "}
@@ -104,25 +115,14 @@ function Saves() {
 function Account() {
 	const session = useApp((s) => s.session);
 	const online = useApp((s) => s.online);
-	const deviceName = useApp((s) => s.deviceName);
-	const [name, setName] = useState(deviceName);
 	if (!session) return null;
 	return (
 		<>
 			<Row title="Server" help={`GameVault ${session.serverVersion} · ${online ? "connected" : "not reachable"}`}>
 				<span className="select-text font-mono text-[12.5px] text-muted">{serverHost(session.serverUrl)}</span>
 			</Row>
-			<Row title="Signed in as" help="Stault keeps a session token in the system keychain, never your password.">
+			<Row title="Signed in as">
 				<span className="font-mono text-[12.5px] text-muted">{session.username}</span>
-			</Row>
-			<Row title="Device name" help="Shown in Stault, so you can tell your devices apart.">
-				<input
-					aria-label="Device name"
-					value={name}
-					onChange={(e) => setName(e.target.value)}
-					onBlur={() => name.trim() && name !== deviceName && attempt(api.setDeviceName({ name }))}
-					className="min-h-9 w-56 rounded-md border border-line bg-raised px-2.5 text-[13px]"
-				/>
 			</Row>
 			<button type="button" onClick={() => attempt(api.signOut({}))} className={`${button} mt-3.5 self-start`}>
 				Sign out
