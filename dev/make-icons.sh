@@ -7,6 +7,9 @@ cd "$(dirname "$0")/../assets"
 # Windows and Linux: the tile fills the canvas.
 rsvg-convert -w 512 icon.svg -o icon.png
 
+# Windows takes an ICO, whose images stop at 256 px. Hutch rejects a larger PNG.
+magick icon.png -define icon:auto-resize=256,48,32,16 icon.ico
+
 # macOS: the tile sits on Apple's icon grid (824 px inside a 1024 px canvas).
 mac=$(mktemp -t stault-icon).png
 rsvg-convert -w 824 icon.svg | magick - -background none -gravity center -extent 1024x1024 "$mac"

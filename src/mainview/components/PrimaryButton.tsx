@@ -31,8 +31,8 @@ const TONE: Record<Primary["tone"], string> = {
 
 interface Props {
 	primary: Primary;
-	/** hero: game page. card: "Jump back in". compact: small tiles and lists. */
-	size: "hero" | "card" | "compact";
+	/** hero: game page. card: "Jump back in". compact: small tiles and lists. menu: top of a game's right-click menu. */
+	size: "hero" | "card" | "compact" | "menu";
 }
 
 /** The one button that plays, installs, pauses or stops a game, depending on its state. */
@@ -46,6 +46,16 @@ export function PrimaryButton({ primary, size }: Props) {
 		return (
 			<button type="button" onClick={primary.act} disabled={disabled} className={`relative min-h-[34px] overflow-hidden rounded-[5px] px-3.5 text-xs font-[750] uppercase tracking-[0.06em] ${TONE[primary.tone]}`}>
 				{fill}
+				<span className="relative">{primary.label}</span>
+			</button>
+		);
+	}
+
+	if (size === "menu") {
+		return (
+			<button type="button" role="menuitem" onClick={primary.act} disabled={disabled} className={`stretch-112 relative flex min-h-[38px] w-full items-center gap-2.5 overflow-hidden rounded-[5px] px-3 text-[13px] font-[750] uppercase tracking-[0.05em] ${TONE[primary.tone]}`}>
+				{fill}
+				<Glyph icon={primary.icon} size={14} />
 				<span className="relative">{primary.label}</span>
 			</button>
 		);

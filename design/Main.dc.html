@@ -88,13 +88,12 @@ a{color:#C5F04A}a:hover{color:#E2FF8A}
 <sc-for list="{{ side }}" as="item" hint-placeholder-count="8">
 <li>
 <button class="hv" onClick="{{ item.open }}" style="width: 100%; display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 6px; border: 0; border-radius: 6px; background: {{ item.rowBg }}; color: {{ item.rowInk }}; text-align: left">
-<span aria-hidden="true" style="display: block; width: 26px; height: 36px; border-radius: 3px; flex: 0 0 auto; background: {{ item.cover }}"></span>
+<span aria-hidden="true" style="display: block; width: 26px; height: 36px; border-radius: 3px; flex: 0 0 auto; background: {{ item.cover }}; opacity: {{ item.coverOp }}; filter: {{ item.coverFx }}"></span>
 <span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px">
 <span style="font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ item.title }}</span>
-<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #A9B0B8; white-space: nowrap">{{ item.sideMeta }}</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: {{ item.metaInk }}; white-space: nowrap">{{ item.sideMeta }}</span>
 </span>
 <sc-if value="{{ item.warn }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFB648" stroke-width="2" stroke-linejoin="round" role="img" aria-label="Save conflict"><path d="M12 4l9 16H3z"></path><path d="M12 10v4M12 17v.01"></path></svg></sc-if>
-<span aria-hidden="true" style="display: block; flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%; background: {{ item.dot }}"></span>
 </button>
 </li>
 </sc-for>
@@ -814,9 +813,11 @@ class Component extends DCLogic {
       act: () => this.primary(g.id),
       mark: g.mark, markIt: () => this.setState({ games: this.upd(g.id, { mark: !g.mark }) }),
       uninstall: () => { this.setState({ games: this.upd(g.id, { installed: false }) }); this.toast(g.title + ' uninstalled', 'Saves stay on the server'); },
-      dot: run ? A : q ? A : g.installed ? '#A9B0B8' : 'rgba(0,0,0,0)',
       rowBg: s.gameId === g.id && s.view === 'game' ? '#1D2126' : 'rgba(0,0,0,0)',
-      rowInk: g.installed || q ? '#ECEEF0' : '#A9B0B8',
+      rowInk: run ? '#5FD98A' : q ? '#6CB6FF' : g.installed ? '#ECEEF0' : '#8F969F',
+      metaInk: run ? '#5FD98A' : q ? '#6CB6FF' : '#7D858F',
+      coverOp: g.installed || q ? '1' : '.55',
+      coverFx: g.installed || q ? 'none' : 'grayscale(.6)',
       warn: g.save === 'conflict',
       sideMeta: run ? 'Playing now' : q ? (q.phase === 'download' ? (q.paused ? 'Paused · ' : 'Downloading · ') + Math.floor(q.pct) + '%' : q.phase === 'extract' ? 'Extracting…' : 'Installing…') : g.installed ? 'Installed · ' + (g.hours ? g.hours.toFixed(1) + ' h' : 'new') : 'Not installed',
       markFill: g.mark ? 'currentColor' : 'none',

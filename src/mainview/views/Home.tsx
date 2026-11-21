@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { typeLabel } from "../../shared/compat";
 import type { GameSummary } from "../../shared/model";
 import { Cover } from "../components/Cover";
+import { gameMenu } from "../components/GameMenu";
 import { Heading } from "../components/Heading";
 import { CheckIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -18,7 +19,7 @@ const playedLine = (game: GameSummary) =>
 function Featured({ game }: { game: GameSummary }) {
 	const status = useGameStatus(game);
 	return (
-		<article className="relative flex min-h-[272px] flex-[2_1_520px] flex-col justify-end overflow-hidden rounded-lg">
+		<article onContextMenu={gameMenu(game.id)} className="relative flex min-h-[272px] flex-[2_1_520px] flex-col justify-end overflow-hidden rounded-lg">
 			<Cover title={game.title} url={game.backgroundUrl ?? game.coverUrl} className="!absolute inset-0" />
 			<div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,12,14,.92)_0%,rgba(11,12,14,.55)_55%,rgba(11,12,14,0)_100%)]" />
 			<div className="relative flex max-w-[520px] flex-col gap-3.5 p-7">
@@ -42,7 +43,7 @@ function Featured({ game }: { game: GameSummary }) {
 function RecentCard({ game }: { game: GameSummary }) {
 	const status = useGameStatus(game);
 	return (
-		<article className="flex min-h-[272px] flex-[1_1_250px] flex-col overflow-hidden rounded-lg border border-hover bg-raised transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:shadow-[0_14px_30px_rgba(0,0,0,.55)]">
+		<article onContextMenu={gameMenu(game.id)} className="flex min-h-[272px] flex-[1_1_250px] flex-col overflow-hidden rounded-lg border border-hover bg-raised transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:shadow-[0_14px_30px_rgba(0,0,0,.55)]">
 			<Cover title={game.title} url={game.backgroundUrl ?? game.coverUrl} className="flex-[1_1_120px]" />
 			<div className="flex flex-col gap-2 px-4 pb-4 pt-3.5">
 				<button type="button" onClick={() => open(game)} className="text-left text-base font-bold">
@@ -60,7 +61,7 @@ function RecentCard({ game }: { game: GameSummary }) {
 function Tile({ game, caption }: { game: GameSummary; caption: "genres" | "status" }) {
 	const status = useGameStatus(game);
 	return (
-		<button type="button" onClick={() => open(game)} className="flex flex-col gap-2 rounded text-left transition-transform duration-200 hover:-translate-y-[3px]">
+		<button type="button" onClick={() => open(game)} onContextMenu={gameMenu(game.id)} className="flex flex-col gap-2 rounded text-left transition-transform duration-200 hover:-translate-y-[3px]">
 			<span className="relative block w-full">
 				<Cover title={game.title} url={game.coverUrl} labelled className="aspect-[5/7] w-full rounded" />
 				{status.install && (

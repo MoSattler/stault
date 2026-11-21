@@ -1,30 +1,38 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { GameSummary } from "../../shared/model";
 import { Cover } from "../components/Cover";
+import { gameMenu } from "../components/GameMenu";
 import { SearchIcon } from "../components/icons";
 import { useGameStatus } from "../state/derive";
 import { go, setUi, useApp, useUi } from "../state/store";
 
 function Row({ game, selected }: { game: GameSummary; selected: boolean }) {
 	const status = useGameStatus(game);
-	const active = status.running || !!status.download;
-	const here = !!status.install || !!status.download;
+	const menuOpen = useUi((s) => s.menu?.gameId === game.id);
+	const here = status.running || !!status.install || !!status.download;
+	// Playing is green and a download blue; otherwise brightness says whether the game is on this device.
+	const tone = status.running
+		? "text-green"
+		: status.download
+			? status.download.error ? "text-amber" : "text-sky"
+			: null;
 	return (
 		<li>
 			<button
 				type="button"
 				onClick={() => go({ name: "game", gameId: game.id })}
-				className={`flex w-full items-center gap-2.5 rounded-md py-[5px] pl-1.5 pr-2 text-left hover:bg-hover ${selected ? "bg-hover" : ""} ${here ? "text-ink" : "text-muted"}`}
+				onContextMenu={gameMenu(game.id)}
+				className={`flex w-full items-center gap-2.5 rounded-md py-[5px] pl-1.5 pr-2 text-left hover:bg-hover ${selected || menuOpen ? "bg-hover" : ""}`}
 			>
-				<Cover title={game.title} url={game.coverUrl} className="h-9 w-[26px] flex-none rounded-[3px]" />
-				<span className="flex min-w-0 flex-auto flex-col gap-px">
-					<span className="truncate text-[13px] font-semibold">{game.title}</span>
-					<span className="whitespace-nowrap font-mono text-[10.5px] text-muted">{status.line}</span>
-				</span>
-				<span
-					aria-hidden="true"
-					className={`block h-1.5 w-1.5 flex-none rounded-full ${active ? "bg-lime" : status.install ? "bg-muted" : "bg-transparent"}`}
+				<Cover
+					title={game.title}
+					url={game.coverUrl}
+					className={`h-9 w-[26px] flex-none rounded-[3px] ${here ? "" : "opacity-55 grayscale-[.6]"}`}
 				/>
+				<span className="flex min-w-0 flex-auto flex-col gap-px">
+					<span className={`truncate text-[13px] font-semibold ${tone ?? (here ? "text-ink" : "text-[#8f969f]")}`}>{game.title}</span>
+					<span className={`whitespace-nowrap font-mono text-[10.5px] ${tone ?? "text-faint"}`}>{status.line}</span>
+				</span>
 			</button>
 		</li>
 	);

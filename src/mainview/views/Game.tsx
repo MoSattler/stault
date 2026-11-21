@@ -3,7 +3,6 @@ import { canRun, PLATFORM_NAME, typeLabel } from "../../shared/compat";
 import type { GameDetail, GameSummary, GameVersion } from "../../shared/model";
 import { api } from "../api";
 import { Cover } from "../components/Cover";
-import { Dialog, dialogButton } from "../components/Dialog";
 import { Heading } from "../components/Heading";
 import { BackIcon, BookmarkIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
@@ -11,7 +10,7 @@ import { StepList } from "../components/StepList";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
 import { PROGRESS_LABEL, useGameStatus } from "../state/derive";
-import { attempt, go, setUi, showToast, useApp } from "../state/store";
+import { attempt, go, setUi, useApp } from "../state/store";
 
 const card = "rounded-lg border border-line bg-panel px-5 py-[18px]";
 
@@ -67,15 +66,7 @@ export function Game({ game }: { game: GameSummary }) {
 				? "text-[clamp(28px,3.4vw,42px)]"
 				: "text-[clamp(24px,2.7vw,34px)]";
 
-	const [confirming, setConfirming] = useState(false);
 	const rise = useRise();
-
-	async function uninstall() {
-		setConfirming(false);
-		if ((await attempt(api.uninstall({ gameId: game.id }).then(() => true))) === true) {
-			showToast(`${game.title} uninstalled`, "It stays on the server");
-		}
-	}
 
 	return (
 		<div className={`flex flex-col ${rise}`}>
@@ -232,31 +223,12 @@ export function Game({ game }: { game: GameSummary }) {
 					</section>
 
 					{install && !status.running && (
-						<button type="button" onClick={() => setConfirming(true)} className="min-h-9 self-start rounded-md px-3.5 text-[13px] font-semibold text-[#FF8A7E] hover:bg-hover">
+						<button type="button" onClick={() => setUi({ uninstalling: { gameId: game.id } })} className="min-h-9 self-start rounded-md px-3.5 text-[13px] font-semibold text-[#FF8A7E] hover:bg-hover">
 							Uninstall…
 						</button>
 					)}
 				</aside>
 			</div>
-
-			{confirming && (
-				<Dialog labelledBy="d-uninstall" onClose={() => setConfirming(false)} className="max-w-[440px]">
-					<div className="flex flex-col gap-2 p-5">
-						<h2 id="d-uninstall" className="stretch-125 text-xl font-extrabold uppercase leading-none">
-							Uninstall {game.title}?
-						</h2>
-						<p className="text-[13px] text-muted">
-							Its files are deleted from this device. The game stays on the server, and your playtime is kept.
-						</p>
-					</div>
-					<div className="flex justify-end gap-2.5 border-t border-line px-5 py-4">
-						<button type="button" onClick={() => setConfirming(false)} className={dialogButton}>Cancel</button>
-						<button type="button" onClick={uninstall} className="min-h-[42px] rounded-md bg-[#FF8A7E] px-[22px] font-[750] uppercase tracking-[0.04em] text-carbon hover:brightness-110">
-							Uninstall
-						</button>
-					</div>
-				</Dialog>
-			)}
 		</div>
 	);
 }
