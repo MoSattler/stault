@@ -19,6 +19,14 @@ Built with [Electrobun](https://docs.electrobun.dev/electrobun/) 2 (Bun main pro
 
 Not in v0.1: cloud saves, Big Picture Mode, Steam shortcuts, single sign-on.
 
+## Install
+
+Download an installer from the [latest release](https://github.com/MoSattler/stault/releases/latest), or on macOS (Apple Silicon, macOS 14 or newer) use Homebrew:
+
+```bash
+brew install --cask mosattler/tap/stault
+```
+
 ## Setup
 
 Install [Hutch](https://docs.electrobun.dev/electrobun/guides/hutch/), Electrobun's build CLI, then:
@@ -50,6 +58,7 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 Versions come from the commit messages on `main`, which follow [Conventional Commits](https://www.conventionalcommits.org): `fix:` raises the patch version, `feat:` the minor version, and a breaking change (`feat!:`) also the minor version until 1.0. Other types (`docs:`, `chore:`, `ci:`, `refactor:`, `test:`) release nothing.
 
 - [release-please](https://github.com/googleapis/release-please) keeps a release PR open with the next version and its changelog. Merge it to tag the version, publish the GitHub release and attach stable installers. The version lives in `package.json`; don't edit it or create tags by hand.
+- A release also updates the Homebrew cask in [MoSattler/homebrew-tap](https://github.com/MoSattler/homebrew-tap). The workflow pushes there with the deploy key in the `HOMEBREW_TAP_DEPLOY_KEY` secret.
 - Run the workflow by hand (Actions → Release → Run workflow) for canary installers, which stay attached to the run for 14 days. Use this to try a build on Windows or a Steam Deck.
 
 The builds are not code-signed, so macOS and Windows warn before opening them.
