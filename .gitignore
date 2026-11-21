@@ -3,6 +3,7 @@ node_modules/
 build/
 dist/
 artifacts/
+vendor/
 *.tsbuildinfo
 .DS_Store
 .cottontail-tmp/

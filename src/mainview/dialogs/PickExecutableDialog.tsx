@@ -1,6 +1,7 @@
 import type { GameSummary } from "../../shared/model";
 import { api } from "../api";
 import { Dialog, dialogButton } from "../components/Dialog";
+import { play } from "../state/derive";
 import { attempt, setUi } from "../state/store";
 
 interface Props {
@@ -15,7 +16,7 @@ export function PickExecutableDialog({ game, candidates }: Props) {
 	async function choose(path: string) {
 		close();
 		await attempt(api.setExecutable({ gameId: game.id, path }));
-		await attempt(api.play({ gameId: game.id }));
+		await play(game.id);
 	}
 
 	return (

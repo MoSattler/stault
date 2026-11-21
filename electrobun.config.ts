@@ -7,6 +7,9 @@ const sevenZipDir = `node_modules/7zip-bin-full/${
 }/${process.arch}`;
 const sevenZipFiles = process.platform === "win32" ? ["7z.exe", "7z.dll"] : ["7zz"];
 
+// Ludusavi finds and moves game saves. dev/fetch-ludusavi.ts puts it in vendor/.
+const ludusaviFiles = [process.platform === "win32" ? "ludusavi.exe" : "ludusavi", "legal.zip"];
+
 export default {
 	app: {
 		name: "Stault",
@@ -25,6 +28,9 @@ export default {
 			"dist/assets": "views/mainview/assets",
 			...Object.fromEntries(
 				[...sevenZipFiles, "License.txt"].map((file) => [`${sevenZipDir}/${file}`, `7zip/${file}`]),
+			),
+			...Object.fromEntries(
+				ludusaviFiles.map((file) => [`vendor/ludusavi/${file}`, `ludusavi/${file}`]),
 			),
 		},
 		// Vite owns dist/, so it must not retrigger the watch loop.

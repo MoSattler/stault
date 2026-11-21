@@ -32,6 +32,13 @@ export type Requests = {
 	play: Req<{ gameId: number }, PlayResult>;
 	setExecutable: Req<{ gameId: number; path: string }>;
 	stop: Req<{ gameId: number }>;
+	/** Sends this device's saves to the server, or replaces them with the server's. */
+	syncSaves: Req<{ gameId: number; direction: "upload" | "download" }>;
+	/** Ludusavi entries whose name resembles the query, best first. */
+	findSaveGames: Req<{ gameId: number; query: string }, string[]>;
+	/** Sets which Ludusavi entry a game's saves follow; null turns sync off for it. */
+	setSaveGame: Req<{ gameId: number; name: string | null }>;
+	setSaveSync: Req<{ on: boolean }>;
 	/** Opens the native folder picker. Resolves once the folder is added or the picker is cancelled. */
 	addLibraryFolder: Req<{}>;
 	removeLibraryFolder: Req<{ path: string }>;

@@ -6,6 +6,8 @@ import { GameMenu } from "./components/GameMenu";
 import { Toast } from "./components/Toast";
 import { InstallDialog } from "./dialogs/InstallDialog";
 import { PickExecutableDialog } from "./dialogs/PickExecutableDialog";
+import { SaveConflictDialog } from "./dialogs/SaveConflictDialog";
+import { SaveGameDialog } from "./dialogs/SaveGameDialog";
 import { UninstallDialog } from "./dialogs/UninstallDialog";
 import { go, useApp, useUi } from "./state/store";
 import { Connect } from "./views/Connect";
@@ -45,15 +47,23 @@ function Dialogs() {
 	const installing = useUi((s) => s.installing);
 	const picking = useUi((s) => s.picking);
 	const uninstalling = useUi((s) => s.uninstalling);
+	const saveConflict = useUi((s) => s.saveConflict);
+	const choosingSaveGame = useUi((s) => s.choosingSaveGame);
 	const games = useApp((s) => s.games);
 	const installGame = installing && games.find((g) => g.id === installing.gameId);
 	const pickGame = picking && games.find((g) => g.id === picking.gameId);
 	const uninstallGame = uninstalling && games.find((g) => g.id === uninstalling.gameId);
+	const conflictGame = saveConflict && games.find((g) => g.id === saveConflict.gameId);
+	const saveGame = choosingSaveGame && games.find((g) => g.id === choosingSaveGame.gameId);
 	return (
 		<>
 			{installing && installGame && <InstallDialog game={installGame} versionId={installing.versionId} />}
 			{picking && pickGame && <PickExecutableDialog game={pickGame} candidates={picking.candidates} />}
 			{uninstallGame && <UninstallDialog game={uninstallGame} />}
+			{saveConflict && conflictGame && (
+				<SaveConflictDialog game={conflictGame} thenPlay={saveConflict.thenPlay} />
+			)}
+			{saveGame && <SaveGameDialog game={saveGame} />}
 		</>
 	);
 }

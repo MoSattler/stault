@@ -118,3 +118,21 @@ async function staysInside(link: string, root: string): Promise<boolean> {
 	const climbsAfterName = firstName !== -1 && parts.includes("..", firstName);
 	return !isAbsolute(target) && !climbsAfterName && inside(resolve(dirname(link), target));
 }
+
+/** Packs a folder's contents into a zip with the bundled 7-Zip. */
+export function zipFolder(sevenZip: string, folder: string, zipPath: string): Promise<void> {
+	return new Promise((done, fail) => {
+		const child = spawn(sevenZip, ["a", "-tzip", "-bso0", "-bsp0", zipPath, "."], {
+			cwd: folder,
+			stdio: ["ignore", "ignore", "pipe"],
+		});
+		let errors = "";
+		child.stderr.on("data", (chunk: Buffer) => {
+			errors += chunk.toString();
+		});
+		child.on("error", fail);
+		child.on("close", (code) =>
+			code === 0 ? done() : fail(new Error(`The saves could not be packed: ${errors.trim()}`)),
+		);
+	});
+}

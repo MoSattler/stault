@@ -8,9 +8,12 @@ services:
       # Without a fixed seed the server signs everyone out each time it restarts.
       AUTH_SEED: stault-dev-only
       SERVER_ACCOUNT_ACTIVATION_DISABLED: "true"
+      # Save sync needs the server to accept save files; they are off by default.
+      SAVEFILES_ENABLED: "true"
     volumes:
       - ./.data/files:/files
       - ./.data/media:/media
       - ./.data/db:/db
+      - ./.data/savefiles:/savefiles
     ports:
       - 127.0.0.1:18080:8080

@@ -35,6 +35,8 @@ const app = createStore<AppState>({
 	running: null,
 	folders: [],
 	speedLimitKib: 0,
+	saves: [],
+	saveSync: { enabled: true, serverOff: false },
 });
 
 api.onPush("patch", (patch) => app.set(patch));
@@ -67,6 +69,10 @@ interface UiState {
 	picking: { gameId: number; candidates: string[] } | null;
 	/** Game being asked about before its files are deleted. */
 	uninstalling: { gameId: number } | null;
+	/** Game whose saves changed here and on the server; the user picks one side. */
+	saveConflict: { gameId: number; thenPlay: boolean } | null;
+	/** Game whose Ludusavi entry is being chosen by hand. */
+	choosingSaveGame: { gameId: number } | null;
 	/** Game whose right-click menu is open, and where in the window it was opened. */
 	menu: { gameId: number; x: number; y: number } | null;
 }
@@ -80,6 +86,8 @@ const ui = createStore<UiState>({
 	installing: null,
 	picking: null,
 	uninstalling: null,
+	saveConflict: null,
+	choosingSaveGame: null,
 	menu: null,
 });
 
