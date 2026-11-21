@@ -30,14 +30,18 @@ export default {
 		// Vite owns dist/, so it must not retrigger the watch loop.
 		watchIgnore: ["dist/**"],
 		// Use the system webview on every platform (no bundled Chromium).
+		// The icons are rendered from assets/icon.svg by dev/make-icons.sh.
 		mac: {
 			bundleCEF: false,
+			icons: "assets/icon.iconset",
 		},
 		linux: {
 			bundleCEF: false,
+			icon: "assets/icon.png",
 		},
 		win: {
 			bundleCEF: false,
+			icon: "assets/icon.png",
 		},
 	},
 } satisfies ElectrobunConfig;
