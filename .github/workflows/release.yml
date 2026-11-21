@@ -1,0 +1,106 @@
+name: Release
+
+# Builds Stault on every OS it ships for. Hutch can only build for the OS it
+# runs on, so each platform needs its own runner.
+#
+#   Tag like v0.1.0      stable installers, published as a GitHub release
+#   Manual run           canary installers, kept on the run for testing
+#   PR touching the      the same canary build, as a check that packaging
+#   packaging files      still works
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - electrobun.config.ts
+      - hutch.config.ts
+      - hutch.lock
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # Keep in step with the "@hutch cli=" pragma at the top of hutch.config.ts.
+  HUTCH_VERSION: "0.30.0"
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            runner: macos-latest
+          - name: Windows x64
+            runner: windows-latest
+          - name: Linux x64
+            runner: ubuntu-latest
+    env:
+      CHANNEL: ${{ startsWith(github.ref, 'refs/tags/v') && 'stable' || 'canary' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Hutch (macOS, Linux)
+        if: runner.os != 'Windows'
+        run: |
+          curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | sh -s -- --version "$HUTCH_VERSION" --no-modify-path
+          echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
+
+      - name: Install Hutch (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & ([scriptblock]::Create((irm https://hutch.blackboard.sh/hutch/install.ps1))) -Version $env:HUTCH_VERSION -NoModifyPath
+          Join-Path $HOME ".hutch\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      # v0.1.0 -> 0.1.0. electrobun.config.ts reads STAULT_VERSION.
+      - name: Take the app version from the tag
+        if: env.CHANNEL == 'stable'
+        shell: bash
+        run: echo "STAULT_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: hutch run install
+
+      - name: Build
+        run: hutch run ${{ env.CHANNEL == 'stable' && 'build' || 'build:canary' }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: stault-${{ env.CHANNEL }}-${{ runner.os }}-${{ runner.arch }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      # A tag with a hyphen (v0.2.0-rc.1) is published as a pre-release.
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ contains(github.ref_name, '-') && '--prerelease' || '' }}
+        run: |
+          ls -l artifacts
+          gh release create "$TAG" artifacts/* --title "Stault $TAG" --generate-notes --verify-tag $PRERELEASE

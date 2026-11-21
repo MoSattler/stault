@@ -43,6 +43,15 @@ Tasks are defined in `hutch.config.ts` and run with `hutch run <task>`.
 
 Hutch builds only for the OS it runs on, so a Windows or Linux build has to be made on that OS.
 
+## Releases
+
+`.github/workflows/release.yml` builds installers for macOS (Apple Silicon), Windows x64 and Linux x64.
+
+- Push a tag such as `v0.1.0` to build stable installers and publish them as a GitHub release. The app version comes from the tag. A tag with a hyphen (`v0.2.0-rc.1`) becomes a pre-release.
+- Run the workflow by hand (Actions → Release → Run workflow) for canary installers, which stay attached to the run for 14 days. Use this to try a build on Windows or a Steam Deck.
+
+The builds are not code-signed, so macOS and Windows warn before opening them.
+
 ## Test server
 
 `./dev/seed.sh` starts a local GameVault server in Docker at http://127.0.0.1:18080 with a few tiny sample games and a test account (see the script for its name and password). One sample, Harbor Lights, is a real Mac app, so install and launch can be tried on macOS.

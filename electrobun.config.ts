@@ -10,7 +10,9 @@ export default {
 	app: {
 		name: "Stault",
 		identifier: "com.mosattler.stault",
-		version: "0.0.1",
+		// Release builds take their version from the git tag
+		// (.github/workflows/release.yml sets STAULT_VERSION).
+		version: process.env.STAULT_VERSION || "0.0.1",
 	},
 	build: {
 		mainProcess: "bun",
