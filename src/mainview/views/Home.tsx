@@ -8,7 +8,7 @@ import { CheckIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
-import { serverHost, useGameStatus } from "../state/derive";
+import { useGameStatus } from "../state/derive";
 import { go, setUi, type Sort, useApp, useUi } from "../state/store";
 
 const open = (game: GameSummary) => go({ name: "game", gameId: game.id });
@@ -102,10 +102,8 @@ export function Home() {
 	const installs = useApp((s) => s.installs);
 	const downloads = useApp((s) => s.downloads);
 	const running = useApp((s) => s.running);
-	const session = useApp((s) => s.session);
 	const sort = useUi((s) => s.sort);
 	const rise = useRise();
-	const host = session ? serverHost(session.serverUrl) : "the server";
 
 	const { recent, fresh, all } = useMemo(() => {
 		const here = new Set([...installs.map((i) => i.gameId), ...downloads.map((d) => d.gameId)]);
@@ -132,9 +130,7 @@ export function Home() {
 		return (
 			<div className="flex max-w-[60ch] flex-col gap-2 p-8">
 				<h1 className="stretch-125 text-[28px] font-extrabold uppercase">No games yet</h1>
-				<p className="text-muted">
-					{host} has no games.
-				</p>
+				<p className="text-muted">Games added to the server show up here.</p>
 			</div>
 		);
 	}
@@ -156,7 +152,7 @@ export function Home() {
 			{fresh.length > 0 && (
 				<section aria-labelledby="h-new" className="flex flex-col gap-3.5">
 					<div className="flex items-baseline gap-3">
-						<Heading id="h-new">New on {host}</Heading>
+						<Heading id="h-new">Recently added</Heading>
 						<span className="text-[12.5px] text-muted">Not installed on this device yet</span>
 					</div>
 					<div className={grid}>

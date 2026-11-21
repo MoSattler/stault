@@ -7,7 +7,7 @@ Built with [Electrobun](https://docs.electrobun.dev/electrobun/) 2 (Bun main pro
 ## What v0.1 does
 
 - Connects to a GameVault server (17.0 or newer) and signs in. The session token is kept in the system keychain.
-- Shows the library: recently played, new on the server, all games, and a page per game.
+- Shows the library: recently played, recently added, all games, and a page per game.
 - Installs games: a download queue with pause, resume, a bandwidth limit and recovery after a restart, then extraction with a bundled 7-Zip.
 - Launches games and records playtime on the server.
 
