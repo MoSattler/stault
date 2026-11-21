@@ -112,7 +112,7 @@ function Account() {
 			<Row title="Server" help={`GameVault ${session.serverVersion} · ${online ? "connected" : "not reachable"}`}>
 				<span className="select-text font-mono text-[12.5px] text-muted">{serverHost(session.serverUrl)}</span>
 			</Row>
-			<Row title="Signed in as" help="Stault keeps a session token in the system keychain, never your password.">
+			<Row title="Signed in as">
 				<span className="font-mono text-[12.5px] text-muted">{session.username}</span>
 			</Row>
 			<Row title="Device name" help="Shown in Stault, so you can tell your devices apart.">

@@ -150,9 +150,6 @@ export function Connect() {
 					>
 						{busy ? "Signing in…" : "Sign in"}
 					</button>
-					<p className="text-[13px] text-muted">
-						Stault stores the session token in the system keychain, never the password.
-					</p>
 				</form>
 			</main>
 		</div>
