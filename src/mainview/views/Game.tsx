@@ -70,7 +70,7 @@ export function Game({ game }: { game: GameSummary }) {
 
 	return (
 		<div className={`flex flex-col ${rise}`}>
-			<div className="relative flex min-h-[340px] flex-col justify-between gap-6 px-8 pb-7 pt-5">
+			<div className="relative flex min-h-[clamp(300px,28vh,420px)] flex-col justify-between gap-6 px-8 pb-7 pt-5">
 				{/* Art is darkened with a filter, which keeps its contrast; a flat veil turns pale art into grey haze. */}
 				<Cover
 					title={game.title}
@@ -110,20 +110,20 @@ export function Game({ game }: { game: GameSummary }) {
 						</div>
 					))}
 				</dl>
-				<div className="flex-1" />
 				<button
 					type="button"
 					onClick={() => attempt(api.setBookmark({ gameId: game.id, on: !game.bookmarked }))}
 					aria-pressed={game.bookmarked}
 					aria-label="Bookmark"
-					className="grid h-11 w-11 place-items-center rounded-md border border-line bg-raised hover:bg-hover"
+					className="ml-auto grid h-11 w-11 place-items-center rounded-md border border-line bg-raised hover:bg-hover"
 				>
 					<BookmarkIcon size={18} filled={game.bookmarked} />
 				</button>
 			</div>
 
-			<div className="flex max-w-[1320px] flex-wrap gap-7 px-8 pb-12 pt-7">
-				<div className="flex min-w-0 flex-[999_1_420px] flex-col gap-6">
+			{/* As in Steam's library: two columns that share the full width two to one, and a single column on a narrow window. */}
+			<div className="grid gap-7 px-8 pb-12 pt-7 @min-[820px]:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+				<div className="flex min-w-0 flex-col gap-6">
 					{download && (
 						<section aria-label="Install progress" className="flex flex-col gap-3.5 rounded-lg border border-line bg-panel px-5 py-[18px]">
 							<div className="flex items-center justify-between gap-3">
@@ -148,11 +148,11 @@ export function Game({ game }: { game: GameSummary }) {
 					<section aria-labelledby="h-about" className="flex flex-col gap-2.5">
 						<Heading id="h-about">About</Heading>
 						{detail?.description ? (
-							<p className="max-w-[62ch] select-text whitespace-pre-line text-pretty text-base leading-[1.6] text-[#D5D9DE]">
+							<p className="max-w-[72ch] select-text whitespace-pre-line text-pretty text-base leading-[1.6] text-[#D5D9DE]">
 								{detail.description}
 							</p>
 						) : (
-							<p className="max-w-[62ch] text-base leading-[1.6] text-muted">
+							<p className="max-w-[72ch] text-base leading-[1.6] text-muted">
 								{detail ? "The server has no description for this game." : pending}
 							</p>
 						)}
@@ -162,7 +162,7 @@ export function Game({ game }: { game: GameSummary }) {
 					</section>
 				</div>
 
-				<aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-4">
+				<aside className="flex min-w-0 flex-col gap-4">
 					<section aria-labelledby="h-det" className={card}>
 						<h2 id="h-det" className="mb-3 text-sm font-bold">Details</h2>
 						<dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-[18px] gap-y-[9px] text-[13px]">

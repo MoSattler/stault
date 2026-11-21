@@ -88,7 +88,7 @@ export function Sidebar() {
 					aria-label="Search library"
 					className="min-w-0 flex-auto bg-transparent py-2 text-[13px] text-ink outline-none"
 				/>
-				<kbd className="rounded border border-edge px-[5px] py-px font-mono text-[10.5px]">
+				<kbd className="whitespace-nowrap rounded border border-edge px-[5px] py-px font-mono text-[10.5px]">
 					{platform === "macos" ? "⌘K" : "Ctrl K"}
 				</kbd>
 			</label>

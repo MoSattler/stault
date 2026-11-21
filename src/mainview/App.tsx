@@ -32,7 +32,7 @@ function Main() {
 	}, [key]);
 
 	return (
-		<main ref={scroller} className="min-w-0 flex-1 overflow-y-auto bg-[#0E1013]">
+		<main ref={scroller} className="@container min-w-0 flex-1 overflow-y-auto bg-[#0E1013]">
 			{view.name === "home" && <Home />}
 			{game && <Game key={game.id} game={game} />}
 			{view.name === "downloads" && <Downloads />}

@@ -1,10 +1,10 @@
-import { useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { typeLabel } from "../../shared/compat";
 import type { GameSummary } from "../../shared/model";
 import { Cover } from "../components/Cover";
 import { gameMenu } from "../components/GameMenu";
 import { Heading } from "../components/Heading";
-import { CheckIcon } from "../components/icons";
+import { BackIcon, CheckIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
@@ -19,7 +19,7 @@ const playedLine = (game: GameSummary) =>
 function Featured({ game }: { game: GameSummary }) {
 	const status = useGameStatus(game);
 	return (
-		<article onContextMenu={gameMenu(game.id)} className="relative flex min-h-[272px] flex-[2_1_520px] flex-col justify-end overflow-hidden rounded-lg">
+		<article onContextMenu={gameMenu(game.id)} className="relative flex min-h-[272px] flex-[1_0_clamp(480px,45cqw,760px)] flex-col justify-end overflow-hidden rounded-lg">
 			<Cover title={game.title} url={game.backgroundUrl ?? game.coverUrl} className="!absolute inset-0" />
 			<div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,12,14,.92)_0%,rgba(11,12,14,.55)_55%,rgba(11,12,14,0)_100%)]" />
 			<div className="relative flex max-w-[520px] flex-col gap-3.5 p-7">
@@ -43,7 +43,7 @@ function Featured({ game }: { game: GameSummary }) {
 function RecentCard({ game }: { game: GameSummary }) {
 	const status = useGameStatus(game);
 	return (
-		<article onContextMenu={gameMenu(game.id)} className="flex min-h-[272px] flex-[1_1_250px] flex-col overflow-hidden rounded-lg border border-hover bg-raised transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:shadow-[0_14px_30px_rgba(0,0,0,.55)]">
+		<article onContextMenu={gameMenu(game.id)} className="flex w-[280px] flex-none flex-col overflow-hidden rounded-lg border border-hover bg-raised transition-[transform,box-shadow] duration-200 hover:-translate-y-[3px] hover:shadow-[0_14px_30px_rgba(0,0,0,.55)]">
 			<Cover title={game.title} url={game.backgroundUrl ?? game.coverUrl} className="flex-[1_1_120px]" />
 			<div className="flex flex-col gap-2 px-4 pb-4 pt-3.5">
 				<button type="button" onClick={() => open(game)} className="text-left text-base font-bold">
@@ -58,10 +58,10 @@ function RecentCard({ game }: { game: GameSummary }) {
 	);
 }
 
-function Tile({ game, caption }: { game: GameSummary; caption: "genres" | "status" }) {
+function Tile({ game, caption, className = "" }: { game: GameSummary; caption: "genres" | "status"; className?: string }) {
 	const status = useGameStatus(game);
 	return (
-		<button type="button" onClick={() => open(game)} onContextMenu={gameMenu(game.id)} className="flex flex-col gap-2 rounded text-left transition-transform duration-200 hover:-translate-y-[3px]">
+		<button type="button" onClick={() => open(game)} onContextMenu={gameMenu(game.id)} className={`flex flex-col gap-2 rounded text-left transition-transform duration-200 hover:-translate-y-[3px] ${className}`}>
 			<span className="relative block w-full">
 				<Cover title={game.title} url={game.coverUrl} labelled className="aspect-[5/7] w-full rounded" />
 				{status.install && (
@@ -94,7 +94,59 @@ const SORTERS: Record<Sort, (a: GameSummary, b: GameSummary) => number> = {
 	size: (a, b) => b.sizeBytes - a.sizeBytes,
 };
 
-const grid = "grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-x-[18px] gap-y-[22px]";
+/*
+ * Widths follow Steam's library: nothing scales with the window. Covers keep
+ * roughly one size and a wider window fits more of them, in the grid as more
+ * columns and in a shelf as more of its one row.
+ */
+const grid = "grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-x-[18px] gap-y-[22px]";
+
+/** One row of cards that runs off the right edge and pages sideways, with arrows shown only when it overflows. */
+function Shelf({ id, title, note, children }: { id: string; title: string; note?: string; children: ReactNode }) {
+	const row = useRef<HTMLDivElement>(null);
+	const [back, setBack] = useState(false);
+	const [forward, setForward] = useState(false);
+	const measure = () => {
+		const el = row.current;
+		if (!el) return;
+		setBack(el.scrollLeft > 1);
+		setForward(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+	};
+	// Cards come and go without the row changing size, so this runs after every render as well as on resize.
+	useEffect(measure);
+	useEffect(() => {
+		const observer = new ResizeObserver(measure);
+		if (row.current) observer.observe(row.current);
+		return () => observer.disconnect();
+	}, []);
+	const page = (direction: 1 | -1) =>
+		row.current?.scrollBy({ left: direction * row.current.clientWidth * 0.8, behavior: "smooth" });
+	const arrow = "grid h-7 w-7 place-items-center rounded text-muted hover:bg-hover hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent";
+
+	return (
+		<section aria-labelledby={id} className="flex flex-col gap-3.5">
+			<div className="flex min-h-7 items-center gap-3">
+				<Heading id={id}>{title}</Heading>
+				{note && <span className="text-[12.5px] text-muted">{note}</span>}
+				<div className="flex-1" />
+				{(back || forward) && (
+					<div className="flex gap-1">
+						<button type="button" onClick={() => page(-1)} disabled={!back} aria-label="Scroll back" className={arrow}>
+							<BackIcon />
+						</button>
+						<button type="button" onClick={() => page(1)} disabled={!forward} aria-label="Scroll forward" className={arrow}>
+							<BackIcon className="rotate-180" />
+						</button>
+					</div>
+				)}
+			</div>
+			{/* The row bleeds through the page padding to the window edge; the vertical padding leaves room for the hover lift and shadow. */}
+			<div ref={row} onScroll={measure} className="-mx-8 -mb-8 -mt-1 flex gap-4 overflow-x-auto px-8 pb-8 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+				{children}
+			</div>
+		</section>
+	);
+}
 
 export function Home() {
 	const games = useApp((s) => s.games);
@@ -115,11 +167,8 @@ export function Home() {
 					Number(running?.gameId === b.id) - Number(running?.gameId === a.id) ||
 					(b.lastPlayedAt ?? "").localeCompare(a.lastPlayedAt ?? ""),
 			)
-			.slice(0, 3);
-		const fresh = games
-			.filter((g) => !here.has(g.id))
-			.sort(SORTERS.added)
-			.slice(0, 6);
+			.slice(0, 12);
+		const fresh = games.filter((g) => !here.has(g.id)).sort(SORTERS.added).slice(0, 24);
 		return { recent, fresh, all: [...games].sort(SORTERS[sort]) };
 	}, [games, installs, downloads, running, sort]);
 
@@ -136,31 +185,22 @@ export function Home() {
 	}
 
 	return (
-		<div className={`flex w-full max-w-[1320px] flex-col gap-10 px-8 pb-12 pt-7 ${rise}`}>
+		<div className={`flex w-full flex-col gap-10 px-8 pb-12 pt-7 ${rise}`}>
 			{recent.length > 0 && (
-				<section aria-labelledby="h-cont" className="flex flex-col gap-3.5">
-					<Heading id="h-cont">Jump back in</Heading>
-					<div className="flex flex-wrap gap-4">
-						<Featured game={recent[0]} />
-						{recent.slice(1).map((game) => (
-							<RecentCard key={game.id} game={game} />
-						))}
-					</div>
-				</section>
+				<Shelf id="h-cont" title="Jump back in">
+					<Featured game={recent[0]} />
+					{recent.slice(1).map((game) => (
+						<RecentCard key={game.id} game={game} />
+					))}
+				</Shelf>
 			)}
 
 			{fresh.length > 0 && (
-				<section aria-labelledby="h-new" className="flex flex-col gap-3.5">
-					<div className="flex items-baseline gap-3">
-						<Heading id="h-new">Recently added</Heading>
-						<span className="text-[12.5px] text-muted">Not installed on this device yet</span>
-					</div>
-					<div className={grid}>
-						{fresh.map((game) => (
-							<Tile key={game.id} game={game} caption="genres" />
-						))}
-					</div>
-				</section>
+				<Shelf id="h-new" title="Recently added" note="Not installed on this device yet">
+					{fresh.map((game) => (
+						<Tile key={game.id} game={game} caption="genres" className="w-[190px] flex-none" />
+					))}
+				</Shelf>
 			)}
 
 			<section aria-labelledby="h-all" className="flex flex-col gap-3.5">
