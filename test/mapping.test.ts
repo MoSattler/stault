@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { toDetail, toSummary, userGameData } from "../src/bun/gamevault/mapping";
 import type { ApiGame } from "../src/bun/gamevault/types";
-import { buildOs, canRun, typeLabel } from "../src/shared/compat";
+import { buildOs, canRun, cantRunHere, typeLabel } from "../src/shared/compat";
 
 const game: ApiGame = {
 	id: 3,
@@ -81,6 +81,20 @@ test("which builds run where", () => {
 	// Nothing says what an undetectable build holds, so it stays installable everywhere.
 	expect(canRun("macos", "UNDETECTABLE")).toBe("maybe");
 	expect(canRun("windows", "UNDETECTABLE", "v1.0")).toBe("maybe");
+});
+
+test("a game can't run here only when none of its builds can", () => {
+	const windows = { type: "WINDOWS_PORTABLE", version: "v1" } as const;
+	const linux = { type: "LINUX_PORTABLE", version: "v1" } as const;
+	const mac = { type: "UNDETECTABLE", version: "v1 · macOS" } as const;
+	expect(cantRunHere("macos", [windows, linux, windows])).toEqual(["windows", "linux"]);
+	expect(cantRunHere("macos", [windows, mac])).toBeNull();
+	expect(cantRunHere("windows", [linux])).toEqual(["linux"]);
+	expect(cantRunHere("linux", [windows])).toBeNull();
+	// An undetectable build might run anywhere.
+	expect(cantRunHere("windows", [linux, { type: "UNDETECTABLE", version: "v1" }])).toBeNull();
+	// Until the versions are known, the default proves nothing.
+	expect(cantRunHere("macos", undefined)).toBeNull();
 });
 
 test("a version label that names macOS marks a Mac build", () => {

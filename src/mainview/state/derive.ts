@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { buildOs, canRun, type KnownOs, OS_NAME } from "../../shared/compat";
+import { canRun, cantRunHere, type KnownOs, OS_NAME } from "../../shared/compat";
 import type {
 	AppState,
 	Download,
@@ -175,14 +175,12 @@ export function gameStatus(
 	} else {
 		line = "Not installed";
 		const known = versions ?? game.versions;
-		const runnable = (known ?? [game]).filter((v) => canRun(state.platform, v.type, v.version) !== "no");
-		// Until every version is known, a default that can't run here proves nothing.
-		if (known && runnable.length === 0) {
-			// A build for an unknown system counts as runnable, so every one here is known.
-			const systems = [...new Set(known.map((v) => buildOs(v.type, v.version)))].filter((os) => os !== "unknown");
+		const systems = cantRunHere(state.platform, known);
+		if (systems) {
 			line = `Available for ${systems.map((os) => OS_NAME[os]).join(" and ")}`;
 			primary = { label: "Available for", sub: "", icon: "none", systems, tone: "off", fill: 0, act() {} };
 		} else {
+			const runnable = (known ?? [game]).filter((v) => canRun(state.platform, v.type, v.version) !== "no");
 			const sub =
 				runnable.length > 1
 					? `${runnable.length} versions · choose next`
