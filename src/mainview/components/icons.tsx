@@ -36,10 +36,11 @@ export const SearchIcon = (p: IconProps) => (
 	</Icon>
 );
 
+// A cog with six teeth. Separate rays around a dot read as a sun (light mode), not as settings.
 export const GearIcon = (p: IconProps) => (
-	<Icon strokeWidth={1.8} {...p}>
-		<circle cx="12" cy="12" r="3.2" />
-		<path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" />
+	<Icon strokeWidth={1.8} strokeLinejoin="round" {...p}>
+		<path d="M9.7 5.39L10.2 2.67A9.5 9.5 0 0 1 13.8 2.67L14.3 5.39A7 7 0 0 1 16.58 6.7L19.18 5.78A9.5 9.5 0 0 1 20.98 8.89L18.88 10.69A7 7 0 0 1 18.88 13.31L20.98 15.11A9.5 9.5 0 0 1 19.18 18.22L16.58 17.3A7 7 0 0 1 14.3 18.61L13.8 21.33A9.5 9.5 0 0 1 10.2 21.33L9.7 18.61A7 7 0 0 1 7.42 17.3L4.82 18.22A9.5 9.5 0 0 1 3.02 15.11L5.12 13.31A7 7 0 0 1 5.12 10.69L3.02 8.89A9.5 9.5 0 0 1 4.82 5.78L7.42 6.7A7 7 0 0 1 9.7 5.39Z" />
+		<circle cx="12" cy="12" r="3" />
 	</Icon>
 );
 
