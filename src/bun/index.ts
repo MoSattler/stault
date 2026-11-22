@@ -257,7 +257,17 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 				await saves.sync(gameId, direction);
 			},
 			findSaveGames: ({ gameId, query }) => saves.search(gameId, query),
-			setSaveGame: ({ gameId, name }) => saves.setName(gameId, name),
+			setSaveGame: ({ gameId, name }) => saves.choose(gameId, name ? { name } : null),
+			setSavePaths: ({ gameId, paths }) => saves.choose(gameId, { paths }),
+			pickSavePath: async ({ gameId, folder }) => {
+				const [picked] = await Utils.openFileDialog({
+					startingFolder: homedir(),
+					canChooseFiles: !folder,
+					canChooseDirectory: folder,
+					allowsMultipleSelection: false,
+				});
+				return picked ? saves.savePath(gameId, picked) : null;
+			},
 			setSaveSync: ({ on }) => {
 				settings.update({ saveSync: on });
 				saves.publish();

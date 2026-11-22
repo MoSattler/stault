@@ -139,6 +139,8 @@ export interface SaveSync {
 	state: SaveState;
 	/** The Ludusavi entry this game was matched to. */
 	name: string | null;
+	/** Save files the user chose by hand instead of a Ludusavi entry. */
+	paths: string[] | null;
 	/** ISO time the save this device last synced was uploaded. */
 	syncedAt: string | null;
 	/** Present while the state is "conflict". */

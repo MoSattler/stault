@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { ApiError, type GameVaultClient, OfflineError, parseSaveName } from "../src/bun/gamevault/client";
 import { filesDir, gameDir, Installs, workDir } from "../src/bun/installs";
 import { nextStep, saveKind, Saves } from "../src/bun/saves";
-import { globEscape, Ludusavi, ludusaviConfig, readScan } from "../src/bun/saves/ludusavi";
+import { globEscape, Ludusavi, ludusaviConfig, readScan, savePath } from "../src/bun/saves/ludusavi";
 import type { GameType, Platform, SaveSync } from "../src/shared/model";
 
 describe("the pieces", () => {
@@ -34,7 +34,7 @@ describe("the pieces", () => {
 	test("Ludusavi is pointed at Stault's folder layout, with the official client's path names", () => {
 		const config = ludusaviConfig(
 			{ gameDir: "/lib/Celeste [12]", filesDir: "/lib/Celeste [12]/files", userDir: "/Users/sam" },
-			"Celeste",
+			{ name: "Celeste" },
 		);
 		// "[" is a glob character in a root path.
 		expect(config.roots).toEqual([{ store: "other", path: "/lib/Celeste [[]12]" }]);
@@ -45,6 +45,17 @@ describe("the pieces", () => {
 			["/Users/sam", "G:\\gamevault\\currentuser"],
 		]);
 		expect(globEscape("a [1] [2]")).toBe("a [[]1] [[]2]");
+	});
+
+	test("save files named by hand replace Ludusavi's entry, and don't name this device's folders", () => {
+		const where = { gameDir: "/lib/Odd [12]", filesDir: "/lib/Odd [12]/files", userDir: "/Users/sam" };
+		expect(ludusaviConfig(where, { name: "Odd", paths: ["<home>/odd/*.sav"] }).customGames).toEqual([
+			{ name: "Odd", integration: "override", files: ["<home>/odd/*.sav"], installDir: ["files"] },
+		]);
+		expect(savePath("/lib/Odd [12]/files/saves", where, "/Users/sam")).toBe("<base>/saves");
+		expect(savePath("/Users/sam/Library/Odd [EU]/", where, "/Users/sam")).toBe("<home>/Library/Odd [[]EU]");
+		expect(savePath("/Users/samantha/odd", where, "/Users/sam")).toBe("/Users/samantha/odd");
+		expect(savePath("C:\\Games\\Odd\\save.dat", where, "/Users/sam")).toBe("C:/Games/Odd/save.dat");
 	});
 
 	test("a scan with no files means no saves, and only a differing one counts as changed", () => {
@@ -161,6 +172,8 @@ function device(server: Server, name: string, options: { known?: boolean; as?: t
 		saves,
 		seen,
 		dir,
+		files,
+		home,
 		record: () => installs.get(3)!.manifest.saves!,
 		play(save: string, profile = "profile") {
 			mkdirSync(join(home, "harbor"), { recursive: true });
@@ -343,9 +356,34 @@ describe.skipIf(!ready)("two devices and a server", () => {
 
 		// "Celeste" is in Ludusavi's list; choosing it starts following that entry.
 		expect(await a.saves.search(3, "Celeste")).toContain("Celeste");
-		await a.saves.setName(3, "Celeste");
+		await a.saves.choose(3, { name: "Celeste" });
 		expect(a.record().name).toBe("Celeste");
-		await a.saves.setName(3, null);
+		await a.saves.choose(3, null);
 		expect(a.seen.status?.state).toBe("unsupported");
+	}, 60_000);
+
+	test("a game Ludusavi doesn't know syncs the save files the user names", async () => {
+		const server = fakeServer();
+		const a = device(server, "a10", { known: false });
+		const b = device(server, "b10", { known: false });
+		for (const d of [a, b]) {
+			await d.saves.choose(3, {
+				paths: [d.saves.savePath(3, join(d.files, "save.txt")), d.saves.savePath(3, join(d.home, "harbor"))],
+			});
+			// Choosing starts a sync. Let it finish: the two devices share one Ludusavi config folder.
+			expect(await d.saves.sync(3)).toBe("synced");
+		}
+		expect(a.record()).toMatchObject({ name: "Harbor Lights", paths: ["<base>/save.txt", "<home>/harbor"] });
+		expect(a.seen.status?.paths).toEqual(["<base>/save.txt", "<home>/harbor"]);
+
+		a.play("chapter 1", "sam");
+		expect(await a.saves.sync(3)).toBe("uploaded");
+		expect(await b.saves.sync(3)).toBe("restored");
+		expect(b.save()).toBe("chapter 1");
+		expect(b.profile()).toBe("sam");
+
+		await expect(a.saves.choose(3, { paths: ["saves/x.sav"] })).rejects.toThrow("not a full path");
+		await expect(a.saves.choose(3, { paths: [" "] })).rejects.toThrow("at least one");
+		expect(a.record().paths).toEqual(["<base>/save.txt", "<home>/harbor"]);
 	}, 60_000);
 });
