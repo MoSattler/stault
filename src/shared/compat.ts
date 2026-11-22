@@ -1,4 +1,4 @@
-import type { GameType, Platform } from "./model";
+import type { GameType, GameVersion, Platform } from "./model";
 
 export type BuildOs = "windows" | "linux" | "macos" | "unknown";
 export type KnownOs = Exclude<BuildOs, "unknown">;
@@ -31,6 +31,21 @@ export function canRun(
 	if (platform === "linux") return "yes";
 	// macOS: Windows builds would need Wine, which Stault does not drive yet.
 	return "no";
+}
+
+/**
+ * When none of a game's builds can run on this OS, the systems they are for;
+ * otherwise null. Only the full list of builds can tell: a game summary has it
+ * once the library fetched it, and until then a default that can't run here
+ * proves nothing.
+ */
+export function cantRunHere(
+	platform: Platform,
+	versions: Pick<GameVersion, "type" | "version">[] | undefined,
+): KnownOs[] | null {
+	if (!versions || versions.some((v) => canRun(platform, v.type, v.version) !== "no")) return null;
+	// A build for an unknown system counts as runnable, so every one here is known.
+	return [...new Set(versions.map((v) => buildOs(v.type, v.version)))].filter((os) => os !== "unknown");
 }
 
 export const OS_NAME: Record<BuildOs, string> = {

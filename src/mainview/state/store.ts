@@ -61,7 +61,8 @@ export type Sort = "added" | "name" | "played" | "size";
 interface UiState {
 	view: View;
 	query: string;
-	filter: "all" | "installed";
+	/** Which games the sidebar lists: all of them, the ones that run on this system, or the ones on this device. */
+	filter: "all" | "runs" | "installed";
 	sort: Sort;
 	toast: Toast | null;
 	/** Game whose install dialog is open, with an optional preselected version. */

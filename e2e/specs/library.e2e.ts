@@ -1,5 +1,5 @@
 import { $, $$, browser, expect } from "@wdio/globals";
-import { fill, footer, gameList, listedGames, main, section, signIn, SYSTEM } from "../app.ts";
+import { fill, footer, gameList, listedGames, main, NATIVE, section, signIn, SYSTEM } from "../app.ts";
 
 const search = () => $("input[aria-label='Search library']");
 /** The titles in the "All games" grid, in the order shown. */
@@ -46,6 +46,23 @@ describe("The library", () => {
 
 		await gameList().$("button*=All ·").click();
 		await browser.waitUntil(async () => (await listedGames()).length > 0);
+	});
+
+	it("shows only the games that run on this system on request", async () => {
+		const all = await listedGames();
+		const runs = gameList().$(`button*=${SYSTEM} ·`);
+		await runs.click();
+		await expect(runs).toHaveAttribute("aria-pressed", "true");
+		// Tin Kettle is a Linux build and Pixel Drift a Windows one. Linux runs both, the second through umu-launcher.
+		// Which builds a game has is fetched after sign-in, so Tin Kettle may take a moment to go.
+		if (SYSTEM === "Windows") await browser.waitUntil(async () => !(await listedGames()).includes("Tin Kettle"));
+		const shown = await listedGames();
+		expect(shown).toEqual(expect.arrayContaining(["Pixel Drift", NATIVE.title]));
+		expect(all).toEqual(expect.arrayContaining(shown));
+		await expect(runs).toHaveText(`${SYSTEM} · ${shown.length}`);
+
+		await gameList().$("button*=All ·").click();
+		await browser.waitUntil(async () => (await listedGames()).length === all.length);
 	});
 
 	it("opens on Home with every game", async () => {

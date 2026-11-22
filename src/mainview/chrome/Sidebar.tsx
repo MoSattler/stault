@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { cantRunHere, PLATFORM_NAME } from "../../shared/compat";
 import type { GameSummary } from "../../shared/model";
 import { Cover } from "../components/Cover";
 import { gameMenu } from "../components/GameMenu";
@@ -66,15 +67,25 @@ export function Sidebar() {
 		() => new Set([...installs.map((i) => i.gameId), ...downloads.map((d) => d.gameId)]),
 		[installs, downloads],
 	);
+	// The games on this device, and every other one with a build that can or might run here.
+	const runnable = useMemo(
+		() => games.filter((g) => here.has(g.id) || !cantRunHere(platform, g.versions)),
+		[games, here, platform],
+	);
 	const shown = useMemo(() => {
 		const q = query.trim().toLowerCase();
-		return games
-			.filter((g) => (filter === "all" || here.has(g.id)) && (!q || g.title.toLowerCase().includes(q)))
+		const listed = filter === "all" ? games : filter === "runs" ? runnable : games.filter((g) => here.has(g.id));
+		return listed
+			.filter((g) => !q || g.title.toLowerCase().includes(q))
 			.sort((a, b) => a.sortTitle.localeCompare(b.sortTitle));
-	}, [games, here, query, filter]);
+	}, [games, runnable, here, query, filter]);
 
-	const pill = (on: boolean) =>
-		`min-h-[30px] rounded text-[12.5px] font-semibold ${on ? "bg-line text-ink" : "text-muted"}`;
+	const system = PLATFORM_NAME[platform];
+	const options = [
+		{ value: "all", label: "All", count: games.length, empty: "This server has no games yet." },
+		{ value: "runs", label: system, count: runnable.length, empty: `No game on this server runs on ${system}.` },
+		{ value: "installed", label: "Installed", count: installs.length, empty: "Nothing installed on this device yet." },
+	] as const;
 
 	return (
 		<aside aria-label="Game list" className="flex w-[264px] flex-none flex-col gap-3 border-r border-hover bg-panel py-3.5 pl-3 pr-2.5">
@@ -94,13 +105,19 @@ export function Sidebar() {
 				</kbd>
 			</label>
 
-			<div role="group" aria-label="Show" className="grid grid-cols-2 gap-0.5 rounded-md bg-raised p-0.5">
-				<button type="button" onClick={() => setUi({ filter: "all" })} aria-pressed={filter === "all"} className={pill(filter === "all")}>
-					All · {games.length}
-				</button>
-				<button type="button" onClick={() => setUi({ filter: "installed" })} aria-pressed={filter === "installed"} className={pill(filter === "installed")}>
-					Installed · {installs.length}
-				</button>
+			{/* Equal widths while the labels fit; a longer one ("Windows · 140") takes the room it needs. */}
+			<div role="group" aria-label="Show" className="flex gap-0.5 rounded-md bg-raised p-0.5">
+				{options.map(({ value, label, count }) => (
+					<button
+						key={value}
+						type="button"
+						onClick={() => setUi({ filter: value })}
+						aria-pressed={filter === value}
+						className={`min-h-[30px] flex-1 whitespace-nowrap rounded text-[12.5px] font-semibold ${filter === value ? "bg-line text-ink" : "text-muted"}`}
+					>
+						{label} · {count}
+					</button>
+				))}
 			</div>
 
 			<ul className="-mr-1.5 flex min-h-0 flex-auto flex-col gap-0.5 overflow-y-auto pr-1.5">
@@ -111,9 +128,7 @@ export function Sidebar() {
 					<p className="mx-2 my-1 text-[13px] text-muted">
 						{query.trim()
 							? `No games match “${query.trim()}”.`
-							: filter === "installed"
-								? "Nothing installed on this device yet."
-								: "This server has no games yet."}
+							: options.find((o) => o.value === filter)?.empty}
 					</p>
 				)}
 			</ul>
