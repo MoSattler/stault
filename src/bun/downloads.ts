@@ -1,8 +1,8 @@
-import { mkdir, open, rename, rm, stat } from "node:fs/promises";
+import { mkdir, open, rename, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { Download, DownloadPhase, GameType } from "../shared/model";
 import { extract } from "./extract";
-import { freeBytes } from "./folders";
+import { freeBytes, removeFolder } from "./folders";
 import { OfflineError, type GameVaultClient } from "./gamevault/client";
 import { filesDir, folderSize, gameDir, type Installs, workDir } from "./installs";
 import { readJson, writeJson } from "./json-file";
@@ -87,7 +87,7 @@ export class Downloads {
 		this.queue = [];
 		this.save();
 		this.publish(true);
-		await Promise.all(dropped.map((q) => rm(q.dir, { recursive: true, force: true })));
+		await Promise.all(dropped.map((q) => removeFolder(q.dir)));
 	}
 
 	has(gameId: number) {
@@ -104,7 +104,7 @@ export class Downloads {
 		const dir = gameDir(folder, input.title, input.gameId);
 		// Switching versions: the old files go first, the new ones land in the same place.
 		await this.deps.installs.remove(input.gameId);
-		await rm(dir, { recursive: true, force: true });
+		await removeFolder(dir);
 		this.queue.push({ ...input, dir, receivedBytes: 0, paused: false, error: null });
 		this.save();
 		this.pump();
@@ -141,7 +141,7 @@ export class Downloads {
 		}
 		this.queue = this.queue.filter((q) => q !== item);
 		this.save();
-		await rm(item.dir, { recursive: true, force: true });
+		await removeFolder(item.dir);
 		this.pump();
 	}
 
@@ -231,18 +231,18 @@ export class Downloads {
 		const target = filesDir(item.dir);
 		const extractTo = isSetup ? join(workDir(item.dir), "setup") : target;
 		this.enter(run, "extract");
-		await rm(extractTo, { recursive: true, force: true });
+		await removeFolder(extractTo);
 		await extract(this.deps.sevenZip, archive, extractTo, (fraction) => {
 			run.progress = fraction;
 			this.publish();
 		});
-		await rm(join(workDir(item.dir), "download"), { recursive: true, force: true });
+		await removeFolder(join(workDir(item.dir), "download"));
 
 		if (isSetup) {
 			this.enter(run, "setup");
 			await mkdir(target, { recursive: true });
 			await this.deps.runSetup(item, extractTo, target, signal);
-			await rm(extractTo, { recursive: true, force: true });
+			await removeFolder(extractTo);
 		}
 
 		this.deps.installs.add(item.dir, {

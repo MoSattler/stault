@@ -36,6 +36,12 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 
 On an Apple Silicon Mac the container runs through Rosetta. That is enough for everything above, but Hutch does not run there, so `run.sh` builds the JavaScript on the Mac and puts it into the latest released Linux app. It does not test the Linux packaging; the canary build from the Release workflow does.
 
+## Testing on Windows
+
+On an Apple Silicon Mac, `./dev/windows/up.sh <ISO>` creates a Windows 11 VM in [UTM](https://mac.getutm.app) (`brew install --cask utm`) from the Windows 11 Arm64 ISO that Microsoft offers for download, and installs Windows without questions. `./dev/windows/run.sh` then runs the current code in it, and `./dev/windows/vm.sh` takes screenshots, clicks, types and runs commands there. Inside the VM the test server is `http://10.0.2.2:18080`.
+
+Windows for Arm runs Stault's x64 build through emulation, so this shows what works, not how fast it is. As on Linux, `run.sh` puts the JavaScript built on the Mac into the latest released Windows app; it does not test the Windows packaging.
+
 ## Layout
 
 ```
@@ -43,7 +49,7 @@ src/shared/       Types shared by both sides, including the RPC contract
 src/bun/          Main process: server client, session, downloads, installs, launcher, save sync
 src/mainview/     Webview UI: React + Tailwind, built by Vite
 test/             Unit tests (Bun's test runner)
-dev/              Local test server, Linux test desktop and helper scripts
+dev/              Local test server, Linux and Windows test machines, helper scripts
 electrobun.config.ts   App identity and how the bundle is assembled
 hutch.config.ts        Tasks and the pinned Electrobun version
 ```

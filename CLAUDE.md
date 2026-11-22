@@ -48,7 +48,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Screen-control tools cannot type into the password field. `hutch dev/sign-in.ts "<data folder>"` signs the dev build into the test server instead; the app prints its data folder on start.
 - When the app window is covered by another window (or the browser pane is hidden), CSS animations pause, so a screenshot can show a page still faded out. The content is there; check the accessibility tree or bring the window forward.
 - The running dev app holds Hutch's build lock. `hutch run build:canary` waits silently until the dev app is closed.
-- The macOS and Linux builds have been run. Launching on Windows (setup installers) is covered by unit tests of the command builders but has not been run there.
+- All three builds have been run: macOS natively, Linux in a container, Windows in a VM (sections below).
 
 ## Testing on Linux (`dev/linux/`)
 
@@ -57,3 +57,12 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - A title-bar drag needs pauses between press, moves and release; Electrobun starts the move a moment after the press.
 - Once the image exists, `seed.sh` compiles the Windows samples (`dev/samples/*.c`) into real programs: Pixel Drift opens a message box, Setup Quest's installer copies a game to `/DIR=` or to `C:\Games\Setup Quest`.
 - On an Apple Silicon host the container runs through Rosetta, which can't start Hutch or the system `bwrap`, so nothing is built in the container and current Arch (GTK loads icons through `bwrap`) is no use as its base. Wine sometimes dies at start with an `xsave` assertion in the launch log; start the game again.
+
+## Testing on Windows (`dev/windows/`)
+
+- The VM "Stault Windows" lives in UTM: Windows 11 for Arm, which runs Stault's x64 build through emulation. `./dev/windows/up.sh <ISO>` creates it from scratch, unattended; `utmctl start "Stault Windows"` starts an existing one. Inside it the test server is `http://10.0.2.2:18080`, and the user `stault` has no password.
+- `./dev/windows/run.sh` puts this checkout's code into the released Windows app there and starts it. `./dev/windows/vm.sh` drives the VM: `shot`, `click X Y`, `key`, `sys` (a batch script as SYSTEM), `user` (one on the desktop, through a scheduled task) and `ulog`. Run `vm.sh screen` once after each VM start: it sets 1440x900 and measures how UTM scales click positions.
+- The app's own output does not reach a log on Windows (it is a GUI program). To trace something, append to a file from the code for the moment.
+- Never run a game with `vm.sh sys`: its window opens on SYSTEM's invisible desktop and it waits there forever. And `taskkill /im <game>.exe` also ends the copy Stault started.
+- Speed there says nothing: x64 is emulated and the network is user-mode. A 200 MB install took two minutes.
+- Windows keeps a program's file locked for a moment after it exits, which is why game folders are deleted with `removeFolder` (`src/bun/folders.ts`), which retries.
