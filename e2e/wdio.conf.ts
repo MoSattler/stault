@@ -34,6 +34,7 @@ export const config: WebdriverIO.Config = {
 					browserName: "MicrosoftEdge",
 					browserVersion: webView2Version(),
 					"ms:edgeOptions": { debuggerAddress: `127.0.0.1:${DEBUG_PORT}` },
+					"wdio:enforceWebDriverClassic": true,
 				}
 			: {
 					browserName: "electrobun",

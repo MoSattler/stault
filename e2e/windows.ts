@@ -54,7 +54,11 @@ export async function startApp() {
 	app = spawn(process.env.STAULT_APP!, [], { cwd: homedir(), stdio: ["ignore", output, output] });
 	closeSync(output);
 	for (const deadline = Date.now() + 30_000; Date.now() < deadline && app.exitCode === null; await sleep(250)) {
-		if ((await pages()).some((page) => page.type === "page")) return;
+		const found = await pages();
+		if (found.some((page) => page.type === "page")) {
+			console.log("DEBUG targets before attaching", JSON.stringify(found));
+			return;
+		}
 	}
 	const ended = app.exitCode === null ? "" : ` It exited with ${app.exitCode}.`;
 	const tails = logs()
