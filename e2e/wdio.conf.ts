@@ -5,9 +5,10 @@
 //   STAULT_APP     the built app's launcher, <app>/bin/launcher
 //   STAULT_SERVER  the test server's address, where it is not the one in dev/seed.sh
 
-import { mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { browser } from "@wdio/globals";
 
 // The app keeps everything under the home folder set below. Without a keyring
 // its sign-in token goes into a file there too, not into the desktop's keyring.
@@ -33,6 +34,15 @@ export const config: WebdriverIO.Config = {
 	onWorkerStart() {
 		process.env.HOME = mkdtempSync(join(tmpdir(), "stault-e2e-home-"));
 	},
+	// A picture of the window for every check that fails, in e2e/failures/.
+	async afterTest(test, _context, { passed }) {
+		if (passed) return;
+		mkdirSync("failures", { recursive: true });
+		const name = `${test.parent} - ${test.title}`.replace(/[^\w .-]/g, "_");
+		await browser.saveScreenshot(join("failures", `${name}.png`)).catch(() => {});
+	},
+	// How long a check waits for the window to catch up.
+	waitforTimeout: 10_000,
 	logLevel: "warn",
 	framework: "mocha",
 	reporters: ["spec"],
