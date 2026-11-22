@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/MoSattler/stault/compare/v0.7.1...v0.8.0) (2026-11-22)
+
+
+### Features
+
+* add a Properties dialog for installed games ([#42](https://github.com/MoSattler/stault/issues/42)) ([67ca924](https://github.com/MoSattler/stault/commit/67ca924590e03ffc0d4f9c812805c3db83c1e999))
+
 ## [0.7.1](https://github.com/MoSattler/stault/compare/v0.7.0...v0.7.1) (2026-11-22)
 
 
