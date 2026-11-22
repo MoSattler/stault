@@ -10,7 +10,8 @@ FROM debian:trixie-slim
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		libwebkit2gtk-4.1-0 libgtk-3-0 libayatana-appindicator3-1 \
-		xvfb openbox xdotool x11vnc x11-utils imagemagick \
+		xvfb xauth openbox xdotool x11vnc x11-utils imagemagick \
+		webkitgtk-webdriver \
 		dbus dbus-x11 gnome-keyring libsecret-tools \
 		adwaita-icon-theme librsvg2-common fonts-dejavu fonts-noto-core \
 		libgl1-mesa-dri mesa-vulkan-drivers \
@@ -27,6 +28,11 @@ RUN dpkg --add-architecture i386 && cd /tmp \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends ./python3-umu-launcher_*.deb ./umu-launcher_*.deb \
 	&& rm -rf /var/lib/apt/lists/* /tmp/*.deb
+
+# The end-to-end tests (e2e.sh) run on Node, and need a newer one than Debian's.
+ARG NODE_VERSION=24.22.3
+RUN curl -fsSL "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
+	| tar -xJ -C /usr/local --strip-components=1
 
 # Same user name and id as on a Steam Deck. umu-launcher refuses to run as root.
 RUN useradd -m -u 1000 -s /bin/bash deck \

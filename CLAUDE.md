@@ -58,6 +58,16 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Once the image exists, `seed.sh` compiles the Windows samples (`dev/samples/*.c`) into real programs: Pixel Drift opens a message box, Setup Quest's installer copies a game to `/DIR=` or to `C:\Games\Setup Quest`.
 - On an Apple Silicon host the container runs through Rosetta, which can't start Hutch or the system `bwrap`, so nothing is built in the container and current Arch (GTK loads icons through `bwrap`) is no use as its base. Wine sometimes dies at start with an `xsave` assertion in the launch log; start the game again.
 
+## End-to-end tests (`e2e/`)
+
+- WebdriverIO with `@wdio/electrobun-service` starts the built app and drives its real window. Linux only so far: the service has no way into WKWebView on macOS (only into a CEF build), and its Windows path (WebView2) is untried here. `./dev/linux/e2e.sh` runs them from a Mac in the container `stault-e2e`; `.github/workflows/e2e.yml` runs them on pull requests.
+- `e2e/` is its own npm project on Node (`npm ci`, `package-lock.json`), not part of `hutch install`. The WebdriverIO packages are pinned to the versions the service depends on; raise them together.
+- The tests must not need anything from `src/`: no test ids, hooks or test-only branches. Select by label, role and text.
+- The service runs a copy of the app from a temporary folder. A stable build crashes there at start (`Updater.localInfo` throws outside `<data folder>/app`), so the tests need a dev build (`hutch run build:dev`).
+- Every spec file gets a new app in an empty home folder (`onWorkerStart` in `wdio.conf.ts`), so it starts signed out. With no keyring there, the token goes to `session.json`.
+- WebKit's WebDriver returns no text for the truncated titles in the game list; find those rows with a text selector (`button*=Title`) instead of reading the list's text.
+- Installed game files are in `<library>/<Title> [<id>]/files/`.
+
 ## Testing on Windows (`dev/windows/`)
 
 - The VM "Stault Windows" lives in UTM: Windows 11 for Arm, which runs Stault's x64 build through emulation. `./dev/windows/up.sh <ISO>` creates it from scratch, unattended; `utmctl start "Stault Windows"` starts an existing one. Inside it the test server is `http://10.0.2.2:18080`, and the user `stault` has no password.

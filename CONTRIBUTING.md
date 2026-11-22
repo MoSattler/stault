@@ -21,6 +21,7 @@ Tasks are defined in `hutch.config.ts` and run with `hutch run <task>`.
 | `hmr` | Serves only the UI at http://localhost:5173, on sample data, for work in a browser. |
 | `test` | Runs the unit tests. The save sync tests run the real Ludusavi and are skipped until a build or dev start has fetched it (`hutch dev/fetch-ludusavi.ts`). |
 | `typecheck` | Type-checks `src/`, `test/` and `dev/`. |
+| `build:dev` | Builds the app as `dev` does, without starting it. The Linux scripts and the end-to-end tests use it. |
 | `build:canary` | Builds a canary release for the current OS and architecture. Close the dev app first. |
 | `build` | Builds a stable release for the current OS and architecture. |
 
@@ -36,6 +37,21 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 
 On an Apple Silicon Mac the container runs through Rosetta. That is enough for everything above, but Hutch does not run there, so `run.sh` builds the JavaScript on the Mac and puts it into the latest released Linux app. It does not test the Linux packaging; the canary build from the Release workflow does.
 
+## End-to-end tests
+
+`e2e/` holds tests that start the built app and drive its real window with [WebdriverIO](https://webdriver.io) and its [Electrobun service](https://github.com/webdriverio/desktop-mobile/tree/main/packages/electrobun-service): they sign in to the test server, click through the UI and check what lands on disk. Each spec file gets its own app with nobody signed in and nothing installed.
+
+They run on Linux only so far, where WebKit's WebDriver can drive the system webview. `.github/workflows/e2e.yml` runs them on every pull request. On a Mac, with the test server up:
+
+```sh
+./dev/linux/e2e.sh                               # all of them
+./dev/linux/e2e.sh --spec specs/sign-in.e2e.ts   # one file
+```
+
+That runs them in a Linux container of their own (`stault-e2e`), on the same mix as `run.sh`: this checkout's JavaScript in the latest released Linux app.
+
+WebdriverIO runs on Node, so `e2e/` is a small npm project of its own (`package-lock.json`, `npm ci`), apart from the app's Hutch-managed dependencies. Nothing in `src/` exists for the tests' sake; they find things the way a user does, by label and text.
+
 ## Testing on Windows
 
 On an Apple Silicon Mac, `./dev/windows/up.sh <ISO>` creates a Windows 11 VM in [UTM](https://mac.getutm.app) (`brew install --cask utm`) from the Windows 11 Arm64 ISO that Microsoft offers for download, and installs Windows without questions. `./dev/windows/run.sh` then runs the current code in it, and `./dev/windows/vm.sh` takes screenshots, clicks, types and runs commands there. Inside the VM the test server is `http://10.0.2.2:18080`.
@@ -49,6 +65,7 @@ src/shared/       Types shared by both sides, including the RPC contract
 src/bun/          Main process: server client, session, downloads, installs, launcher, save sync
 src/mainview/     Webview UI: React + Tailwind, built by Vite
 test/             Unit tests (Bun's test runner)
+e2e/              End-to-end tests (WebdriverIO, on Node)
 dev/              Local test server, Linux and Windows test machines, helper scripts
 electrobun.config.ts   App identity and how the bundle is assembled
 hutch.config.ts        Tasks and the pinned Electrobun version
