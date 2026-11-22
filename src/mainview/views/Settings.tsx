@@ -133,6 +133,7 @@ function Account() {
 
 export function Settings() {
 	const [tab, setTab] = useState<Tab>("library");
+	const version = useApp((s) => s.version);
 	const rise = useRise();
 	return (
 		<div className={`flex w-full max-w-[1100px] flex-col gap-6 px-8 pb-12 pt-7 ${rise}`}>
@@ -150,6 +151,9 @@ export function Settings() {
 							{label}
 						</button>
 					))}
+					{version && (
+						<span className="select-text px-3 pt-3 font-mono text-[11.5px] text-muted">Stault {version}</span>
+					)}
 				</nav>
 				<div className="flex min-w-0 flex-[999_1_480px] flex-col">
 					{tab === "library" && <LibraryFolders />}

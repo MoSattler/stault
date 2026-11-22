@@ -22,6 +22,7 @@ function createStore<T extends object>(initial: T) {
 
 const app = createStore<AppState>({
 	platform: "macos",
+	version: "",
 	ready: false,
 	session: null,
 	online: true,

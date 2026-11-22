@@ -9,6 +9,7 @@ const platform: Platform =
 
 let state: AppState = {
 	platform,
+	version: "",
 	ready: false,
 	session: null,
 	online: true,
