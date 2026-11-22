@@ -53,10 +53,7 @@ export function SavesCard({ game, running }: { game: GameSummary; running: boole
 		);
 	} else if (serverOff) {
 		body = (
-			<p className="text-[13px] text-muted">
-				Save files are switched off on {host}. Whoever runs it can turn them on with{" "}
-				<span className="select-text font-mono text-xs">SAVEFILES_ENABLED=true</span>.
-			</p>
+			<p className="text-[13px] text-muted">Save files are switched off on the server.</p>
 		);
 	} else if (!save) {
 		return null;

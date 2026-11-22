@@ -65,9 +65,19 @@ function Saves() {
 		<>
 			<SettingRow
 				title="Sync game saves"
-				help={`Fetches a newer save from ${host} before a game starts, and uploads yours after you quit. A game's properties can turn it off for that game.`}
+				help={
+					serverOff
+						? "Save files are switched off on the server."
+						: `Fetches a newer save from ${host} before a game starts, and uploads yours after you quit. A game's properties can turn it off for that game.`
+				}
 			>
-				<Switch label="Sync game saves" on={enabled} onChange={(on) => attempt(api.setSaveSync({ on }))} />
+				<Switch
+					label="Sync game saves"
+					// Off while the server takes no saves, whatever the setting says.
+					on={enabled && !serverOff}
+					disabled={serverOff}
+					onChange={(on) => attempt(api.setSaveSync({ on }))}
+				/>
 			</SettingRow>
 			<SettingRow title="Device name" help="Stored with the saves this device uploads, so you can tell where a save came from.">
 				<input
@@ -78,12 +88,6 @@ function Saves() {
 					className="min-h-9 w-56 rounded-md border border-line bg-raised px-2.5 text-[13px]"
 				/>
 			</SettingRow>
-			{serverOff && (
-				<p className="pt-3.5 text-[13px] text-amber">
-					Save files are switched off on {host}. Whoever runs it can turn them on with{" "}
-					<span className="select-text font-mono text-xs">SAVEFILES_ENABLED=true</span>.
-				</p>
-			)}
 			<p className="pt-3.5 text-[12.5px] text-muted">
 				Save locations come from Ludusavi, so only games it knows are synced. A save made by a Mac build can't be
 				used by a Windows or Linux build of the same game, or the other way round.

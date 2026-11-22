@@ -85,7 +85,7 @@ function Saves({ gameId }: { gameId: number }) {
 
 	let help = `Fetches a newer save from ${host} before the game starts, and uploads yours after you quit.`;
 	if (!enabled) help = "Save sync is turned off for all games in Settings.";
-	else if (serverOff) help = `Save files are switched off on ${host}.`;
+	else if (serverOff) help = "Save files are switched off on the server.";
 
 	let where: ReactNode = "Stault doesn't know where this game keeps its saves.";
 	if (save?.state === "unknown") where = "Looking up where this game keeps its saves…";
@@ -97,7 +97,8 @@ function Saves({ gameId }: { gameId: number }) {
 			<SettingRow title="Sync saves" help={help}>
 				<Switch
 					label="Sync saves"
-					on={on}
+					// Shown as it works out: off while nothing can sync, whatever the game's own choice.
+					on={usable && on}
 					disabled={!usable || !save}
 					onChange={(next) => attempt(api.setGameSaveSync({ gameId, on: next }))}
 				/>
