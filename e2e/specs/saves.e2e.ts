@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { $, browser, expect } from "@wdio/globals";
 import {
-	dialog, fill, hero, install, installFolder, LIBRARY, main, PASSWORD, SERVER, signIn, toast, toastGone, USER,
+	confirm, dialog, fill, hero, install, installFolder, LIBRARY, main, PASSWORD, SERVER, signIn, toast, toastGone, USER,
 } from "../app.ts";
 
 const card = () => $("section[aria-labelledby='h-saves']");
@@ -124,6 +124,49 @@ describe("Save sync", () => {
 		await expect(card()).toHaveText(expect.stringContaining("Save locations from Ludusavi's entry Pixel Drift"), {
 			wait: 30_000,
 		});
+	});
+
+	it("syncs save files chosen by hand instead of a Ludusavi entry", async () => {
+		// Choosing an entry just now started a sync, which keeps the buttons disabled until it ends.
+		const change = card().$("button=Change");
+		await change.waitForEnabled({ timeout: 30_000 });
+		await toastGone();
+		await change.click();
+		await dialog().$("button=Choose the save files yourself").click();
+		await expect(dialog().$("h2")).toHaveText("Where does Pixel Drift save?", { ignoreCase: true });
+
+		// A path that doesn't say where it starts is turned down, and the dialog stays open.
+		await fill(dialog().$("input[aria-label='New save path']"), "save.txt");
+		await confirm("Use these");
+		await expect(toast()).toHaveText(expect.stringContaining("is not a full path"));
+		await expect(dialog()).toExist();
+
+		// Typed in full, the path is kept relative to the game's files, as a picked one would be.
+		await fill(dialog().$("input[aria-label='Save path 1']"), saveFile());
+		await confirm("Use these");
+		await expect(dialog()).not.toExist();
+		await expect(card()).toHaveText(expect.stringContaining("Save locations you chose"));
+		await expect(card()).toHaveText(expect.stringContaining("<base>/save.txt"));
+		expect(manifest().saves.paths).toEqual(["<base>/save.txt"]);
+
+		// The round trip: up from this device, then back over a changed file.
+		// Choosing starts a sync here too. A save changed before it ends would be a conflict, rightly.
+		const upload = card().$("button=Upload now");
+		await upload.waitForEnabled({ timeout: 30_000 });
+		await expect(card()).toHaveText(expect.stringContaining("In step with"));
+		const byHand = `${changed}and synced as a file chosen by hand\n`;
+		writeFileSync(saveFile(), byHand);
+		const before = manifest().saves.syncedAt;
+		await toastGone();
+		await upload.click();
+		await browser.waitUntil(() => manifest().saves.syncedAt !== before, { timeout: 30_000 });
+
+		writeFileSync(saveFile(), "overwritten on this device\n");
+		const fetchBack = card().$("button=Fetch from server");
+		await fetchBack.waitForEnabled({ timeout: 30_000 });
+		await toastGone();
+		await fetchBack.click();
+		await browser.waitUntil(() => readFileSync(saveFile(), "utf8") === byHand, { timeout: 30_000 });
 	});
 
 	it("leaves the game's saves alone while sync is off for it", async () => {

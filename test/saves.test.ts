@@ -49,11 +49,12 @@ describe("the pieces", () => {
 
 	test("save files named by hand replace Ludusavi's entry, and don't name this device's folders", () => {
 		const where = { gameDir: "/lib/Odd [12]", filesDir: "/lib/Odd [12]/files", userDir: "/Users/sam" };
-		expect(ludusaviConfig(where, { name: "Odd", paths: ["<home>/odd/*.sav"] }).customGames).toEqual([
-			{ name: "Odd", integration: "override", files: ["<home>/odd/*.sav"], installDir: ["files"] },
+		// "[" is a plain character in the user's paths, so it is escaped for Ludusavi.
+		expect(ludusaviConfig(where, { name: "Odd", paths: ["<home>/odd [EU]/*.sav"] }).customGames).toEqual([
+			{ name: "Odd", integration: "override", files: ["<home>/odd [[]EU]/*.sav"], installDir: ["files"] },
 		]);
 		expect(savePath("/lib/Odd [12]/files/saves", where, "/Users/sam")).toBe("<base>/saves");
-		expect(savePath("/Users/sam/Library/Odd [EU]/", where, "/Users/sam")).toBe("<home>/Library/Odd [[]EU]");
+		expect(savePath("/Users/sam/Library/Odd [EU]/", where, "/Users/sam")).toBe("<home>/Library/Odd [EU]");
 		expect(savePath("/Users/samantha/odd", where, "/Users/sam")).toBe("/Users/samantha/odd");
 		expect(savePath("C:\\Games\\Odd\\save.dat", where, "/Users/sam")).toBe("C:/Games/Odd/save.dat");
 	});
@@ -384,13 +385,13 @@ describe.skipIf(!ready)("two devices and a server", () => {
 		const server = fakeServer();
 		const a = device(server, "a11", { known: false });
 		const b = device(server, "b11", { known: false });
-		for (const d of [a, b]) {
-			await d.saves.choose(3, {
-				paths: [d.saves.savePath(3, join(d.files, "save.txt")), d.saves.savePath(3, join(d.home, "harbor"))],
-			});
-			// Choosing starts a sync. Let it finish: the two devices share one Ludusavi config folder.
-			expect(await d.saves.sync(3)).toBe("synced");
-		}
+		// A types the full paths, B picks them; both end up the same, and "[3]" in the game folder is no glob.
+		await a.saves.choose(3, { paths: [join(a.files, "save.txt"), `${join(a.home, "harbor")}/`] });
+		await b.saves.choose(3, {
+			paths: [b.saves.savePath(3, join(b.files, "save.txt")), b.saves.savePath(3, join(b.home, "harbor"))],
+		});
+		// Choosing starts a sync. Let each finish: the two devices share one Ludusavi config folder.
+		for (const d of [a, b]) expect(await d.saves.sync(3)).toBe("synced");
 		expect(a.record()).toMatchObject({ name: "Harbor Lights", paths: ["<base>/save.txt", "<home>/harbor"] });
 		expect(a.seen.status?.paths).toEqual(["<base>/save.txt", "<home>/harbor"]);
 
