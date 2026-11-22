@@ -1,6 +1,7 @@
 import type { GameType, Platform } from "./model";
 
 export type BuildOs = "windows" | "linux" | "macos" | "unknown";
+export type KnownOs = Exclude<BuildOs, "unknown">;
 
 /**
  * Which OS a build is for. The server only knows Windows and Linux builds;
@@ -32,7 +33,7 @@ export function canRun(
 	return "no";
 }
 
-const OS_NAME: Record<BuildOs, string> = {
+export const OS_NAME: Record<BuildOs, string> = {
 	windows: "Windows",
 	linux: "Linux",
 	macos: "macOS",

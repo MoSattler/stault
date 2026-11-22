@@ -3,6 +3,7 @@ import type { GameSummary } from "../../shared/model";
 import { Cover } from "../components/Cover";
 import { gameMenu } from "../components/GameMenu";
 import { SearchIcon } from "../components/icons";
+import { StatusLine } from "../components/StatusLine";
 import { useGameStatus } from "../state/derive";
 import { go, setUi, useApp, useUi } from "../state/store";
 
@@ -10,7 +11,7 @@ function Row({ game, selected }: { game: GameSummary; selected: boolean }) {
 	const status = useGameStatus(game);
 	const menuOpen = useUi((s) => s.menu?.gameId === game.id);
 	const here = status.running || !!status.install || !!status.download;
-	// Playing is green and a download blue; otherwise brightness says whether the game is on this device.
+	// Playing is green and a download blue; otherwise a bright title says the game is on this device.
 	const tone = status.running
 		? "text-green"
 		: status.download
@@ -27,11 +28,11 @@ function Row({ game, selected }: { game: GameSummary; selected: boolean }) {
 				<Cover
 					title={game.title}
 					url={game.coverUrl}
-					className={`h-9 w-[26px] flex-none rounded-[3px] ${here ? "" : "opacity-55 grayscale-[.6]"}`}
+					className="h-9 w-[26px] flex-none rounded-[3px]"
 				/>
 				<span className="flex min-w-0 flex-auto flex-col gap-px">
-					<span className={`truncate text-[13px] font-semibold ${tone ?? (here ? "text-ink" : "text-[#8f969f]")}`}>{game.title}</span>
-					<span className={`whitespace-nowrap font-mono text-[10.5px] ${tone ?? "text-faint"}`}>{status.line}</span>
+					<span className={`truncate text-[13px] font-semibold ${tone ?? (here ? "text-ink" : "text-muted")}`}>{game.title}</span>
+					<span className={`whitespace-nowrap font-mono text-[10.5px] ${tone ?? "text-faint"}`}><StatusLine status={status} /></span>
 				</span>
 			</button>
 		</li>
