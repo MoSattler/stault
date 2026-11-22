@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/MoSattler/stault/compare/v0.7.1...v0.8.0) (2026-11-22)
+
+
+### Features
+
+* add a Properties dialog for installed games ([#42](https://github.com/MoSattler/stault/issues/42)) ([67ca924](https://github.com/MoSattler/stault/commit/67ca924590e03ffc0d4f9c812805c3db83c1e999))
+
+## [0.7.1](https://github.com/MoSattler/stault/compare/v0.7.0...v0.7.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* drop the metadata provider note from a game's page ([#39](https://github.com/MoSattler/stault/issues/39)) ([350bc05](https://github.com/MoSattler/stault/commit/350bc0507f9fcec601936476cf95c3804f3b2800))
+
 ## [0.7.0](https://github.com/MoSattler/stault/compare/v0.6.0...v0.7.0) (2026-11-22)
 
 

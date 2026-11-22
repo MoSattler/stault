@@ -55,7 +55,7 @@ const settings = new SettingsFile(join(dataDir, "settings.json"), {
 	saveSync: true,
 });
 const media = new MediaProxy(join(Utils.paths.userCache, "media"));
-const library = new Library(join(dataDir, "library.json"), media);
+const library = new Library(join(dataDir, "library.json"), media, platform);
 
 const installs = new Installs((list) => {
 	patchState({
@@ -243,7 +243,6 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			signOut: () => session.signOut(),
 			refreshLibrary: () => session.refreshLibrary(),
 			getGame: ({ gameId }) => library.detail(session.client, gameId),
-			setBookmark: ({ gameId, on }) => library.setBookmark(session.client, gameId, on),
 			install: ({ gameId, versionId, folder }) => install(gameId, versionId, folder),
 			setDownloadPaused: ({ gameId, paused }) => downloads.setPaused(gameId, paused),
 			setAllDownloadsPaused: ({ paused }) => downloads.setAllPaused(paused),
@@ -251,18 +250,31 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			moveDownloadUp: ({ gameId }) => downloads.moveUp(gameId),
 			uninstall: ({ gameId }) => uninstall(gameId),
 			play: ({ gameId }) => launcher.play(gameId),
-			setExecutable: ({ gameId, path }) => launcher.setExecutable(gameId, path),
+			getExecutables: ({ gameId }) => launcher.executables(gameId),
+			setExecutable: ({ gameId, path }) => void launcher.setExecutable(gameId, path),
+			browseExecutable: ({ gameId }) => launcher.browseExecutable(gameId),
 			stop: ({ gameId }) => launcher.stop(gameId),
 			syncSaves: async ({ gameId, direction }) => {
 				await saves.sync(gameId, direction);
 			},
 			findSaveGames: ({ gameId, query }) => saves.search(gameId, query),
-			setSaveGame: ({ gameId, name }) => saves.setName(gameId, name),
+			setSaveGame: ({ gameId, name }) => saves.choose(gameId, { name }),
+			setSavePaths: ({ gameId, paths }) => saves.choose(gameId, { paths }),
+			pickSavePath: async ({ gameId, folder }) => {
+				const [picked] = await Utils.openFileDialog({
+					startingFolder: homedir(),
+					canChooseFiles: !folder,
+					canChooseDirectory: folder,
+					allowsMultipleSelection: false,
+				});
+				return picked ? saves.savePath(gameId, picked) : null;
+			},
 			setSaveSync: ({ on }) => {
 				settings.update({ saveSync: on });
 				saves.publish();
 				if (on) saves.catchUp();
 			},
+			setGameSaveSync: ({ gameId, on }) => saves.setEnabled(gameId, on),
 			addLibraryFolder: async () => {
 				const [picked] = await Utils.openFileDialog({
 					startingFolder: homedir(),

@@ -216,12 +216,6 @@ export class GameVaultClient {
 		return this.json(`/api/games/${gameId}`);
 	}
 
-	async setBookmark(gameId: number, on: boolean): Promise<void> {
-		await this.request(`/api/users/me/bookmark/${gameId}`, {
-			method: on ? "POST" : "DELETE",
-		});
-	}
-
 	addMinutes(userId: number, gameId: number, minutes: number): Promise<ApiProgress> {
 		return this.json(
 			`/api/progresses/user/${userId}/game/${gameId}/increment/${minutes}`,

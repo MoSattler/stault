@@ -9,7 +9,6 @@ import type { ApiGame, ApiUser, ApiVersion } from "./types";
 /** What the signed-in user has done with each game, keyed by game id. */
 export interface UserGameData {
 	progress: Map<number, { minutes: number; lastPlayedAt: string | null; state: ProgressState }>;
-	bookmarks: Set<number>;
 }
 
 export function userGameData(user: ApiUser): UserGameData {
@@ -22,10 +21,7 @@ export function userGameData(user: ApiUser): UserGameData {
 			state: p.state,
 		});
 	}
-	return {
-		progress,
-		bookmarks: new Set((user.bookmarked_games ?? []).map((g) => g.id)),
-	};
+	return { progress };
 }
 
 const bytes = (size: string) => Number(size) || 0;
@@ -38,6 +34,19 @@ function toVersion(v: ApiVersion): GameVersion {
 		sizeBytes: bytes(v.size),
 		earlyAccess: v.early_access,
 	};
+}
+
+/** Every version, the server's default first, then newest to oldest. */
+function toVersions(game: ApiGame): GameVersion[] {
+	const versions = (game.versions ?? []).map(toVersion);
+	// The server lists versions oldest first; its default is the one whose label
+	// matches the game's own. Put that first, then newest to oldest.
+	versions.reverse();
+	const defaultIndex = versions.findIndex(
+		(v) => v.version === game.version && v.type === game.type,
+	);
+	if (defaultIndex > 0) versions.unshift(...versions.splice(defaultIndex, 1));
+	return versions;
 }
 
 export function toSummary(
@@ -61,10 +70,11 @@ export function toSummary(
 		version: game.version,
 		type: game.type,
 		sizeBytes: bytes(game.size),
+		// The game list sends an empty array, though every game has a version.
+		versions: game.versions?.length ? toVersions(game) : undefined,
 		minutesPlayed: progress?.minutes ?? 0,
 		lastPlayedAt: progress?.lastPlayedAt ?? null,
 		progressState: progress?.state ?? "UNPLAYED",
-		bookmarked: user.bookmarks.has(game.id),
 	};
 }
 
@@ -73,18 +83,10 @@ export function toDetail(
 	user: UserGameData,
 	mediaUrl: (mediaId: number) => string,
 ): GameDetail {
-	const versions = (game.versions ?? []).map(toVersion);
-	// The server lists versions oldest first; its default is the one whose label
-	// matches the game's own. Put that first, then newest to oldest.
-	versions.reverse();
-	const defaultIndex = versions.findIndex(
-		(v) => v.version === game.version && v.type === game.type,
-	);
-	if (defaultIndex > 0) versions.unshift(...versions.splice(defaultIndex, 1));
 	return {
 		...toSummary(game, user, mediaUrl),
 		description: game.metadata?.description ?? null,
 		publishers: (game.metadata?.publishers ?? []).map((p) => p.name),
-		versions,
+		versions: toVersions(game),
 	};
 }

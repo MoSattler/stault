@@ -11,6 +11,8 @@ function summary(save: SaveSync, host: string, online: boolean): { text: string;
 	switch (save.state) {
 		case "unknown":
 			return { text: "Looking up where this game keeps its saves…" };
+		case "off":
+			return { text: "Save sync is off for this game." };
 		case "unsupported":
 			return { text: "Stault doesn't know where this game keeps its saves, so they aren't synced." };
 		case "syncing":
@@ -65,7 +67,15 @@ export function SavesCard({ game, running }: { game: GameSummary; running: boole
 		body = (
 			<>
 				<p className={`text-[13px] ${tone ?? "text-muted"}`}>{text}</p>
-				{save.state === "conflict" ? (
+				{save.state === "off" ? (
+					<button
+						type="button"
+						onClick={() => setUi({ properties: { gameId: game.id } })}
+						className={`${button} self-start`}
+					>
+						Open properties
+					</button>
+				) : save.state === "conflict" ? (
 					<button
 						type="button"
 						disabled={!idle}
@@ -86,9 +96,16 @@ export function SavesCard({ game, running }: { game: GameSummary; running: boole
 						</div>
 					)
 				)}
-				{save.state !== "unknown" && (
+				{save.state !== "unknown" && save.state !== "off" && (
 					<p className="flex flex-wrap items-baseline gap-x-2 border-t border-hover pt-2.5 text-[12.5px] text-muted">
-						{save.name ? (
+						{save.paths ? (
+							<span className="flex w-full flex-col gap-1">
+								Save locations you chose
+								{save.paths.map((path) => (
+									<span key={path} className="select-text break-all font-mono text-xs text-ink">{path}</span>
+								))}
+							</span>
+						) : save.name ? (
 							<span>
 								Save locations from Ludusavi's entry <span className="text-ink">{save.name}</span>
 							</span>

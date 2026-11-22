@@ -1,11 +1,11 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { closeSync, existsSync, mkdirSync, openSync } from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join } from "node:path";
-import type { Platform, PlayResult, ProgressState, Running } from "../../shared/model";
+import { isAbsolute, join, relative } from "node:path";
+import type { Executables, Platform, PlayResult, ProgressState, Running } from "../../shared/model";
 import type { GameVaultClient } from "../gamevault/client";
 import type { ApiGame, ApiProgress } from "../gamevault/types";
-import { filesDir, type Installs } from "../installs";
+import { filesDir, type Installs, type Manifest } from "../installs";
 import {
 	type Command,
 	launchCommand,
@@ -15,7 +15,10 @@ import {
 	targetFor,
 	type UmuOptions,
 } from "./command";
-import { findExecutables, findInPrefix, obviousChoice } from "./detect";
+import { findExecutables, findInPrefix, obviousChoice, type Target } from "./detect";
+
+/** A program path as stored: relative to the game's files, or absolute. */
+const within = (root: string, path: string) => (isAbsolute(path) ? path : join(root, path));
 
 export interface LauncherDeps {
 	platform: Platform;
@@ -115,34 +118,56 @@ export class Launcher {
 		};
 	}
 
+	/** An installed game's record, the folder with its files, and the kind of program that starts it here. */
+	private installed(gameId: number) {
+		const entry = this.deps.installs.get(gameId);
+		if (!entry) throw new Error("This game isn't installed.");
+		const target = targetFor(this.deps.platform, entry.manifest.type);
+		if (!target) throw new Error("This build can't run on this device.");
+		return { manifest: entry.manifest, root: filesDir(entry.dir), target };
+	}
+
+	/** The program the user or the server settled on, while it is still there. */
+	private settled(gameId: number, manifest: Manifest, root: string): string | null {
+		if (manifest.executable && existsSync(within(root, manifest.executable))) return manifest.executable;
+		const preset = this.deps.game(gameId)?.metadata?.launch_executable;
+		if (!preset) return null;
+		const path = relative(root, join(root, preset));
+		return path && existsSync(join(root, path)) ? path : null;
+	}
+
+	/** Programs in the game's files that could start it, best guess first. */
+	private async candidates(gameId: number, root: string, target: Target): Promise<string[]> {
+		const ignored = await this.deps.client().ignoredExecutables().catch(() => []);
+		const found = await findExecutables(root, target, ignored);
+		// An installer that wasn't told where to install puts the game on the prefix's C: drive.
+		if (!found.length && this.deps.platform === "linux" && target === "windows-exe") {
+			const driveC = join(this.deps.prefixesDir, String(gameId), "drive_c");
+			return (await findInPrefix(driveC, ignored)).map((path) => join(driveC, path));
+		}
+		return found;
+	}
+
+	/** What Play would start, and what else could start the game. Changes nothing. */
+	async executables(gameId: number): Promise<Executables> {
+		const { manifest, root, target } = this.installed(gameId);
+		const candidates = await this.candidates(gameId, root, target);
+		const current = this.settled(gameId, manifest, root) ?? obviousChoice(candidates);
+		if (current && !candidates.includes(current)) candidates.unshift(current);
+		return { current, candidates };
+	}
+
 	/** Finds the program that starts the game, or the choices when it is ambiguous. */
 	private async resolve(gameId: number): Promise<string | { candidates: string[] }> {
-		const { platform, installs } = this.deps;
-		const entry = installs.get(gameId);
-		if (!entry) throw new Error("This game isn't installed.");
-		const { manifest, dir } = entry;
-		const target = targetFor(platform, manifest.type);
-		if (!target) throw new Error("This build can't run on this device.");
-		const root = filesDir(dir);
-		const within = (path: string) => (isAbsolute(path) ? path : join(root, path));
+		const { manifest, root, target } = this.installed(gameId);
+		const settled = this.settled(gameId, manifest, root);
+		if (settled) return within(root, settled);
 
-		if (manifest.executable && existsSync(within(manifest.executable))) {
-			return within(manifest.executable);
-		}
-		const preset = this.deps.game(gameId)?.metadata?.launch_executable;
-		if (preset && existsSync(join(root, preset))) return join(root, preset);
-
-		const ignored = await this.deps.client().ignoredExecutables().catch(() => []);
-		let candidates = await findExecutables(root, target, ignored);
-		// An installer that wasn't told where to install puts the game on the prefix's C: drive.
-		if (!candidates.length && platform === "linux" && target === "windows-exe") {
-			const driveC = join(this.deps.prefixesDir, String(gameId), "drive_c");
-			candidates = (await findInPrefix(driveC, ignored)).map((path) => join(driveC, path));
-		}
+		const candidates = await this.candidates(gameId, root, target);
 		const choice = obviousChoice(candidates);
 		if (choice) {
-			installs.update(gameId, { executable: choice });
-			return within(choice);
+			this.deps.installs.update(gameId, { executable: choice });
+			return within(root, choice);
 		}
 		if (candidates.length > 1) return { candidates };
 
@@ -152,12 +177,26 @@ export class Launcher {
 		// Typically a setup build whose installer put the game somewhere else.
 		const picked = await this.deps.pickFile(root);
 		if (!picked) throw new Error("Stault couldn't find the program that starts this game.");
-		installs.update(gameId, { executable: picked });
-		return picked;
+		return within(root, this.setExecutable(gameId, picked));
 	}
 
-	setExecutable(gameId: number, path: string) {
-		this.deps.installs.update(gameId, { executable: path });
+	/**
+	 * Remembers the program that starts the game, and returns it as stored: one
+	 * inside the game's files relative to them, so it survives the folder moving.
+	 */
+	setExecutable(gameId: number, path: string): string {
+		const { root } = this.installed(gameId);
+		const inside = isAbsolute(path) ? relative(root, path) : path;
+		const stored = isAbsolute(inside) || inside.split(/[\\/]/)[0] === ".." ? path : inside;
+		this.deps.installs.update(gameId, { executable: stored });
+		return stored;
+	}
+
+	/** Lets the user pick the program in the native file picker. Null when they cancel. */
+	async browseExecutable(gameId: number): Promise<string | null> {
+		const { root } = this.installed(gameId);
+		const picked = await this.deps.pickFile(root);
+		return picked ? this.setExecutable(gameId, picked) : null;
 	}
 
 	async play(gameId: number): Promise<PlayResult> {

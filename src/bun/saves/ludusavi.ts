@@ -30,20 +30,50 @@ export interface Scan {
 	files: string[];
 }
 
+/** Which saves to work on: Ludusavi's entry for the game, or files the user named under the game's title. */
+export interface SaveEntry {
+	name: string;
+	paths?: string[];
+}
+
 /** Root paths are globs: a literal "[" is written "[[]". Stault's game folders end in "[<id>]". */
 export const globEscape = (path: string) => path.replace(/\[/g, "[[]");
 
 /**
- * Ludusavi's settings for working on one game. Written as JSON, which is YAML.
- * `name` is Ludusavi's name for the game, once known.
+ * A file or folder the user picked, as a Ludusavi path: inside the game's files
+ * it starts with `<base>`, inside the home folder with `<home>`, so it does not
+ * name this device's library or user folder. The rest is escaped, since paths are globs.
  */
-export function ludusaviConfig(where: GameLocation, name: string | null) {
+export function savePath(picked: string, where: GameLocation, home: string): string {
+	const slashes = (path: string) => path.replace(/\\/g, "/").replace(/\/+$/, "");
+	const path = slashes(picked);
+	const under = (folder: string) => {
+		const base = slashes(folder);
+		return path === base ? "" : path.startsWith(`${base}/`) ? path.slice(base.length) : null;
+	};
+	const inFiles = under(where.filesDir);
+	if (inFiles !== null) return `<base>${globEscape(inFiles)}`;
+	const inHome = under(home);
+	if (inHome !== null) return `<home>${globEscape(inHome)}`;
+	return globEscape(path);
+}
+
+/**
+ * Ludusavi's settings for working on one game. Written as JSON, which is YAML.
+ * `entry` is the game's saves, once known.
+ */
+export function ludusaviConfig(where: GameLocation, entry: SaveEntry | null) {
 	return {
 		release: { check: false },
 		// Ludusavi expects each child of a root to be a game named after itself.
 		// Stault's layout has one child, "files", which the entry below names.
 		roots: [{ store: "other", path: globEscape(where.gameDir) }],
-		customGames: name ? [{ name, integration: "extend", installDir: ["files"] }] : [],
+		customGames: !entry
+			? []
+			: entry.paths
+				? // The user's files replace whatever Ludusavi knows under that name.
+					[{ name: entry.name, integration: "override", files: entry.paths, installDir: ["files"] }]
+				: [{ name: entry.name, integration: "extend", installDir: ["files"] }],
 		// Applied in order. The install folder goes first: it often sits inside the user folder.
 		redirects: [
 			{ kind: "bidirectional", source: where.filesDir, target: INSTALL_DIR },
@@ -85,9 +115,9 @@ export class Ludusavi {
 		return existsSync(this.binary);
 	}
 
-	private async run(where: GameLocation, name: string | null, args: string[]): Promise<Output> {
+	private async run(where: GameLocation, entry: SaveEntry | null, args: string[]): Promise<Output> {
 		mkdirSync(this.configDir, { recursive: true });
-		writeFileSync(join(this.configDir, "config.yaml"), JSON.stringify(ludusaviConfig(where, name)));
+		writeFileSync(join(this.configDir, "config.yaml"), JSON.stringify(ludusaviConfig(where, entry)));
 		if (process.platform !== "win32") {
 			try {
 				chmodSync(this.binary, 0o755);
@@ -154,20 +184,21 @@ export class Ludusavi {
 	}
 
 	/** Compares the saves on this device with the backup in `folder`, changing nothing. */
-	async scan(where: GameLocation, name: string, folder: string): Promise<Scan> {
-		return readScan(await this.run(where, name, this.backupArgs(where, name, folder, true)), name);
+	async scan(where: GameLocation, entry: SaveEntry, folder: string): Promise<Scan> {
+		return readScan(await this.run(where, entry, this.backupArgs(where, entry.name, folder, true)), entry.name);
 	}
 
 	/** Copies the saves on this device into `folder`, replacing an earlier backup there. */
-	async backup(where: GameLocation, name: string, folder: string): Promise<Scan> {
-		const output = await this.run(where, name, this.backupArgs(where, name, folder, false));
+	async backup(where: GameLocation, entry: SaveEntry, folder: string): Promise<Scan> {
+		const output = await this.run(where, entry, this.backupArgs(where, entry.name, folder, false));
 		if (output.errors?.someGamesFailed) throw new Error("Some save files could not be read.");
-		return readScan(output, name);
+		return readScan(output, entry.name);
 	}
 
 	/** Puts the backup in `folder` in place of the saves on this device. */
-	async restore(where: GameLocation, name: string, folder: string): Promise<void> {
-		const output = await this.run(where, name, ["restore", "--force", "--api", "--path", folder, name]);
+	async restore(where: GameLocation, entry: SaveEntry, folder: string): Promise<void> {
+		const { name } = entry;
+		const output = await this.run(where, entry, ["restore", "--force", "--api", "--path", folder, name]);
 		if (!output.games?.[name]) throw new Error("That save belongs to a different game.");
 		if (output.errors?.someGamesFailed) throw new Error("Some save files could not be written.");
 	}

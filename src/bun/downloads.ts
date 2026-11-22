@@ -133,14 +133,14 @@ export class Downloads {
 	async remove(gameId: number) {
 		const item = this.queue.find((q) => q.gameId === gameId);
 		if (!item) return;
-		if (this.active?.item === item) {
-			if (this.active.phase !== "download") {
-				throw new Error(`${item.title} is already being installed.`);
-			}
-			await this.stopActive();
+		const running = this.active?.item === item;
+		if (running && this.active?.phase !== "download") {
+			throw new Error(`${item.title} is already being installed.`);
 		}
+		// Out of the queue before its run stops, or the end of the run starts it again.
 		this.queue = this.queue.filter((q) => q !== item);
 		this.save();
+		if (running) await this.stopActive();
 		await removeFolder(item.dir);
 		this.pump();
 	}

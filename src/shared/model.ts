@@ -39,14 +39,18 @@ export interface GameSummary {
 	releaseYear: number | null;
 	/** ISO timestamp of when the game landed on the server. */
 	addedAt: string;
-	/** The server's default version. The full list is on GameDetail. */
+	/** The server's default version. */
 	version: string | null;
 	type: GameType;
 	sizeBytes: number;
+	/**
+	 * Every version, default first, once fetched: the server's game list leaves
+	 * them out. The library fetches them for games whose default can't run here.
+	 */
+	versions?: GameVersion[];
 	minutesPlayed: number;
 	lastPlayedAt: string | null;
 	progressState: ProgressState;
-	bookmarked: boolean;
 }
 
 export interface GameDetail extends GameSummary {
@@ -113,7 +117,9 @@ export interface Running {
 export type SaveState =
 	/** Not looked up yet. */
 	| "unknown"
-	/** Ludusavi knows no save location for this game, or sync is off for it. */
+	/** The user turned sync off for this game. */
+	| "off"
+	/** Ludusavi knows no save location for this game, and none was chosen. */
 	| "unsupported"
 	/** Nothing is waiting: in step with the server, or nothing to sync yet. */
 	| "idle"
@@ -139,6 +145,8 @@ export interface SaveSync {
 	state: SaveState;
 	/** The Ludusavi entry this game was matched to. */
 	name: string | null;
+	/** Save files the user chose by hand instead of a Ludusavi entry. */
+	paths: string[] | null;
 	/** ISO time the save this device last synced was uploaded. */
 	syncedAt: string | null;
 	/** Present while the state is "conflict". */
@@ -189,6 +197,14 @@ export interface ServerCheck {
 	serverUrl?: string;
 	version?: string;
 	error?: string;
+}
+
+/** The programs that could start an installed game. Paths are relative to its files, or absolute. */
+export interface Executables {
+	/** What Play starts. Null when Stault would ask first. */
+	current: string | null;
+	/** Every program found in the game's files, best guess first, and the current one. */
+	candidates: string[];
 }
 
 export type PlayResult =

@@ -85,12 +85,6 @@ export const BackIcon = (p: IconProps) => (
 	</Icon>
 );
 
-export const BookmarkIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
-	<Icon strokeWidth={1.9} strokeLinejoin="round" {...p}>
-		<path d="M7 4h10v16l-5-3.6L7 20z" fill={filled ? "currentColor" : "none"} />
-	</Icon>
-);
-
 export const ArrowUpIcon = (p: IconProps) => (
 	<Icon strokeWidth={2.2} {...p}>
 		<path d="M12 19V7M7.5 11.5L12 7l4.5 4.5" />

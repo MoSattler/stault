@@ -19,6 +19,11 @@ Browse, install, play and sync saves on Windows, macOS and Linux.
 
 </div>
 
+> [!IMPORTANT]
+> Stault is alpha software. Expect bugs and rough edges, and keep a backup of any saves you care about.
+>
+> Bug reports and contributions are very welcome. If something breaks, please [report it](https://github.com/MoSattler/stault/issues/new?template=bug_report.yml). To help with code, start with [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Features
 
 - **Your whole library.** Recently played, recently added, search, and a page per game with the art and details from your server.
@@ -62,7 +67,7 @@ The builds are not code-signed. Windows warns before opening them. macOS refuses
 | Linux | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) (install it separately) |
 | macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
 
-Stault is young. It is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
+Stault is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
 
 Not built yet: Big Picture Mode, Steam shortcuts, single sign-on.
 
@@ -75,7 +80,8 @@ The server has to accept save files: set `SAVEFILES_ENABLED=true` on it and give
 <details>
 <summary>How it behaves</summary>
 
-- [Ludusavi](https://github.com/mtkennerly/ludusavi), bundled with Stault, finds the save files. A game it doesn't know is not synced. When Stault matches no entry or the wrong one, choose it on the game's page.
+- [Ludusavi](https://github.com/mtkennerly/ludusavi), bundled with Stault, finds the save files. When Stault matches no entry or the wrong one, choose it on the game's page. For a game Ludusavi doesn't list, choose its save files and folders there yourself; each device needs them once.
+- To leave one game's saves alone, turn sync off in its properties (the gear on its page).
 - Offline, a game starts with the saves on the device, and saves made meanwhile are uploaded once the server is back.
 - When saves changed on two devices, Stault asks which to keep. It never overwrites a save it has not seen on either side.
 - Saves use the format of the official GameVault client, so a Windows build's saves move between it and Stault, and between Windows and Linux. A Mac build's saves only move between Macs.
