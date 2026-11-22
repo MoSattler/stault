@@ -21,7 +21,7 @@ interface SwitchProps {
 	onChange(on: boolean): void;
 }
 
-/** The control of an on/off setting. */
+/** The control of an on/off setting: a sliding toggle, as in design/Main.dc.html. */
 export function Switch({ label, on, disabled, onChange }: SwitchProps) {
 	return (
 		<button
@@ -31,9 +31,12 @@ export function Switch({ label, on, disabled, onChange }: SwitchProps) {
 			aria-label={label}
 			disabled={disabled}
 			onClick={() => onChange(!on)}
-			className={`min-h-9 min-w-16 flex-none rounded-md border bg-raised px-3.5 text-[13px] font-semibold hover:bg-hover disabled:opacity-50 ${on ? "border-lime text-lime" : "border-edge text-muted"}`}
+			className={`relative h-[26px] w-11 flex-none rounded-full transition-colors enabled:hover:brightness-110 disabled:opacity-50 motion-reduce:transition-none ${on ? "bg-lime" : "bg-edge"}`}
 		>
-			{on ? "On" : "Off"}
+			<span
+				aria-hidden="true"
+				className={`absolute left-[3px] top-[3px] h-5 w-5 rounded-full transition-transform motion-reduce:transition-none ${on ? "translate-x-[18px] bg-carbon" : "bg-muted"}`}
+			/>
 		</button>
 	);
 }
