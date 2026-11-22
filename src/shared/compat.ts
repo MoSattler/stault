@@ -48,6 +48,15 @@ export function cantRunHere(
 	return [...new Set(versions.map((v) => buildOs(v.type, v.version)))].filter((os) => os !== "unknown");
 }
 
+/** The builds this OS can run, then the rest, each group in the order given. */
+export function runnableFirst<T extends Pick<GameVersion, "type" | "version">>(
+	platform: Platform,
+	versions: T[],
+): T[] {
+	const runs = (v: T) => canRun(platform, v.type, v.version) !== "no";
+	return [...versions.filter(runs), ...versions.filter((v) => !runs(v))];
+}
+
 export const OS_NAME: Record<BuildOs, string> = {
 	windows: "Windows",
 	linux: "Linux",

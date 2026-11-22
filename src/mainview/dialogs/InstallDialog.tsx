@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { canRun, PLATFORM_NAME, typeLabel } from "../../shared/compat";
+import { canRun, PLATFORM_NAME, runnableFirst, typeLabel } from "../../shared/compat";
 import type { GameDetail, GameSummary } from "../../shared/model";
 import { api } from "../api";
 import { Cover } from "../components/Cover";
@@ -86,7 +86,7 @@ export function InstallDialog({ game, versionId }: Props) {
 					<legend className="mb-2 font-[650]">Version</legend>
 					{failed && <p className="text-[13px] text-amber">{failed}</p>}
 					{!detail && !failed && <p className="text-[13px] text-muted">Loading versions…</p>}
-					{detail?.versions.map((v, i) => {
+					{detail && runnableFirst(platform, detail.versions).map((v) => {
 						const fit = canRun(platform, v.type, v.version);
 						const runnable = fit !== "no";
 						const { os, kind } = typeLabel(v.type, v.version);
@@ -96,7 +96,7 @@ export function InstallDialog({ game, versionId }: Props) {
 								<span className="flex min-w-0 flex-auto flex-col gap-px">
 									<span className="font-[650]">
 										{v.version ?? "Unversioned"}
-										{i === 0 && " · default"}
+										{v.id === detail.versions[0].id && " · default"}
 										{v.earlyAccess && " · early access"}
 									</span>
 									<span className="text-[12.5px] text-muted">
