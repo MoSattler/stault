@@ -31,18 +31,16 @@ test("a game without metadata still maps to something showable", () => {
 		sizeBytes: 504,
 		minutesPlayed: 0,
 		progressState: "UNPLAYED",
-		bookmarked: false,
 	});
 });
 
-test("progress and bookmarks come from the user record", () => {
+test("progress comes from the user record", () => {
 	const user = userGameData({
 		id: 1,
 		username: "sam",
 		progresses: [{ minutes_played: 90, state: "PLAYING", last_played_at: "2026-11-20T10:00:00.000Z", game: { id: 3 } }],
-		bookmarked_games: [{ id: 3 }],
 	});
-	expect(toSummary(game, user, mediaUrl)).toMatchObject({ minutesPlayed: 90, progressState: "PLAYING", bookmarked: true });
+	expect(toSummary(game, user, mediaUrl)).toMatchObject({ minutesPlayed: 90, progressState: "PLAYING" });
 });
 
 test("metadata supplies title, art and genres", () => {

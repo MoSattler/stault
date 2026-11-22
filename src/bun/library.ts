@@ -13,13 +13,13 @@ import { patchState } from "./state";
 
 interface Cache {
 	games: ApiGame[];
-	user: Pick<ApiUser, "progresses" | "bookmarked_games">;
+	user: Pick<ApiUser, "progresses">;
 }
 
 /** The server's game list plus what this user did with it. Cached for offline starts. */
 export class Library {
 	private games = new Map<number, ApiGame>();
-	private user: UserGameData = { progress: new Map(), bookmarks: new Set() };
+	private user: UserGameData = { progress: new Map() };
 
 	constructor(
 		private readonly cachePath: string,
@@ -59,7 +59,6 @@ export class Library {
 					last_played_at: p.last_played_at,
 					game: p.game && { id: p.game.id },
 				})),
-				bookmarked_games: (me.bookmarked_games ?? []).map((g) => ({ id: g.id })),
 			},
 		};
 		this.adopt(cache);
@@ -71,13 +70,6 @@ export class Library {
 		// The detail record also carries the version list; keep it for installs.
 		this.games.set(gameId, game);
 		return toDetail(game, this.user, this.media.url);
-	}
-
-	async setBookmark(client: GameVaultClient, gameId: number, on: boolean) {
-		await client.setBookmark(gameId, on);
-		if (on) this.user.bookmarks.add(gameId);
-		else this.user.bookmarks.delete(gameId);
-		patchState({ games: this.summaries() });
 	}
 
 	/** Applies a progress record the server just returned. */
@@ -92,7 +84,7 @@ export class Library {
 
 	clear() {
 		this.games.clear();
-		this.user = { progress: new Map(), bookmarks: new Set() };
+		this.user = { progress: new Map() };
 		writeJson(this.cachePath, null);
 		patchState({ games: [], gamesLoaded: false });
 	}

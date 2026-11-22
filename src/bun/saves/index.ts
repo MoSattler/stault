@@ -130,21 +130,24 @@ export class Saves {
 		const { installs } = this.deps;
 		this.deps.onChange(
 			installs.ids().map((gameId): SaveSync => {
-				const record = installs.get(gameId)?.manifest.saves;
+				const manifest = installs.get(gameId)?.manifest;
+				const record = manifest?.saves;
 				const conflict = this.conflicts.get(gameId);
 				return {
 					gameId,
 					state: this.busy.has(gameId)
 						? "syncing"
-						: !record
-							? "unknown"
-							: !record.name
-								? "unsupported"
-								: conflict
-									? "conflict"
-									: record.pending
-										? "pending"
-										: "idle",
+						: manifest?.syncSaves === false
+							? "off"
+							: !record
+								? "unknown"
+								: !record.name
+									? "unsupported"
+									: conflict
+										? "conflict"
+										: record.pending
+											? "pending"
+											: "idle",
 					name: record?.name ?? null,
 					syncedAt: iso(record?.syncedAt),
 					...(conflict ? { conflict } : {}),
@@ -208,7 +211,8 @@ export class Saves {
 	 */
 	sync(gameId: number, mode: "auto" | "upload" | "download" = "auto", signal?: AbortSignal): Promise<Outcome> {
 		return this.exclusive(async () => {
-			if (!this.usable || !this.deps.installs.get(gameId)) return "skipped";
+			const install = this.deps.installs.get(gameId);
+			if (!this.usable || !install || install.manifest.syncSaves === false) return "skipped";
 			if (this.deps.running() === gameId) {
 				if (mode === "auto") return "skipped";
 				throw new Error("Stop the game first.");
@@ -459,8 +463,20 @@ export class Saves {
 		return this.exclusive(() => this.deps.ludusavi.search(this.where(gameId), query.trim()));
 	}
 
-	/** Sets which Ludusavi entry the game follows. Null turns sync off for it. */
-	async setName(gameId: number, name: string | null) {
+	/**
+	 * Turns sync on or off for one game. Off, nothing moves for it, while its
+	 * entry and what it last synced are kept for when it is turned back on.
+	 */
+	setEnabled(gameId: number, on: boolean) {
+		if (!this.deps.installs.get(gameId)) return;
+		this.deps.installs.update(gameId, { syncSaves: on ? undefined : false });
+		this.conflicts.delete(gameId);
+		this.publish();
+		if (on) this.background(gameId);
+	}
+
+	/** Sets which Ludusavi entry the game follows. */
+	async setName(gameId: number, name: string) {
 		const entry = this.deps.installs.get(gameId);
 		if (!entry) return;
 		await this.exclusive(async () => {
@@ -471,7 +487,7 @@ export class Saves {
 			this.conflicts.delete(gameId);
 		});
 		this.publish();
-		if (name) this.background(gameId);
+		this.background(gameId);
 	}
 
 }

@@ -26,7 +26,8 @@ export function PickExecutableDialog({ game, candidates }: Props) {
 					Which one starts {game.title}?
 				</h2>
 				<p className="text-[13px] text-muted">
-					Stault found several programs in this game's folder. It remembers your choice.
+					Stault found several programs in this game's folder. It remembers your choice, which you can change in the
+					game's properties.
 				</p>
 			</div>
 			<ul className="flex flex-col gap-2 p-5">

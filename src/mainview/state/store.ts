@@ -74,6 +74,8 @@ interface UiState {
 	saveConflict: { gameId: number; thenPlay: boolean } | null;
 	/** Game whose Ludusavi entry is being chosen by hand. */
 	choosingSaveGame: { gameId: number } | null;
+	/** Installed game whose properties are open. */
+	properties: { gameId: number } | null;
 	/** Game whose right-click menu is open, and where in the window it was opened. */
 	menu: { gameId: number; x: number; y: number } | null;
 }
@@ -89,6 +91,7 @@ const ui = createStore<UiState>({
 	uninstalling: null,
 	saveConflict: null,
 	choosingSaveGame: null,
+	properties: null,
 	menu: null,
 });
 

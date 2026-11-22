@@ -243,7 +243,6 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			signOut: () => session.signOut(),
 			refreshLibrary: () => session.refreshLibrary(),
 			getGame: ({ gameId }) => library.detail(session.client, gameId),
-			setBookmark: ({ gameId, on }) => library.setBookmark(session.client, gameId, on),
 			install: ({ gameId, versionId, folder }) => install(gameId, versionId, folder),
 			setDownloadPaused: ({ gameId, paused }) => downloads.setPaused(gameId, paused),
 			setAllDownloadsPaused: ({ paused }) => downloads.setAllPaused(paused),
@@ -251,7 +250,9 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			moveDownloadUp: ({ gameId }) => downloads.moveUp(gameId),
 			uninstall: ({ gameId }) => uninstall(gameId),
 			play: ({ gameId }) => launcher.play(gameId),
-			setExecutable: ({ gameId, path }) => launcher.setExecutable(gameId, path),
+			getExecutables: ({ gameId }) => launcher.executables(gameId),
+			setExecutable: ({ gameId, path }) => void launcher.setExecutable(gameId, path),
+			browseExecutable: ({ gameId }) => launcher.browseExecutable(gameId),
 			stop: ({ gameId }) => launcher.stop(gameId),
 			syncSaves: async ({ gameId, direction }) => {
 				await saves.sync(gameId, direction);
@@ -263,6 +264,7 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 				saves.publish();
 				if (on) saves.catchUp();
 			},
+			setGameSaveSync: ({ gameId, on }) => saves.setEnabled(gameId, on),
 			addLibraryFolder: async () => {
 				const [picked] = await Utils.openFileDialog({
 					startingFolder: homedir(),

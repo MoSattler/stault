@@ -106,7 +106,7 @@ export function saveLabel(
 	save: SaveSync | undefined,
 	sync: AppState["saveSync"],
 ): { text: string; alert: boolean } {
-	if (!sync.enabled || sync.serverOff) return { text: "Off", alert: false };
+	if (!sync.enabled || sync.serverOff || save?.state === "off") return { text: "Off", alert: false };
 	switch (save?.state) {
 		case "syncing":
 			return { text: "Syncing…", alert: false };

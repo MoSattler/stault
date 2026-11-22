@@ -46,7 +46,6 @@ export interface GameSummary {
 	minutesPlayed: number;
 	lastPlayedAt: string | null;
 	progressState: ProgressState;
-	bookmarked: boolean;
 }
 
 export interface GameDetail extends GameSummary {
@@ -113,7 +112,9 @@ export interface Running {
 export type SaveState =
 	/** Not looked up yet. */
 	| "unknown"
-	/** Ludusavi knows no save location for this game, or sync is off for it. */
+	/** The user turned sync off for this game. */
+	| "off"
+	/** Ludusavi knows no save location for this game, and none was chosen. */
 	| "unsupported"
 	/** Nothing is waiting: in step with the server, or nothing to sync yet. */
 	| "idle"
@@ -189,6 +190,14 @@ export interface ServerCheck {
 	serverUrl?: string;
 	version?: string;
 	error?: string;
+}
+
+/** The programs that could start an installed game. Paths are relative to its files, or absolute. */
+export interface Executables {
+	/** What Play starts. Null when Stault would ask first. */
+	current: string | null;
+	/** Every program found in the game's files, best guess first, and the current one. */
+	candidates: string[];
 }
 
 export type PlayResult =

@@ -21,12 +21,14 @@ export interface Manifest {
 	pendingMinutes?: number;
 	/** Save sync bookkeeping. Absent until Stault has looked the game up. */
 	saves?: SaveRecord;
+	/** False when the user turned save sync off for this game. */
+	syncSaves?: boolean;
 }
 
 export interface SaveRecord {
 	/** Tells the server which install a save came from (UUID v4). */
 	installationId: string;
-	/** Ludusavi's name for this game. Null: it knows none, or the user turned sync off. */
+	/** Ludusavi's name for this game. Null when it knows none and none was chosen. */
 	name: string | null;
 	/** Upload time of the server save this install last restored or uploaded. */
 	syncedAt?: number;
