@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { $, browser, expect } from "@wdio/globals";
-import { dataFile, fill, footer, install, LIBRARY, main, openGame, openSettings, restart, signIn } from "../app.ts";
+import {
+	dataFile, fill, footer, install, LIBRARY, main, NATIVE, openGame, openSettings, restart, signIn, SYSTEM,
+} from "../app.ts";
 
 const saved = () => JSON.parse(readFileSync(dataFile("settings.json"), "utf8"));
 const syncSwitch = () => $("button[role=switch][aria-label='Sync game saves']");
@@ -28,7 +30,7 @@ describe("Settings", () => {
 		await openSettings("Saves");
 		await fill(deviceName(), "Test rig");
 		await main().$("h1").click();
-		await expect(footer()).toHaveText(expect.stringContaining("Linux · Test rig"));
+		await expect(footer()).toHaveText(expect.stringContaining(`${SYSTEM} · Test rig`));
 		expect(saved().deviceName).toBe("Test rig");
 	});
 
@@ -41,7 +43,7 @@ describe("Settings", () => {
 	});
 
 	it("says on a game's page that save sync is off", async () => {
-		await install("Tin Kettle");
+		await install(NATIVE.title);
 		await expect($("section[aria-labelledby='h-saves']")).toHaveText(expect.stringContaining("Save sync is off."));
 		await expect(main()).toHaveText(expect.stringMatching(/SAVES\s*Off/));
 
@@ -68,7 +70,7 @@ describe("Settings", () => {
 		await expect(deviceName()).toHaveValue("Test rig");
 		await openSettings("Downloads");
 		await expect(main().$("select")).toHaveValue("20480");
-		await openGame("Tin Kettle");
+		await openGame(NATIVE.title);
 		await expect(main()).toHaveText("Installed ·", { containing: true, ignoreCase: true });
 	});
 });

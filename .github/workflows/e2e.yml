@@ -1,7 +1,7 @@
 name: End-to-end tests
 
-# Starts the built app on Linux and drives its real window (e2e/), against a
-# GameVault server in Docker. Windows and macOS are not covered yet.
+# Starts the built app and drives its real window (e2e/), on Linux and on
+# Windows, against a GameVault server in Docker. macOS is not covered yet.
 
 on:
   push:
@@ -79,7 +79,68 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: e2e-failures
+          name: e2e-failures-linux
+          path: e2e/failures/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      # The test server's Docker image is a Linux one, which a Windows runner
+      # can only run inside WSL2. WSL stops a distribution 15 s after its last
+      # session ends, and the server with it; the tests run from Windows with
+      # no session open, so that is turned off before WSL starts.
+      - name: Keep WSL running while idle
+        run: Set-Content "$env:USERPROFILE\.wslconfig" "[general]`ninstanceIdleTimeout=-1"
+
+      # mingw lets seed.sh build the Windows samples as real programs.
+      - uses: Vampire/setup-wsl@v7
+        with:
+          distribution: Ubuntu-24.04
+          additional-packages: docker.io docker-compose-v2 zip curl gcc-mingw-w64-x86-64
+
+      # WSL hands the server's port on to Windows: the tests reach it at the
+      # same address as on Linux.
+      - name: Start the test server
+        shell: wsl-bash {0}
+        run: ./dev/seed.sh
+
+      - name: Install Hutch
+        run: |
+          & ([scriptblock]::Create((irm https://hutch.blackboard.sh/hutch/install.ps1))) -Version $env:HUTCH_VERSION -NoModifyPath
+          Join-Path $HOME ".hutch\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install dependencies
+        run: hutch run install
+
+      - name: Build the app
+        run: hutch run build:dev
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install the tests' packages
+        working-directory: e2e
+        run: npm ci
+
+      - name: Run the tests
+        working-directory: e2e
+        run: |
+          $env:STAULT_APP = (Resolve-Path ../build/dev-*/*/bin/launcher.exe).Path
+          npm test
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: e2e-failures-windows
           path: e2e/failures/
           if-no-files-found: ignore
           retention-days: 14

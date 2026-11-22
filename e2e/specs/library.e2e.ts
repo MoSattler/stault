@@ -1,5 +1,5 @@
 import { $, $$, browser, expect } from "@wdio/globals";
-import { fill, footer, gameList, listedGames, main, section, signIn } from "../app.ts";
+import { fill, footer, gameList, listedGames, main, section, signIn, SYSTEM } from "../app.ts";
 
 const search = () => $("input[aria-label='Search library']");
 /** The titles in the "All games" grid, in the order shown. */
@@ -90,7 +90,7 @@ describe("The library", () => {
 	});
 
 	it("names the system and says nothing is downloading", async () => {
-		await expect(footer()).toHaveText(expect.stringContaining("Linux ·"));
+		await expect(footer()).toHaveText(expect.stringContaining(`${SYSTEM} ·`));
 		await expect(footer()).toHaveText(expect.stringContaining("No downloads"));
 		expect(await $$("button[aria-label='Close']")).toHaveLength(1);
 	});

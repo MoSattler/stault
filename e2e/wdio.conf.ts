@@ -2,7 +2,7 @@
 // window, against the test server from ./dev/seed.sh. CONTRIBUTING.md says
 // how to run them.
 //
-//   STAULT_APP     the built app's launcher, <app>/bin/launcher
+//   STAULT_APP     the built app's launcher, <app>/bin/launcher (launcher.exe on Windows)
 //   STAULT_SERVER  the test server's address, where it is not the one in dev/seed.sh
 
 import { mkdirSync, mkdtempSync } from "node:fs";
@@ -30,9 +30,11 @@ export const config: WebdriverIO.Config = {
 		},
 	],
 	// Every spec file starts its own app in an empty home folder: nobody signed
-	// in, nothing installed.
+	// in, nothing installed. Linux reads it from HOME, Windows from USERPROFILE.
 	onWorkerStart() {
-		process.env.HOME = mkdtempSync(join(tmpdir(), "stault-e2e-home-"));
+		const home = mkdtempSync(join(tmpdir(), "stault-e2e-home-"));
+		process.env.HOME = home;
+		process.env.USERPROFILE = home;
 	},
 	// A picture of the window for every check that fails, in e2e/failures/.
 	async afterTest(test, _context, { passed }) {
