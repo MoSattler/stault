@@ -63,6 +63,19 @@ export async function startApp() {
 	throw new Error([`The app did not open its page on debug port ${DEBUG_PORT}.${ended}`, ...tails].join("\n\n"));
 }
 
+/**
+ * Points the WebDriver session at the app's own page, which Electrobun serves
+ * from views://. The webview shows more than one page to WebDriver.
+ */
+export async function useAppPage(browser: WebdriverIO.Browser) {
+	console.log("DEBUG targets", JSON.stringify(await pages()));
+	for (const handle of await browser.getWindowHandles()) {
+		await browser.switchToWindow(handle);
+		console.log("DEBUG handle", handle, await browser.getUrl(), await browser.getTitle());
+	}
+	await browser.switchWindow(/^views:\/\//);
+}
+
 /** Ends the app, if it still runs, with everything it started. */
 export function stopApp() {
 	if (!app?.pid) return;

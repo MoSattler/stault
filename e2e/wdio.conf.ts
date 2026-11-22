@@ -9,7 +9,7 @@ import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { browser } from "@wdio/globals";
-import { DEBUG_PORT, startApp, stopApp, webView2Version } from "./windows.ts";
+import { DEBUG_PORT, startApp, stopApp, useAppPage, webView2Version } from "./windows.ts";
 
 const WINDOWS = process.platform === "win32";
 
@@ -52,6 +52,9 @@ export const config: WebdriverIO.Config = {
 	},
 	async beforeSession() {
 		if (WINDOWS) await startApp();
+	},
+	async before() {
+		if (WINDOWS) await useAppPage(browser);
 	},
 	afterSession() {
 		if (WINDOWS) stopApp();

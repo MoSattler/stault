@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { $, browser } from "@wdio/globals";
-import { startApp } from "./windows.ts";
+import { startApp, useAppPage } from "./windows.ts";
 
 const seed = readFileSync(join(import.meta.dirname, "..", "dev", "seed.sh"), "utf8");
 const read = (name: string) => seed.match(new RegExp(`^${name}=(.*)$`, "m"))![1];
@@ -112,6 +112,7 @@ export async function restart() {
 	await browser.waitUntil(() => !runs(APP));
 	if (WINDOWS) await startApp();
 	await browser.reloadSession();
+	if (WINDOWS) await useAppPage(browser);
 }
 
 /** Opens a game's page from the list on the left. */
