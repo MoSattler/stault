@@ -19,7 +19,7 @@ Tasks are defined in `hutch.config.ts` and run with `hutch run <task>`.
 | `dev:hmr` | Runs the app against the Vite dev server. UI edits hot-reload; restart after main-process edits. |
 | `dev` | Runs the app from bundled assets and relaunches it when main-process code changes. |
 | `hmr` | Serves only the UI at http://localhost:5173, on sample data, for work in a browser. |
-| `test` | Runs the unit tests. The save sync tests run the real Ludusavi and are skipped until a build or dev start has fetched it (`hutch dev/fetch-ludusavi.ts`). |
+| `test` | Runs the unit tests. The save sync tests run the real Ludusavi and are skipped until a build or dev start has fetched it (`hutch dev/fetch-vendor.ts`). |
 | `typecheck` | Type-checks `src/`, `test/` and `dev/`. |
 | `build:dev` | Builds the app as `dev` does, without starting it. The Linux scripts and the end-to-end tests use it. |
 | `build:canary` | Builds a canary release for the current OS and architecture. Close the dev app first. |
@@ -33,7 +33,7 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 
 ## Testing on Linux
 
-`./dev/linux/up.sh` starts a Linux desktop in Docker (Debian 13, x64) next to the test server, and `./dev/linux/run.sh` runs the current code in it. Watch the screen at `vnc://127.0.0.1:5901`; inside the container the test server is `http://gamevault:8080`. It has umu-launcher, and the Pixel Drift and Setup Quest samples are real Windows programs once the image is built, so installing and launching Windows games can be tried without a game or a GPU.
+`./dev/linux/up.sh` starts a Linux desktop in Docker (Debian 13, x64) next to the test server, and `./dev/linux/run.sh` runs the current code in it. Watch the screen at `vnc://127.0.0.1:5901`; inside the container the test server is `http://gamevault:8080`. Windows games run there through the umu-launcher that comes with Stault, and the Pixel Drift and Setup Quest samples are real Windows programs once the image is built, so installing and launching them can be tried without a game or a GPU.
 
 On an Apple Silicon Mac the container runs through Rosetta. That is enough for everything above, but Hutch does not run there, so `run.sh` builds the JavaScript on the Mac and puts it into the latest released Linux app. It does not test the Linux packaging; the canary build from the Release workflow does.
 

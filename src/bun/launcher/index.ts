@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { closeSync, existsSync, mkdirSync, openSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, relative } from "node:path";
 import type { Executables, Platform, PlayResult, ProgressState, Running } from "../../shared/model";
@@ -26,6 +26,8 @@ export interface LauncherDeps {
 	logsDir: string;
 	/** Where per-game Wine prefixes live (Linux). */
 	prefixesDir: string;
+	/** The umu-run bundled with the app (Linux), for when none is installed. */
+	bundledUmu: string;
 	client(): GameVaultClient;
 	userId(): number;
 	/** The server's record of a game, for its launch settings. */
@@ -42,21 +44,48 @@ export interface LauncherDeps {
 	afterExit(gameId: number): void;
 }
 
-function findUmu(): string | null {
-	const candidates = [
+/**
+ * Whether Proton's sandbox may start here. Ubuntu (24.04 on) lets a program build
+ * one only under an AppArmor profile that allows it; umu-launcher's own package
+ * links one for bwrap, and some releases ship it already.
+ */
+function sandboxAllowed(): boolean {
+	try {
+		if (readFileSync("/proc/sys/kernel/apparmor_restrict_unprivileged_userns", "utf8").trim() !== "1") return true;
+	} catch {
+		return true;
+	}
+	try {
+		return readdirSync("/etc/apparmor.d").some((name) => name.startsWith("bwrap"));
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * The umu-run to start Windows programs with. An installed one comes first: its
+ * package may set up more than the program. Otherwise the one bundled with Stault.
+ */
+function findUmu(bundled: string): string {
+	const installed = [
 		Bun.which("umu-run"),
 		join(homedir(), ".local", "bin", "umu-run"),
 		"/usr/bin/umu-run",
 		"/usr/local/bin/umu-run",
-	];
-	return candidates.find((path) => path && existsSync(path)) ?? null;
+	].find((path) => path && existsSync(path));
+	if (installed) return installed;
+	if (!sandboxAllowed()) throw new Error(NEEDS_UMU_PACKAGE);
+	// The bundled one is a Python program.
+	if (!Bun.which("python3")) throw new Error(NEEDS_PYTHON);
+	return bundled;
 }
 
 /** Where umu-launcher keeps the runtime it downloads on first use. */
 const umuDataDir = () => join(process.env.XDG_DATA_HOME || join(homedir(), ".local", "share"), "umu");
 
-const NO_UMU =
-	"Windows games on Linux run through umu-launcher, which isn't installed. Install it from github.com/Open-Wine-Components/umu-launcher, then try again.";
+const NEEDS_UMU_PACKAGE =
+	"On this system, Windows games need umu-launcher's own package: it lets Proton's sandbox past AppArmor. Install it from github.com/Open-Wine-Components/umu-launcher, then try again.";
+const NEEDS_PYTHON = "Windows games run through umu-launcher, which needs Python 3. Install python3, then try again.";
 
 /** Starts a command, resolving once the process exists. */
 function start(command: Command, logPath: string): Promise<ChildProcess> {
@@ -100,8 +129,7 @@ export class Launcher {
 
 	private umu(gameId: number): UmuOptions | undefined {
 		if (this.deps.platform !== "linux") return undefined;
-		const umuRun = findUmu();
-		if (!umuRun) throw new Error(NO_UMU);
+		const umuRun = findUmu(this.deps.bundledUmu);
 		if (!existsSync(umuDataDir())) {
 			this.deps.notify(
 				"Getting Proton ready",

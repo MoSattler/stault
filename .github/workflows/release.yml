@@ -25,7 +25,7 @@ on:
       - electrobun.config.ts
       - hutch.config.ts
       - hutch.lock
-      - dev/fetch-ludusavi.ts
+      - dev/fetch-vendor.ts
 
 # A newer push to a PR replaces its build. Runs on main never replace each other.
 concurrency:

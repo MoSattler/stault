@@ -28,10 +28,13 @@ docker exec -u root stault-linux rm -rf "$RES/bun" "$RES/views"
 docker cp -q "$BUILT/bun" "stault-linux:$RES/bun"
 docker cp -q "$BUILT/views" "stault-linux:$RES/views"
 docker exec -u root stault-linux chown -R deck:deck "$RES"
-# Ludusavi is a different program on each OS; the app's own Bun fetches the Linux one.
-if ! in_linux "test -x $RES/ludusavi/ludusavi"; then
-	in_linux "rm -rf /tmp/fetch && mkdir -p /tmp/fetch/dev && cp /src/dev/fetch-ludusavi.ts /tmp/fetch/dev/ \
-		&& $APP/bin/bun /tmp/fetch/dev/fetch-ludusavi.ts && cp -r /tmp/fetch/vendor/ludusavi $RES/ludusavi"
+# The bundled programs differ by OS, and the released app may predate one of
+# them; the app's own Bun fetches the Linux ones.
+if ! in_linux "test -x $RES/ludusavi/ludusavi && test -x $RES/umu/umu-run"; then
+	in_linux "rm -rf /tmp/fetch && mkdir -p /tmp/fetch/dev"
+	docker exec -i stault-linux sh -c "cat > /tmp/fetch/dev/fetch-vendor.ts" < dev/fetch-vendor.ts
+	in_linux "$APP/bin/bun /tmp/fetch/dev/fetch-vendor.ts && rm -rf $RES/ludusavi $RES/umu \
+		&& cp -r /tmp/fetch/vendor/ludusavi /tmp/fetch/vendor/umu $RES/"
 fi
 
 docker exec -d stault-linux sh -c "$APP/bin/launcher > /tmp/stault.log 2>&1"

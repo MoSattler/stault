@@ -186,6 +186,7 @@ describe("choosing the program in a game's properties", () => {
 			installs,
 			logsDir: join(root, "logs"),
 			prefixesDir: join(root, "prefixes"),
+			bundledUmu: join(root, "umu-run"),
 			client: () => ({ ignoredExecutables: async () => [] }) as unknown as GameVaultClient,
 			userId: () => 1,
 			game: () => undefined,
