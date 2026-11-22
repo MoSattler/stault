@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.0](https://github.com/MoSattler/stault/compare/v0.8.0...v0.9.0) (2026-11-22)
+
+
+### Features
+
+* let the user choose save files for games Ludusavi doesn't list ([#47](https://github.com/MoSattler/stault/issues/47)) ([bf78617](https://github.com/MoSattler/stault/commit/bf7861753652c62ece7326dbcd3f4569a99fef48))
+* show on/off settings as sliding toggles ([#45](https://github.com/MoSattler/stault/issues/45)) ([c916c39](https://github.com/MoSattler/stault/commit/c916c399e8767299caa2ea944aa6adb2680c01a4))
+
+
+### Bug Fixes
+
+* check every build of a game before the list says "Available for" ([#41](https://github.com/MoSattler/stault/issues/41)) ([ec48823](https://github.com/MoSattler/stault/commit/ec48823a3f1a564979ea8514211278f1f7386216))
+* let typed save paths into a game's folder match ([#48](https://github.com/MoSattler/stault/issues/48)) ([80be70a](https://github.com/MoSattler/stault/commit/80be70a72dce30555c6e6203384e950c85069337))
+
 ## [0.8.0](https://github.com/MoSattler/stault/compare/v0.7.1...v0.8.0) (2026-11-22)
 
 
