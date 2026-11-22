@@ -40,9 +40,11 @@ export interface SaveEntry {
 export const globEscape = (path: string) => path.replace(/\[/g, "[[]");
 
 /**
- * A file or folder the user picked, as a Ludusavi path: inside the game's files
- * it starts with `<base>`, inside the home folder with `<home>`, so it does not
- * name this device's library or user folder. The rest is escaped, since paths are globs.
+ * A save file or folder as Stault keeps it: inside the game's files it starts
+ * with `<base>`, inside the home folder with `<home>`, so it does not name this
+ * device's library or user folder. `*` matches as in Ludusavi; `[` stays a
+ * plain character and is escaped only in Ludusavi's settings, since Stault's
+ * own folder names hold one.
  */
 export function savePath(picked: string, where: GameLocation, home: string): string {
 	const slashes = (path: string) => path.replace(/\\/g, "/").replace(/\/+$/, "");
@@ -52,10 +54,10 @@ export function savePath(picked: string, where: GameLocation, home: string): str
 		return path === base ? "" : path.startsWith(`${base}/`) ? path.slice(base.length) : null;
 	};
 	const inFiles = under(where.filesDir);
-	if (inFiles !== null) return `<base>${globEscape(inFiles)}`;
+	if (inFiles !== null) return `<base>${inFiles}`;
 	const inHome = under(home);
-	if (inHome !== null) return `<home>${globEscape(inHome)}`;
-	return globEscape(path);
+	if (inHome !== null) return `<home>${inHome}`;
+	return path;
 }
 
 /**
@@ -72,7 +74,7 @@ export function ludusaviConfig(where: GameLocation, entry: SaveEntry | null) {
 			? []
 			: entry.paths
 				? // The user's files replace whatever Ludusavi knows under that name.
-					[{ name: entry.name, integration: "override", files: entry.paths, installDir: ["files"] }]
+					[{ name: entry.name, integration: "override", files: entry.paths.map(globEscape), installDir: ["files"] }]
 				: [{ name: entry.name, integration: "extend", installDir: ["files"] }],
 		// Applied in order. The install folder goes first: it often sits inside the user folder.
 		redirects: [
