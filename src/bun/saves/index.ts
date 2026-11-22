@@ -1,6 +1,6 @@
 import { realpathSync, statSync } from "node:fs";
 import { mkdir, rename, rm } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import type { GameType, Platform, PlayResult, SaveConflict, SaveSync } from "../../shared/model";
 import { extract, zipFolder } from "../extract";
 import { ApiError, parseSaveName, type GameVaultClient, type ServerSave } from "../gamevault/client";
@@ -491,13 +491,14 @@ export class Saves {
 		if ("name" in choice) {
 			saves = { name: choice.name };
 		} else {
-			const paths = [...new Set(choice.paths.map((path) => path.trim()).filter(Boolean))];
-			if (!paths.length) throw new Error("Add at least one save file or folder.");
+			const typed = choice.paths.map((path) => path.trim()).filter(Boolean);
+			if (!typed.length) throw new Error("Add at least one save file or folder.");
 			// Relative to what? Ludusavi would look for them wherever it happens to run.
-			const full = (path: string) => /^(<|\/|[A-Za-z]:[\\/]|\\\\)/.test(path);
-			const loose = paths.find((path) => !full(path));
+			const loose = typed.find((path) => !path.startsWith("<") && !isAbsolute(path));
 			if (loose) throw new Error(`"${loose}" is not a full path. Pick it with Add file or Add folder.`);
-			saves = { name: entry.manifest.title, paths };
+			// A typed path ends up as a picked one would.
+			const paths = typed.map((path) => (path.startsWith("<") ? path : this.savePath(gameId, path)));
+			saves = { name: entry.manifest.title, paths: [...new Set(paths)] };
 		}
 		await this.exclusive(async () => {
 			const record = await this.record(gameId);
