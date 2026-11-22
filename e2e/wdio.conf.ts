@@ -9,9 +9,12 @@ import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { browser } from "@wdio/globals";
+import { DEBUG_PORT, startApp, stopApp, webView2Version } from "./windows.ts";
 
-// The app keeps everything under the home folder set below. Without a keyring
-// its sign-in token goes into a file there too, not into the desktop's keyring.
+const WINDOWS = process.platform === "win32";
+
+// On Linux the app keeps everything under the home folder set below. Without a
+// keyring its sign-in token goes into a file there too, not into the desktop's keyring.
 for (const name of ["XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"]) {
 	delete process.env[name];
 }
@@ -22,19 +25,36 @@ export const config: WebdriverIO.Config = {
 	specs: ["./specs/**/*.e2e.ts"],
 	// One app at a time: the specs share the test server's one account.
 	maxInstances: 1,
-	services: ["electrobun"],
+	// Linux: the Electrobun service starts the app through WebKit's WebDriver.
+	// Windows: the tests start it (windows.ts) and Edge's WebDriver attaches to it.
+	services: WINDOWS ? [] : ["electrobun"],
 	capabilities: [
-		{
-			browserName: "electrobun",
-			"wdio:electrobunServiceOptions": { appBinaryPath: process.env.STAULT_APP },
-		},
+		WINDOWS
+			? {
+					browserName: "MicrosoftEdge",
+					browserVersion: webView2Version(),
+					"ms:edgeOptions": { debuggerAddress: `127.0.0.1:${DEBUG_PORT}` },
+				}
+			: {
+					browserName: "electrobun",
+					"wdio:electrobunServiceOptions": { appBinaryPath: process.env.STAULT_APP },
+				},
 	],
 	// Every spec file starts its own app in an empty home folder: nobody signed
-	// in, nothing installed. Linux reads it from HOME, Windows from USERPROFILE.
+	// in, nothing installed. Linux reads it from HOME; Windows from USERPROFILE,
+	// and the app keeps its data in LOCALAPPDATA.
 	onWorkerStart() {
 		const home = mkdtempSync(join(tmpdir(), "stault-e2e-home-"));
 		process.env.HOME = home;
 		process.env.USERPROFILE = home;
+		process.env.LOCALAPPDATA = join(home, "AppData", "Local");
+		mkdirSync(process.env.LOCALAPPDATA, { recursive: true });
+	},
+	async beforeSession() {
+		if (WINDOWS) await startApp();
+	},
+	afterSession() {
+		if (WINDOWS) stopApp();
 	},
 	// A picture of the window for every check that fails, in e2e/failures/.
 	async afterTest(test, _context, { passed }) {

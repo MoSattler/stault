@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { $, browser } from "@wdio/globals";
+import { startApp } from "./windows.ts";
 
 const seed = readFileSync(join(import.meta.dirname, "..", "dev", "seed.sh"), "utf8");
 const read = (name: string) => seed.match(new RegExp(`^${name}=(.*)$`, "m"))![1];
@@ -23,7 +24,7 @@ export const HOME = homedir();
 export const LIBRARY = join(HOME, "Games", "Stault");
 /** A file in the app's data folder, such as settings.json. */
 export const dataFile = (name: string) =>
-	join(HOME, ".local", "share", "com.mosattler.stault", "dev", name);
+	join(WINDOWS ? process.env.LOCALAPPDATA! : join(HOME, ".local", "share"), "com.mosattler.stault", "dev", name);
 
 /** How the app names this system, as in its footer. */
 export const SYSTEM = WINDOWS ? "Windows" : "Linux";
@@ -103,11 +104,13 @@ export function runs(program: string) {
 /**
  * Closes the app with its own Close button and starts it again on the same
  * home folder. Ending only the WebDriver session would leave the app running,
- * and a second copy hands over to the first.
+ * and a second copy hands over to the first. On Linux the new session starts
+ * the app; on Windows the tests do (windows.ts).
  */
 export async function restart() {
 	await $("button[aria-label='Close']").click();
 	await browser.waitUntil(() => !runs(APP));
+	if (WINDOWS) await startApp();
 	await browser.reloadSession();
 }
 
