@@ -32,7 +32,8 @@ function boot() {
 			account: null, lastSignIn: null, deviceName: "Test rig", libraryFolders: [], speedLimitKib: 0, saveSync: true,
 		});
 		const media = new MediaProxy(join(dir, "media"));
-		const library = new Library(join(dir, "library.json"), media);
+		// Linux runs every sample build, so no versions get fetched in the background.
+		const library = new Library(join(dir, "library.json"), media, "linux");
 		return new Session(settings, secrets, media, library, {
 			signedIn: (url) => void events.push(`in ${url}`),
 			signingOut: async () => void events.push("out"),
@@ -61,8 +62,13 @@ test.skipIf(!up)("signs in, loads the library, restores on the next start, and s
 
 	// The detail record carries the versions the list leaves out.
 	const drift = getState().games.find((g) => g.title === "Pixel Drift")!;
-	const detail = await new Library(join(dir, "other.json"), new MediaProxy(join(dir, "m2"))).detail(session.client, drift.id);
+	const mac = new Library(join(dir, "other.json"), new MediaProxy(join(dir, "m2")), "macos");
+	const detail = await mac.detail(session.client, drift.id);
 	expect(detail.versions.map((v) => v.version)).toEqual(["v1.2.0", "v1.1.0"]);
+	// On a Mac, where its Windows builds can't run, the library fetches them for the list too.
+	await mac.refresh(session.client);
+	await mac.fillVersions(session.client);
+	expect(getState().games.find((g) => g.id === drift.id)?.versions?.map((v) => v.version)).toEqual(["v1.2.0", "v1.1.0"]);
 
 	// A new process: only the settings file and the stored token carry over.
 	const restored = make();

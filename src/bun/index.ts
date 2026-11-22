@@ -55,7 +55,7 @@ const settings = new SettingsFile(join(dataDir, "settings.json"), {
 	saveSync: true,
 });
 const media = new MediaProxy(join(Utils.paths.userCache, "media"));
-const library = new Library(join(dataDir, "library.json"), media);
+const library = new Library(join(dataDir, "library.json"), media, platform);
 
 const installs = new Installs((list) => {
 	patchState({

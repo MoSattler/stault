@@ -36,6 +36,14 @@ const linux = (version: string, gb: number): GameVersion => ({
 	sizeBytes: gb * GB,
 	earlyAccess: false,
 });
+// The server can't detect Mac builds; a label that names macOS marks one.
+const mac = (version: string, gb: number): GameVersion => ({
+	id: nextVersionId++,
+	version: `v${version} · macOS`,
+	type: "UNDETECTABLE",
+	sizeBytes: gb * GB,
+	earlyAccess: false,
+});
 
 function game(
 	id: number,
@@ -86,7 +94,7 @@ const seed = [
 	game(8, "Low Orbit Diner", "Night Owl Co-op", 2024, ["Management", "Cozy"], [linux("1.1.0", 0.7)], false, 0, null, "UNPLAYED", 8, "Flip pancakes for astronauts on a station that is very slowly falling. Native Linux build."),
 	game(9, "Cartographer", "Inkwell", 2022, ["Puzzle"], [win("1.0.3", "P", 0.4)], true, 6.1, 1, "PLAYING", 9, "Redraw the map and the world follows. Fold, cut and rotate the paper to open new paths."),
 	game(10, "Static Bloom", "Halfstep", 2025, ["Rhythm"], [win("0.4.0", "P", 1.6, true)], false, 0, null, "UNPLAYED", 0, "A rhythm game played on a broken TV. Find the beat between the channels."),
-	game(11, "Kiln", "Clayworks", 2023, ["Crafting", "Survival"], [win("1.6.0", "P", 5.3), linux("1.6.0", 5.1)], false, 33, 300, "ABORTED_TEMPORARY", 10, "Fire pottery, trade it downriver, keep the kiln burning through winter."),
+	game(11, "Kiln", "Clayworks", 2023, ["Crafting", "Survival"], [win("1.6.0", "P", 5.3), linux("1.6.0", 5.1), mac("1.6.0", 5.2)], false, 33, 300, "ABORTED_TEMPORARY", 10, "Fire pottery, trade it downriver, keep the kiln burning through winter."),
 	game(12, "Paper Lanterns", "Two Rivers", 2019, ["Narrative"], [win("1.0.0", "P", 1.9)], true, 9.4, 30, "COMPLETED", 11, "One night, one river festival, and the letters your grandmother never sent."),
 ];
 
@@ -140,7 +148,10 @@ export function createMockApi(): StaultApi {
 		online: true,
 		lastSignIn: params.has("signedout") ? { serverUrl: "https://vault.lan", username: "sam" } : null,
 		deviceName: { macos: "MacBook Pro", windows: "Desktop PC", linux: "Steam Deck" }[platform],
-		games: seed.map(({ description: _d, installed: _i, versions: _v, ...summary }) => summary),
+		// Like the main process: a game whose default version can't run here comes with all its versions.
+		games: seed.map(({ description: _d, installed: _i, versions, ...summary }) =>
+			canRun(platform, summary.type, summary.version) === "no" ? { ...summary, versions } : summary,
+		),
 		gamesLoaded: true,
 		installs: seed.filter(installedHere).map((g) => ({
 			gameId: g.id,

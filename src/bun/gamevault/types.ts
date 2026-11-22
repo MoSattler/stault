@@ -55,6 +55,8 @@ export interface ApiVersion {
 export interface ApiGame {
 	id: number;
 	created_at: string;
+	/** Changes when the server saves the game, as when its default version changes. */
+	updated_at: string;
 	title: string;
 	sort_title: string | null;
 	version: string | null;
