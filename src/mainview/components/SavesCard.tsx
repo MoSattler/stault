@@ -98,7 +98,14 @@ export function SavesCard({ game, running }: { game: GameSummary; running: boole
 				)}
 				{save.state !== "unknown" && save.state !== "off" && (
 					<p className="flex flex-wrap items-baseline gap-x-2 border-t border-hover pt-2.5 text-[12.5px] text-muted">
-						{save.name ? (
+						{save.paths ? (
+							<span className="flex w-full flex-col gap-1">
+								Save locations you chose
+								{save.paths.map((path) => (
+									<span key={path} className="select-text break-all font-mono text-xs text-ink">{path}</span>
+								))}
+							</span>
+						) : save.name ? (
 							<span>
 								Save locations from Ludusavi's entry <span className="text-ink">{save.name}</span>
 							</span>

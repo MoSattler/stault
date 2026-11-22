@@ -134,6 +134,7 @@ export function createMockApi(): StaultApi {
 		gameId,
 		state,
 		name: state === "unsupported" ? null : find(gameId).title,
+		paths: null,
 		syncedAt: state === "unsupported" || gameId === 12 ? null : ago(gameId / 4),
 		...(state === "conflict"
 			? { conflict: { serverAt: ago(0.2), serverDevice: "Steam Deck", localAt: ago(0.05) } }
@@ -367,12 +368,19 @@ export function createMockApi(): StaultApi {
 				300,
 			),
 		async setSaveGame({ gameId, name }) {
-			setSave(gameId, { name, state: "idle", syncedAt: null, conflict: undefined });
+			setSave(gameId, { name, paths: null, state: "idle", syncedAt: null, conflict: undefined });
 		},
 		async setGameSaveSync({ gameId, on }) {
 			const name = state.saves.find((s) => s.gameId === gameId)?.name;
 			setSave(gameId, { state: !on ? "off" : name ? "idle" : "unsupported", conflict: undefined });
 		},
+		async setSavePaths({ gameId, paths }) {
+			const kept = paths.map((path) => path.trim()).filter(Boolean);
+			if (!kept.length) throw new Error("Add at least one save file or folder.");
+			setSave(gameId, { name: find(gameId).title, paths: kept, state: "idle", syncedAt: null, conflict: undefined });
+		},
+		pickSavePath: ({ folder }) =>
+			later(folder ? "<home>/Library/Application Support/Example" : "<home>/Documents/Example/save1.dat", 200),
 		async setSaveSync({ on }) {
 			patch({ saveSync: { ...state.saveSync, enabled: on } });
 		},

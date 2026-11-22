@@ -1,12 +1,12 @@
 import { realpathSync, statSync } from "node:fs";
 import { mkdir, rename, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type { GameType, Platform, PlayResult, SaveConflict, SaveSync } from "../../shared/model";
 import { extract, zipFolder } from "../extract";
 import { ApiError, parseSaveName, type GameVaultClient, type ServerSave } from "../gamevault/client";
 import { filesDir, type Installs, type SaveRecord, workDir } from "../installs";
 import { readJson, writeJson } from "../json-file";
-import type { GameLocation, Ludusavi } from "./ludusavi";
+import { type GameLocation, type Ludusavi, type SaveEntry, savePath } from "./ludusavi";
 
 /** How sure Ludusavi has to be that a title is the game it knows. */
 const MATCH = 0.8;
@@ -98,7 +98,9 @@ function real(path: string): string {
 	try {
 		return realpathSync.native(path);
 	} catch {
-		return path;
+		// Not there (yet): resolve the part that is.
+		const parent = dirname(path);
+		return parent === path ? path : join(real(parent), basename(path));
 	}
 }
 
@@ -149,6 +151,7 @@ export class Saves {
 											? "pending"
 											: "idle",
 					name: record?.name ?? null,
+					paths: record?.paths ?? null,
 					syncedAt: iso(record?.syncedAt),
 					...(conflict ? { conflict } : {}),
 				};
@@ -238,14 +241,14 @@ export class Saves {
 	private async run(gameId: number, mode: "auto" | "upload" | "download", signal?: AbortSignal): Promise<Outcome> {
 		const { ludusavi, installs } = this.deps;
 		const record = await this.record(gameId);
-		const name = record.name;
-		if (!name) return "skipped";
+		if (!record.name) return "skipped";
+		const entry: SaveEntry = { name: record.name, ...(record.paths ? { paths: record.paths } : {}) };
 		this.conflicts.delete(gameId);
 
 		const { dir, manifest } = installs.get(gameId)!;
 		const where = this.where(gameId);
 		const baseline = join(workDir(dir), "saves");
-		const local = await ludusavi.scan(where, name, baseline);
+		const local = await ludusavi.scan(where, entry, baseline);
 		// Remembered, so saves made while the server was away still go up later.
 		const changedHere = local.found && (record.pending || local.changed);
 		if (changedHere !== !!record.pending) this.update(gameId, { pending: changedHere });
@@ -254,7 +257,7 @@ export class Saves {
 
 		if (mode === "upload") {
 			if (!local.found) throw new Error("Stault found no saves for this game on this device.");
-			await this.upload(gameId, name);
+			await this.upload(gameId, entry);
 			return "uploaded";
 		}
 		if (mode === "download") {
@@ -264,7 +267,7 @@ export class Saves {
 				await rm(incoming.work, { recursive: true, force: true });
 				throw new Error("The server's save is from another operating system and can't be used here.");
 			}
-			await this.restore(gameId, name, incoming, changedHere);
+			await this.restore(gameId, entry, incoming, changedHere);
 			return "restored";
 		}
 
@@ -277,9 +280,9 @@ export class Saves {
 				this.update(gameId, { foreignAt: incoming.save.uploadedAt });
 				await rm(incoming.work, { recursive: true, force: true });
 			} else if (nextStep(true, changedHere) === "restore") {
-				await this.restore(gameId, name, incoming, false);
+				await this.restore(gameId, entry, incoming, false);
 				return "restored";
-			} else if ((await ludusavi.scan(where, name, incoming.root)).changed) {
+			} else if ((await ludusavi.scan(where, entry, incoming.root)).changed) {
 				this.conflicts.set(gameId, {
 					serverAt: iso(incoming.save.uploadedAt)!,
 					serverDevice: incoming.device,
@@ -294,7 +297,7 @@ export class Saves {
 			}
 		}
 		if (nextStep(false, changedHere) === "upload") {
-			await this.upload(gameId, name);
+			await this.upload(gameId, entry);
 			return "uploaded";
 		}
 		return "synced";
@@ -310,12 +313,12 @@ export class Saves {
 		}
 	}
 
-	private async upload(gameId: number, name: string) {
+	private async upload(gameId: number, entry: SaveEntry) {
 		const { dir, manifest } = this.deps.installs.get(gameId)!;
 		const baseline = join(workDir(dir), "saves");
 		const zip = join(workDir(dir), "saves-upload.zip");
 		this.update(gameId, { pending: true });
-		await this.deps.ludusavi.backup(this.where(gameId), name, baseline);
+		await this.deps.ludusavi.backup(this.where(gameId), entry, baseline);
 		writeJson(join(baseline, MARKER), {
 			kind: saveKind(this.deps.platform, manifest.type),
 			device: this.deps.deviceName(),
@@ -371,15 +374,15 @@ export class Saves {
 		this.update(gameId, { syncedAt: incoming.save.uploadedAt, pending: false });
 	}
 
-	private async restore(gameId: number, name: string, incoming: Incoming, keepCopy: boolean) {
+	private async restore(gameId: number, entry: SaveEntry, incoming: Incoming, keepCopy: boolean) {
 		const { dir, manifest } = this.deps.installs.get(gameId)!;
 		if (keepCopy) {
 			// These saves never reached the server. Keep the last such set, in case the choice was wrong.
 			const replaced = join(workDir(dir), "saves-replaced");
 			await rm(replaced, { recursive: true, force: true });
-			await this.deps.ludusavi.backup(this.where(gameId), name, replaced);
+			await this.deps.ludusavi.backup(this.where(gameId), entry, replaced);
 		}
-		await this.deps.ludusavi.restore(this.where(gameId), name, incoming.root);
+		await this.deps.ludusavi.restore(this.where(gameId), entry, incoming.root);
 		await this.adopt(gameId, incoming);
 		this.deps.notify(
 			`${manifest.title}: saves restored`,
@@ -475,15 +478,32 @@ export class Saves {
 		if (on) this.background(gameId);
 	}
 
-	/** Sets which Ludusavi entry the game follows. */
-	async setName(gameId: number, name: string) {
+	/** A file or folder the user picked, as the path to name it by in `choose`. */
+	savePath(gameId: number, picked: string): string {
+		return savePath(real(picked), this.where(gameId), real(this.deps.home));
+	}
+
+	/** Sets which saves the game follows: a Ludusavi entry, or files the user named (kept under the game's title). */
+	async choose(gameId: number, choice: { name: string } | { paths: string[] }) {
 		const entry = this.deps.installs.get(gameId);
 		if (!entry) return;
+		let saves: Pick<SaveRecord, "name" | "paths">;
+		if ("name" in choice) {
+			saves = { name: choice.name };
+		} else {
+			const paths = [...new Set(choice.paths.map((path) => path.trim()).filter(Boolean))];
+			if (!paths.length) throw new Error("Add at least one save file or folder.");
+			// Relative to what? Ludusavi would look for them wherever it happens to run.
+			const full = (path: string) => /^(<|\/|[A-Za-z]:[\\/]|\\\\)/.test(path);
+			const loose = paths.find((path) => !full(path));
+			if (loose) throw new Error(`"${loose}" is not a full path. Pick it with Add file or Add folder.`);
+			saves = { name: entry.manifest.title, paths };
+		}
 		await this.exclusive(async () => {
 			const record = await this.record(gameId);
 			// What was synced under the old entry says nothing about the new one.
 			await rm(join(workDir(entry.dir), "saves"), { recursive: true, force: true });
-			this.deps.installs.update(gameId, { saves: { installationId: record.installationId, name } });
+			this.deps.installs.update(gameId, { saves: { installationId: record.installationId, ...saves } });
 			this.conflicts.delete(gameId);
 		});
 		this.publish();

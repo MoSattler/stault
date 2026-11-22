@@ -30,6 +30,11 @@ export interface SaveRecord {
 	installationId: string;
 	/** Ludusavi's name for this game. Null when it knows none and none was chosen. */
 	name: string | null;
+	/**
+	 * Save files the user named by hand, as Ludusavi paths. When set, `name` is
+	 * the game's title and these take the place of Ludusavi's own entry.
+	 */
+	paths?: string[];
 	/** Upload time of the server save this install last restored or uploaded. */
 	syncedAt?: number;
 	/** Upload time of a server save made for another operating system, to leave alone. */

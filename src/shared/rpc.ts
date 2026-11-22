@@ -41,6 +41,10 @@ export type Requests = {
 	findSaveGames: Req<{ gameId: number; query: string }, string[]>;
 	/** Sets which Ludusavi entry a game's saves follow. */
 	setSaveGame: Req<{ gameId: number; name: string }>;
+	/** Makes a game's saves the files and folders the user named, in place of a Ludusavi entry. */
+	setSavePaths: Req<{ gameId: number; paths: string[] }>;
+	/** Opens the native picker for a save file or folder; null when cancelled. */
+	pickSavePath: Req<{ gameId: number; folder: boolean }, string | null>;
 	/** Save sync for every game. */
 	setSaveSync: Req<{ on: boolean }>;
 	/** Save sync for one game, within the setting for every game. */

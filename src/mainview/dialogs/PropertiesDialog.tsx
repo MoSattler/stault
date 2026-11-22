@@ -89,6 +89,7 @@ function Saves({ gameId }: { gameId: number }) {
 
 	let where: ReactNode = "Stault doesn't know where this game keeps its saves.";
 	if (save?.state === "unknown") where = "Looking up where this game keeps its saves…";
+	else if (save?.paths) where = "From the save files you chose.";
 	else if (save?.name) where = <>From Ludusavi's entry <span className="text-ink">{save.name}</span>.</>;
 
 	return (
