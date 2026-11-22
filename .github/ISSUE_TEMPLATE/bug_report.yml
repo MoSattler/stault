@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in Stault doesn't work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Click …
+  - type: input
+    id: os
+    attributes:
+      label: OS and version
+      placeholder: macOS 15.5, Windows 11, Fedora 42, Steam Deck
+    validations:
+      required: true
+  - type: input
+    id: stault
+    attributes:
+      label: Stault version
+      description: Shown at the bottom of the Settings menu.
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: GameVault server version
+      description: Shown in Settings → Account.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Launch log
+      description: If a game didn't start or closed right away, paste its launch log. Stault's notification names the file.
+      render: text

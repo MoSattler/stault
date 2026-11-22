@@ -22,7 +22,7 @@ Browse, install, play and sync saves on Windows, macOS and Linux.
 > [!IMPORTANT]
 > Stault is alpha software. Expect bugs and rough edges, and keep a backup of any saves you care about.
 >
-> Bug reports and contributions are very welcome. If something breaks, [open an issue](https://github.com/MoSattler/stault/issues) with your OS, your Stault version (shown in Settings) and your GameVault server version. To help with code, start with [CONTRIBUTING.md](CONTRIBUTING.md).
+> Bug reports and contributions are very welcome. If something breaks, please [report it](https://github.com/MoSattler/stault/issues/new?template=bug_report.yml). To help with code, start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Features
 
