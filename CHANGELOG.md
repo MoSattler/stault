@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/MoSattler/stault/compare/v0.7.0...v0.7.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* drop the metadata provider note from a game's page ([#39](https://github.com/MoSattler/stault/issues/39)) ([350bc05](https://github.com/MoSattler/stault/commit/350bc0507f9fcec601936476cf95c3804f3b2800))
+
 ## [0.7.0](https://github.com/MoSattler/stault/compare/v0.6.0...v0.7.0) (2026-11-22)
 
 
