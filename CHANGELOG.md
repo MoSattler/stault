@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/MoSattler/stault/compare/v0.11.0...v0.12.0) (2026-11-22)
+
+
+### Features
+
+* bundle umu-launcher with the Linux build ([#59](https://github.com/MoSattler/stault/issues/59)) ([d52f0dd](https://github.com/MoSattler/stault/commit/d52f0dde5116b375754cd9524836138b6bbe0a8e))
+
 ## [0.11.0](https://github.com/MoSattler/stault/compare/v0.10.0...v0.11.0) (2026-11-22)
 
 
