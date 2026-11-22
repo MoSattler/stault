@@ -1,6 +1,6 @@
 {
 	"name": "stault",
-	"version": "0.8.0",
+	"version": "0.9.0",
 	"description": "Steam-style desktop client for a self-hosted GameVault server",
 	"private": true,
 	"type": "module",
