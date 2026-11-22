@@ -154,6 +154,8 @@ export interface Toast {
 /** Everything the UI renders. The main process owns it and pushes patches. */
 export interface AppState {
 	platform: Platform;
+	/** The running Stault version, e.g. "0.5.0"; builds off the stable channel add it, e.g. "0.5.0 (canary)". */
+	version: string;
 	/** False until the main process has tried to restore a saved session. */
 	ready: boolean;
 	session: Session | null;

@@ -224,7 +224,9 @@ async function uninstall(gameId: number) {
 	await refreshFolders();
 }
 
+const channel = await Updater.localInfo.channel();
 patchState({
+	version: (await Updater.localInfo.version()) + (channel === "stable" ? "" : ` (${channel})`),
 	lastSignIn: settings.get().lastSignIn,
 	deviceName: settings.get().deviceName,
 	speedLimitKib: settings.get().speedLimitKib,

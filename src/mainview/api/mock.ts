@@ -135,6 +135,7 @@ export function createMockApi(): StaultApi {
 
 	let state: AppState = {
 		platform,
+		version: "0.5.0",
 		ready: true,
 		session: params.has("signedout") ? null : session,
 		online: true,
