@@ -76,7 +76,7 @@ const vendor = join(import.meta.dir, "..", "vendor", "ludusavi");
 const binary = join(vendor, os === "win" ? "ludusavi.exe" : "ludusavi");
 // Kept between runs, so Ludusavi downloads its game list once a day, not once a test.
 const configDir = join(vendor, "test-config");
-// `hutch dev/fetch-ludusavi.ts` puts the binary there. HOME does not move the user folder on Windows.
+// `hutch dev/fetch-vendor.ts` puts the binary there. HOME does not move the user folder on Windows.
 const ready = existsSync(binary) && process.platform !== "win32";
 
 const root = mkdtempSync(join(tmpdir(), "stault-saves-"));

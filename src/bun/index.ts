@@ -95,11 +95,14 @@ const session: Session = new Session(
 	},
 );
 
+const bundled = (...path: string[]) => join(PATHS.RESOURCES_FOLDER, "app", ...path);
+
 const launcher = new Launcher({
 	platform,
 	installs,
 	logsDir: join(Utils.paths.logs, "com.mosattler.stault", "launch"),
 	prefixesDir,
+	bundledUmu: bundled("umu", "umu-run"),
 	client: () => session.client,
 	userId: () => session.userId,
 	game: (gameId) => library.raw(gameId),
@@ -121,7 +124,6 @@ const launcher = new Launcher({
 	},
 });
 
-const bundled = (...path: string[]) => join(PATHS.RESOURCES_FOLDER, "app", ...path);
 const sevenZip = bundled("7zip", platform === "windows" ? "7z.exe" : "7zz");
 
 const saves: Saves = new Saves({

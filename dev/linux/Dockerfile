@@ -19,15 +19,12 @@ RUN apt-get update \
 		ca-certificates curl git zip unzip zstd xz-utils rsync sudo procps python3 \
 	&& rm -rf /var/lib/apt/lists/*
 
-# umu-launcher runs Windows games. Debian does not package it; its project does.
-# It depends on 32-bit graphics libraries.
-ARG UMU_VERSION=1.4.4
-RUN dpkg --add-architecture i386 && cd /tmp \
-	&& curl -fsSLO "https://github.com/Open-Wine-Components/umu-launcher/releases/download/$UMU_VERSION/python3-umu-launcher_$UMU_VERSION-1_amd64_debian-13.deb" \
-	&& curl -fsSLO "https://github.com/Open-Wine-Components/umu-launcher/releases/download/$UMU_VERSION/umu-launcher_$UMU_VERSION-1_all_debian-13.deb" \
+# Windows games run through the umu-launcher that comes with Stault, on the
+# python3 above. Proton wants 32-bit graphics libraries as well.
+RUN dpkg --add-architecture i386 \
 	&& apt-get update \
-	&& apt-get install -y --no-install-recommends ./python3-umu-launcher_*.deb ./umu-launcher_*.deb \
-	&& rm -rf /var/lib/apt/lists/* /tmp/*.deb
+	&& apt-get install -y --no-install-recommends libgl1-mesa-dri:i386 libglx-mesa0:i386 \
+	&& rm -rf /var/lib/apt/lists/*
 
 # The end-to-end tests (e2e.sh) run on Node, and need a newer one than Debian's.
 ARG NODE_VERSION=24.22.3

@@ -7,7 +7,8 @@ const sevenZipDir = `node_modules/7zip-bin-full/${
 }/${process.arch}`;
 const sevenZipFiles = process.platform === "win32" ? ["7z.exe", "7z.dll"] : ["7zz"];
 
-// Ludusavi finds and moves game saves. dev/fetch-ludusavi.ts puts it in vendor/.
+// Ludusavi finds and moves game saves; on Linux, umu-launcher runs Windows games.
+// dev/fetch-vendor.ts puts them in vendor/.
 const ludusaviFiles = [process.platform === "win32" ? "ludusavi.exe" : "ludusavi", "legal.zip"];
 
 export default {
@@ -32,6 +33,7 @@ export default {
 			...Object.fromEntries(
 				ludusaviFiles.map((file) => [`vendor/ludusavi/${file}`, `ludusavi/${file}`]),
 			),
+			...(process.platform === "linux" ? { "vendor/umu/umu-run": "umu/umu-run" } : {}),
 		},
 		// Vite owns dist/, so it must not retrigger the watch loop.
 		watchIgnore: ["dist/**"],

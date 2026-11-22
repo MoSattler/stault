@@ -33,6 +33,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - `src/shared/rpc.ts` is the contract. Adding a request means: the type there, a handler in `src/bun/index.ts`, and a mock in `src/mainview/api/mock.ts`.
 - The main process holds the whole `AppState` (`src/bun/state.ts`) and pushes patches; the webview mirrors it in `src/mainview/state/store.ts`. View state (current page, dialogs) lives only in the webview.
 - Installed games are found by scanning library folders for `.stault/manifest.json`. There is no central database of installs.
+- On Linux, Windows programs run through umu-launcher (`findUmu` in `src/bun/launcher/index.ts`): an installed `umu-run` first, since its package may set up more than the program; else umu's zipapp, which `dev/fetch-vendor.ts` bundles and which runs on the system's `python3`. Ubuntu 24.04+ lets Proton's sandbox (bwrap) start only under an AppArmor profile; umu's Ubuntu package links one. Where the restriction is on and no bwrap profile is in `/etc/apparmor.d`, Stault asks for that package.
 
 ## GameVault API quirks (checked against 17.2.0)
 
@@ -45,7 +46,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 ## Save sync (`src/bun/saves/`)
 
-- Ludusavi 0.31 finds and moves save files. It is not on npm: `dev/fetch-ludusavi.ts` downloads the pinned build into `vendor/` (git-ignored) before every build and dev start, and `electrobun.config.ts` copies it into the app. To upgrade, change the version and checksums there.
+- Ludusavi 0.31 finds and moves save files. It is not on npm: `dev/fetch-vendor.ts` downloads the pinned build into `vendor/` (git-ignored) before every build and dev start, and `electrobun.config.ts` copies it into the app. To upgrade, change the version and checksums there.
 - The rule the sync follows (`nextStep` in `saves/index.ts`): never replace a server save this device has not seen, never replace local saves the server has not seen. Both changed means compare, then ask.
 - Ludusavi quirks, all found by running it: without a game name it waits on stdin; root paths are globs, so the `[id]` in Stault's folder names must be escaped; it reports real paths, so folders must be resolved through symlinks before they are named in redirects; it does not follow symlinks into game folders.
 - A game can describe its own saves with a `.ludusavi.yaml` in its files; the Harbor Lights sample does.
@@ -61,7 +62,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 ## Testing on Linux (`dev/linux/`)
 
-- `./dev/seed.sh`, then `./dev/linux/up.sh`, starts the container `stault-linux`: a Debian 13 desktop (Xvfb, openbox, keyring, umu-launcher) on the test server's Docker network. Inside it the server is `http://gamevault:8080`. `./dev/linux/run.sh` puts this checkout's code into the released Linux app there and starts it.
+- `./dev/seed.sh`, then `./dev/linux/up.sh`, starts the container `stault-linux`: a Debian 13 desktop (Xvfb, openbox, keyring) on the test server's Docker network. Inside it the server is `http://gamevault:8080`. `./dev/linux/run.sh` puts this checkout's code into the released Linux app there, adds the Linux Ludusavi and umu-launcher if the app lacks them, and starts it.
 - Drive it with `docker exec stault-linux xdotool …`; take a screenshot with `docker exec stault-linux import -window root /tmp/shot.png` and `docker cp`. The window sits at 80,50 on a 1440x900 screen. The user can watch at `vnc://127.0.0.1:5901`. xdotool can type into the password field.
 - A title-bar drag needs pauses between press, moves and release; Electrobun starts the move a moment after the press.
 - Once the image exists, `seed.sh` compiles the Windows samples (`dev/samples/*.c`) into real programs: Pixel Drift and Copper Kite open a message box, Setup Quest's installer copies a game to `/DIR=` or to `C:\Games\Setup Quest`.
@@ -80,7 +81,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - Each system has one small sample game that runs there (`NATIVE` in `e2e/app.ts`): Tin Kettle on Linux, Copper Kite on Windows.
 - Installed game files are in `<library>/<Title> [<id>]/files/`.
 - A failed check leaves a screenshot in `e2e/failures/` (`e2e.sh` copies them out of the container; CI attaches them to the run). Look there first. When the app doesn't come up on Windows, the error carries the end of its output.
-- Not covered, because WebDriver can't reach them: the native folder and file pickers ("Add folder…", choosing an executable by hand), minimize and maximize. Also not covered: Windows games on Linux (CI has no umu-launcher) and an unreachable server.
+- Not covered, because WebDriver can't reach them: the native folder and file pickers ("Add folder…", choosing an executable by hand), minimize and maximize. Also not covered: Windows games on Linux (every run would first download Proton, over 500 MB) and an unreachable server.
 - The local test server keeps saves, playtime and bookmarks from earlier runs, and may hold extra games; CI's is new each time. A check must hold on both: read the state before changing it, or make it (the save tests upload their own save first).
 - What WebKit's WebDriver does differently, all met here (helpers in `e2e/app.ts`):
   - Emptying a field (`setValue`, `clearValue`) goes unnoticed by React, which puts the old text back on its next render. Use `fill()`.
