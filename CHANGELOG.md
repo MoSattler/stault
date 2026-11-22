@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/MoSattler/stault/compare/v0.6.0...v0.7.0) (2026-11-22)
+
+
+### Features
+
+* show which systems a game is for when it can't run here ([#35](https://github.com/MoSattler/stault/issues/35)) ([6cc7f14](https://github.com/MoSattler/stault/commit/6cc7f14e2173ba4530c0f25b4c843d88f5c7fd2a))
+
 ## [0.6.0](https://github.com/MoSattler/stault/compare/v0.5.0...v0.6.0) (2026-11-22)
 
 
