@@ -48,7 +48,9 @@ They run on Linux only so far, where WebKit's WebDriver can drive the system web
 ./dev/linux/e2e.sh --spec specs/sign-in.e2e.ts   # one file
 ```
 
-That runs them in a Linux container of their own (`stault-e2e`), on the same mix as `run.sh`: this checkout's JavaScript in the latest released Linux app.
+That runs them in a Linux container of their own (`stault-e2e`), on the same mix as `run.sh`: this checkout's JavaScript in the latest released Linux app. A failed check leaves a screenshot of the window in `e2e/failures/`.
+
+One spec file per area: signing in and out, the library, a game's page, installing and playing, downloads, settings and save sync. A new screen or flow gets its checks in the same change. What they can't reach is listed in `CLAUDE.md`: mainly the system's own file dialogs, and Windows games.
 
 WebdriverIO runs on Node, so `e2e/` is a small npm project of its own (`package-lock.json`, `npm ci`), apart from the app's Hutch-managed dependencies. Nothing in `src/` exists for the tests' sake; they find things the way a user does, by label and text.
 

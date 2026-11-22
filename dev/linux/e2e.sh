@@ -41,15 +41,24 @@ in_linux 'pkill -x WebKitWebDriver; pkill -x launcher; pkill -x Xvfb; rm -rf /tm
 	sed -i "s/\"channel\":\"stable\"/\"channel\":\"dev\"/" /tmp/e2e/app/Resources/version.json
 	sed -i "s/\"buildEnvironment\":\"stable\"/\"buildEnvironment\":\"dev\"/" /tmp/e2e/app/Resources/build.json'
 pack -C "$BUILT" bun views | docker exec -i stault-e2e tar -x -C /tmp/e2e/app/Resources/app
-pack --exclude node_modules e2e dev/seed.sh | docker exec -i stault-e2e tar -x -C /tmp/e2e/repo
+pack --exclude node_modules --exclude failures e2e dev/seed.sh | docker exec -i stault-e2e tar -x -C /tmp/e2e/repo
 
 in_linux 'cd ~/e2e-packages && ln -s ~/e2e-packages/node_modules /tmp/e2e/repo/e2e/node_modules
 	cmp -s /tmp/e2e/repo/e2e/package-lock.json installed.json && exit
 	cp /tmp/e2e/repo/e2e/package.json /tmp/e2e/repo/e2e/package-lock.json . \
 		&& npm ci --no-audit --no-fund --no-update-notifier && cp package-lock.json installed.json'
 
+status=0
 docker exec -w /tmp/e2e/repo/e2e \
 	-e TMPDIR=/tmp/e2e/tmp \
 	-e STAULT_APP=/tmp/e2e/app/bin/launcher \
 	-e STAULT_SERVER=http://gamevault:8080 \
-	stault-e2e npx wdio run wdio.conf.ts "$@"
+	stault-e2e npx wdio run wdio.conf.ts "$@" || status=$?
+
+# Pictures of the window at each failed check.
+rm -rf e2e/failures
+if in_linux 'test -d /tmp/e2e/repo/e2e/failures'; then
+	docker cp -q stault-e2e:/tmp/e2e/repo/e2e/failures e2e/failures
+	echo "Screenshots of the failures: e2e/failures/"
+fi
+exit $status

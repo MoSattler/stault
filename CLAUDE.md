@@ -65,8 +65,17 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - The tests must not need anything from `src/`: no test ids, hooks or test-only branches. Select by label, role and text.
 - The service runs a copy of the app from a temporary folder. A stable build crashes there at start (`Updater.localInfo` throws outside `<data folder>/app`), so the tests need a dev build (`hutch run build:dev`).
 - Every spec file gets a new app in an empty home folder (`onWorkerStart` in `wdio.conf.ts`), so it starts signed out. With no keyring there, the token goes to `session.json`.
-- WebKit's WebDriver returns no text for the truncated titles in the game list; find those rows with a text selector (`button*=Title`) instead of reading the list's text.
 - Installed game files are in `<library>/<Title> [<id>]/files/`.
+- A failed check leaves a screenshot in `e2e/failures/` (`e2e.sh` copies them out of the container; CI attaches them to the run). Look there first.
+- Not covered, because WebDriver can't reach them: the native folder and file pickers ("Add folder…", choosing an executable by hand), minimize and maximize. Also not covered: Windows games (CI has no umu-launcher) and an unreachable server.
+- The local test server keeps saves, playtime and bookmarks from earlier runs, and may hold extra games; CI's is new each time. A check must hold on both: read the state before changing it, or make it (the save tests upload their own save first).
+- What WebKit's WebDriver does differently, all met here (helpers in `e2e/app.ts`):
+  - Emptying a field (`setValue`, `clearValue`) goes unnoticed by React, which puts the old text back on its next render. Use `fill()`.
+  - An element's text comes back as shown (so upper-cased by CSS) and without anything between blocks: "SAVESIn sync". Match with `ignoreCase` or `\s*`. A line that CSS may cut short (`truncate`) comes back empty; read those from the page, as `listedGames()` does.
+  - A text selector needs a tag: `button*=Install`, not `[role=menuitem]*=Install`.
+  - A click on a disabled button passes and does nothing. A dialog's main button is disabled until its data has loaded: use `confirm()`.
+  - A toast covers the page's bottom right corner for four seconds and takes the clicks meant for what is under it. Call `toastGone()` first.
+  - Ending the WebDriver session leaves the app running, and a second copy hands over to it. `restart()` closes the app with its own Close button before starting it again.
 
 ## Testing on Windows (`dev/windows/`)
 

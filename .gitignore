@@ -7,3 +7,4 @@ vendor/
 *.tsbuildinfo
 .DS_Store
 .cottontail-tmp/
+e2e/failures/
