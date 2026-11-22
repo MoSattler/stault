@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/MoSattler/stault/compare/v0.9.0...v0.10.0) (2026-11-22)
+
+
+### Features
+
+* filter the library to the games that run on this system ([#53](https://github.com/MoSattler/stault/issues/53)) ([71ac9d7](https://github.com/MoSattler/stault/commit/71ac9d7a1cafae1ebf8111f6171adc5c09889ff1))
+
+
+### Bug Fixes
+
+* draw the settings icon as a cog instead of a sun ([#51](https://github.com/MoSattler/stault/issues/51)) ([2dd46ec](https://github.com/MoSattler/stault/commit/2dd46ecd8fee32fd46c415dce0dcf9cce48d88b3))
+* show save sync as off while the server takes no saves ([#50](https://github.com/MoSattler/stault/issues/50)) ([2fe4173](https://github.com/MoSattler/stault/commit/2fe4173df4370a0c88d7448a7323d42c2698f4cc))
+
 ## [0.9.0](https://github.com/MoSattler/stault/compare/v0.8.0...v0.9.0) (2026-11-22)
 
 
