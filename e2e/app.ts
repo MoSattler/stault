@@ -3,8 +3,10 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { $, browser } from "@wdio/globals";
+import { startApp } from "./windows.ts";
 
 const seed = readFileSync(join(import.meta.dirname, "..", "dev", "seed.sh"), "utf8");
 const read = (name: string) => seed.match(new RegExp(`^${name}=(.*)$`, "m"))![1];
@@ -14,13 +16,29 @@ export const SERVER = process.env.STAULT_SERVER ?? read("SERVER");
 export const USER = read("DEV_USER");
 export const PASSWORD = read("DEV_PASSWORD");
 
+const WINDOWS = process.platform === "win32";
+
 /** The home folder of the app under test. Each spec file gets a new, empty one (wdio.conf.ts). */
-export const HOME = process.env.HOME!;
+export const HOME = homedir();
 /** The default library folder. A game is installed into "<Title> [<id>]" in it. */
 export const LIBRARY = join(HOME, "Games", "Stault");
 /** A file in the app's data folder, such as settings.json. */
 export const dataFile = (name: string) =>
-	join(HOME, ".local", "share", "com.mosattler.stault", "dev", name);
+	join(WINDOWS ? process.env.LOCALAPPDATA! : join(HOME, ".local", "share"), "com.mosattler.stault", "dev", name);
+
+/** How the app names this system, as in its footer. */
+export const SYSTEM = WINDOWS ? "Windows" : "Linux";
+
+/**
+ * A small sample game made for this system, with one version: the file in its
+ * folder that starts it, and what runs() looks for while it plays.
+ */
+export const NATIVE = WINDOWS
+	? { title: "Copper Kite", version: "v1.0.0", type: "WINDOWS_PORTABLE", program: "Kite.exe", process: "Kite.exe" }
+	: { title: "Tin Kettle", version: "v1.1.0", type: "LINUX_PORTABLE", program: "start.sh", process: "files/start.sh" };
+
+/** What runs() looks for while the app under test is open. */
+const APP = WINDOWS ? "launcher.exe" : "bin/launcher --automation";
 
 export const main = () => $("main");
 export const gameList = () => $("aside[aria-label='Game list']");
@@ -57,19 +75,27 @@ export async function fill(field: ReturnType<typeof $>, text: string) {
 	else await browser.keys("Backspace");
 }
 
-/** Signs in on the Connect screen and waits for the library. */
+/** Signs in on the Connect screen and waits for the library and its games. */
 export async function signIn() {
 	await fill($("#srv"), SERVER);
 	await fill($("#usr"), USER);
 	await fill($("#pwd"), PASSWORD);
 	await $("button[type=submit]").click();
 	await gameList().waitForDisplayed();
+	await browser.waitUntil(async () => (await listedGames()).length > 0);
 }
 
-/** Whether a program whose command line holds this text is running. */
-export function runs(commandLine: string) {
+/**
+ * Whether a program is running: on Linux one whose command line holds this
+ * text, on Windows one whose file has this name.
+ */
+export function runs(program: string) {
+	if (WINDOWS) {
+		const tasks = execFileSync("tasklist", ["/fo", "csv", "/nh", "/fi", `IMAGENAME eq ${program}`], { encoding: "utf8" });
+		return tasks.includes(`"${program}"`);
+	}
 	try {
-		execFileSync("pgrep", ["-f", commandLine]);
+		execFileSync("pgrep", ["-f", program]);
 		return true;
 	} catch {
 		return false;
@@ -79,11 +105,13 @@ export function runs(commandLine: string) {
 /**
  * Closes the app with its own Close button and starts it again on the same
  * home folder. Ending only the WebDriver session would leave the app running,
- * and a second copy hands over to the first.
+ * and a second copy hands over to the first. On Linux the new session starts
+ * the app; on Windows the tests do (windows.ts).
  */
 export async function restart() {
 	await $("button[aria-label='Close']").click();
-	await browser.waitUntil(() => !runs("bin/launcher --automation"));
+	await browser.waitUntil(() => !runs(APP));
+	if (WINDOWS) await startApp();
 	await browser.reloadSession();
 }
 
