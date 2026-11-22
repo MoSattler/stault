@@ -18,7 +18,7 @@ const big = Buffer.concat(Array.from({ length: 48 }, () => payload)); // ~3 MB
 let archive: Buffer;
 let server: Server;
 let port = 0;
-const requests: { range: string | null; limit: string | null }[] = [];
+const requests: { url: string; range: string | null; limit: string | null }[] = [];
 let honourRange = true;
 
 beforeAll(() => {
@@ -34,7 +34,7 @@ beforeAll(() => {
 	// Behaves like GameVault: a Range request is answered with 200 and the remainder.
 	server = createServer(async (request, response) => {
 		const range = request.headers.range ?? null;
-		requests.push({ range, limit: (request.headers["x-download-speed-limit"] as string) ?? null });
+		requests.push({ url: request.url ?? "", range, limit: (request.headers["x-download-speed-limit"] as string) ?? null });
 		const from = honourRange && range ? Number(range.match(/bytes=(\d+)-/)![1]) : 0;
 		const body = archive.subarray(from);
 		response.writeHead(200, { "Content-Length": body.length });
@@ -182,6 +182,7 @@ test("a new speed limit restarts the transfer with the limit applied", async () 
 
 test("removing a download deletes its files and lets the next one run", async () => {
 	const t = setup("remove");
+	requests.length = 0;
 	await t.downloads.enqueue(t.item, t.folder);
 	await t.downloads.enqueue({ ...t.item, gameId: 2, title: "Second" }, t.folder);
 	await until(() => (t.state()[0]?.progress ?? 0) > 0.1, "some progress");
@@ -190,6 +191,9 @@ test("removing a download deletes its files and lets the next one run", async ()
 	expect(existsSync(t.dir)).toBe(false);
 	await until(() => t.installed.length === 1, "second install");
 	expect(t.installed[0].gameId).toBe(2);
+	// Stopping it didn't start it again on its way out of the queue.
+	expect(requests.filter((r) => r.url.startsWith("/api/game/1/"))).toHaveLength(1);
+	expect(existsSync(t.dir)).toBe(false);
 });
 
 test("the queue survives a restart", async () => {
