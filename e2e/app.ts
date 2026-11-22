@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { $, browser } from "@wdio/globals";
-import { startApp, useAppPage } from "./windows.ts";
+import { startApp } from "./windows.ts";
 
 const seed = readFileSync(join(import.meta.dirname, "..", "dev", "seed.sh"), "utf8");
 const read = (name: string) => seed.match(new RegExp(`^${name}=(.*)$`, "m"))![1];
@@ -75,13 +75,14 @@ export async function fill(field: ReturnType<typeof $>, text: string) {
 	else await browser.keys("Backspace");
 }
 
-/** Signs in on the Connect screen and waits for the library. */
+/** Signs in on the Connect screen and waits for the library and its games. */
 export async function signIn() {
 	await fill($("#srv"), SERVER);
 	await fill($("#usr"), USER);
 	await fill($("#pwd"), PASSWORD);
 	await $("button[type=submit]").click();
 	await gameList().waitForDisplayed();
+	await browser.waitUntil(async () => (await listedGames()).length > 0);
 }
 
 /**
@@ -112,7 +113,6 @@ export async function restart() {
 	await browser.waitUntil(() => !runs(APP));
 	if (WINDOWS) await startApp();
 	await browser.reloadSession();
-	if (WINDOWS) await useAppPage(browser);
 }
 
 /** Opens a game's page from the list on the left. */

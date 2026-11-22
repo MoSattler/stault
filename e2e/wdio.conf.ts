@@ -9,7 +9,7 @@ import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { browser } from "@wdio/globals";
-import { DEBUG_PORT, startApp, stopApp, useAppPage, webView2Version } from "./windows.ts";
+import { DEBUG_PORT, startApp, stopApp, webView2Version } from "./windows.ts";
 
 const WINDOWS = process.platform === "win32";
 
@@ -34,6 +34,8 @@ export const config: WebdriverIO.Config = {
 					browserName: "MicrosoftEdge",
 					browserVersion: webView2Version(),
 					"ms:edgeOptions": { debuggerAddress: `127.0.0.1:${DEBUG_PORT}` },
+					// Over WebDriver BiDi, Edge's WebDriver adds a page of its own to
+					// the webview, and the session lands on a blank page instead of the app's.
 					"wdio:enforceWebDriverClassic": true,
 				}
 			: {
@@ -53,9 +55,6 @@ export const config: WebdriverIO.Config = {
 	},
 	async beforeSession() {
 		if (WINDOWS) await startApp();
-	},
-	async before() {
-		if (WINDOWS) await useAppPage(browser);
 	},
 	afterSession() {
 		if (WINDOWS) stopApp();

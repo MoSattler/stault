@@ -39,9 +39,9 @@ On an Apple Silicon Mac the container runs through Rosetta. That is enough for e
 
 ## End-to-end tests
 
-`e2e/` holds tests that start the built app and drive its real window with [WebdriverIO](https://webdriver.io) and its [Electrobun service](https://github.com/webdriverio/desktop-mobile/tree/main/packages/electrobun-service): they sign in to the test server, click through the UI and check what lands on disk. Each spec file gets its own app with nobody signed in and nothing installed.
+`e2e/` holds tests that start the built app and drive its real window with [WebdriverIO](https://webdriver.io): they sign in to the test server, click through the UI and check what lands on disk. Each spec file gets its own app with nobody signed in and nothing installed.
 
-They run on Linux only so far, where WebKit's WebDriver can drive the system webview. `.github/workflows/e2e.yml` runs them on every pull request. On a Mac, with the test server up:
+They run on Linux, through WebdriverIO's [Electrobun service](https://github.com/webdriverio/desktop-mobile/tree/main/packages/electrobun-service) and WebKit's WebDriver, and on Windows, where they start the app themselves and Edge's WebDriver attaches to its webview (`e2e/windows.ts`). macOS's webview can't be driven. `.github/workflows/e2e.yml` runs both on every pull request; the Windows job brings up the test server in Docker inside WSL2. On a Mac, with the test server up, the Linux side runs locally:
 
 ```sh
 ./dev/linux/e2e.sh                               # all of them
@@ -50,7 +50,7 @@ They run on Linux only so far, where WebKit's WebDriver can drive the system web
 
 That runs them in a Linux container of their own (`stault-e2e`), on the same mix as `run.sh`: this checkout's JavaScript in the latest released Linux app. A failed check leaves a screenshot of the window in `e2e/failures/`.
 
-One spec file per area: signing in and out, the library, a game's page, installing and playing, downloads, settings and save sync. A new screen or flow gets its checks in the same change. What they can't reach is listed in `CLAUDE.md`: mainly the system's own file dialogs, and Windows games.
+One spec file per area: signing in and out, the library, a game's page, installing and playing, downloads, settings and save sync. A new screen or flow gets its checks in the same change. What they can't reach is listed in `CLAUDE.md`: mainly the system's own file dialogs.
 
 WebdriverIO runs on Node, so `e2e/` is a small npm project of its own (`package-lock.json`, `npm ci`), apart from the app's Hutch-managed dependencies. Nothing in `src/` exists for the tests' sake; they find things the way a user does, by label and text.
 

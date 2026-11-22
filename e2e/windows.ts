@@ -54,30 +54,13 @@ export async function startApp() {
 	app = spawn(process.env.STAULT_APP!, [], { cwd: homedir(), stdio: ["ignore", output, output] });
 	closeSync(output);
 	for (const deadline = Date.now() + 30_000; Date.now() < deadline && app.exitCode === null; await sleep(250)) {
-		const found = await pages();
-		if (found.some((page) => page.type === "page")) {
-			console.log("DEBUG targets before attaching", JSON.stringify(found));
-			return;
-		}
+		if ((await pages()).some((page) => page.type === "page")) return;
 	}
 	const ended = app.exitCode === null ? "" : ` It exited with ${app.exitCode}.`;
 	const tails = logs()
 		.filter((file) => existsSync(file))
 		.map((file) => `${file}:\n${readFileSync(file, "utf8").trimEnd().split("\n").slice(-30).join("\n")}`);
 	throw new Error([`The app did not open its page on debug port ${DEBUG_PORT}.${ended}`, ...tails].join("\n\n"));
-}
-
-/**
- * Points the WebDriver session at the app's own page, which Electrobun serves
- * from views://. The webview shows more than one page to WebDriver.
- */
-export async function useAppPage(browser: WebdriverIO.Browser) {
-	console.log("DEBUG targets", JSON.stringify(await pages()));
-	for (const handle of await browser.getWindowHandles()) {
-		await browser.switchToWindow(handle);
-		console.log("DEBUG handle", handle, await browser.getUrl(), await browser.getTitle());
-	}
-	await browser.switchWindow(/^views:\/\//);
 }
 
 /** Ends the app, if it still runs, with everything it started. */
