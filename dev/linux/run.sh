@@ -11,9 +11,7 @@ APP=/home/deck/.local/share/com.mosattler.stault/stable/app
 RES=$APP/Resources/app
 in_linux() { docker exec stault-linux sh -c "$1"; }
 
-hutch electrobun prepare
-hutch pm exec -- vite build
-hutch electrobun build --env=dev
+hutch run build:dev
 BUILT=$(echo build/dev-*/*.app/Contents/Resources/app)
 
 if ! in_linux "test -x $APP/bin/launcher"; then

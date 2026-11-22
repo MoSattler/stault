@@ -8,6 +8,7 @@ export default {
 		hmr: "hutch electrobun prepare && hutch pm exec -- vite --port 5173",
 		typecheck: "hutch electrobun prepare && hutch pm exec -- tsc",
 		test: ["hutch", "test"],
+		"build:dev": "hutch dev/fetch-ludusavi.ts && hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=dev",
 		build: "hutch dev/fetch-ludusavi.ts && hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=stable",
 		"build:canary": "hutch dev/fetch-ludusavi.ts && hutch electrobun prepare && hutch pm exec -- vite build && hutch electrobun build --env=canary",
 	},

@@ -1,0 +1,76 @@
+name: End-to-end tests
+
+# Starts the built app on Linux and drives its real window (e2e/), against a
+# GameVault server in Docker. Windows and macOS are not covered yet.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to a PR replaces its run.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Keep in step with the "@hutch cli=" pragma at the top of hutch.config.ts.
+  HUTCH_VERSION: "0.30.0"
+
+jobs:
+  linux:
+    name: Linux
+    # Pinned: from Ubuntu 26.04 on, WebKit's WebDriver is in a package with another name.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the webview, its WebDriver and a virtual screen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-0 libayatana-appindicator3-1 webkit2gtk-driver xvfb xauth
+
+      # WebKit runs pages in a sandbox built on user namespaces, which Ubuntu
+      # 24.04 only lets programs with an AppArmor profile create.
+      - name: Let WebKit build its sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Install Hutch
+        run: |
+          curl -fsSL https://hutch.blackboard.sh/hutch/install.sh | sh -s -- --version "$HUTCH_VERSION" --no-modify-path
+          echo "$HOME/.hutch/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: hutch run install
+
+      - name: Start the test server
+        run: ./dev/seed.sh
+
+      # A dev build: a release build refuses to start from the temporary
+      # folder WebdriverIO runs its copy of the app from.
+      - name: Build the app
+        run: hutch run build:dev
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install the tests' packages
+        working-directory: e2e
+        run: npm ci
+
+      - name: Type-check the tests
+        working-directory: e2e
+        run: npm run typecheck
+
+      - name: Run the tests
+        working-directory: e2e
+        run: STAULT_APP="$(echo "$GITHUB_WORKSPACE"/build/dev-*/*/bin/launcher)" npm test
