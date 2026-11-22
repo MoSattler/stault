@@ -1,6 +1,7 @@
 import type { RPCSchema } from "electrobun/view";
 import type {
 	AppState,
+	Executables,
 	GameDetail,
 	PlayResult,
 	ServerCheck,
@@ -21,7 +22,6 @@ export type Requests = {
 	signOut: Req<{}>;
 	refreshLibrary: Req<{}>;
 	getGame: Req<{ gameId: number }, GameDetail>;
-	setBookmark: Req<{ gameId: number; on: boolean }>;
 	install: Req<{ gameId: number; versionId: number; folder: string }>;
 	setDownloadPaused: Req<{ gameId: number; paused: boolean }>;
 	setAllDownloadsPaused: Req<{ paused: boolean }>;
@@ -29,19 +29,26 @@ export type Requests = {
 	moveDownloadUp: Req<{ gameId: number }>;
 	uninstall: Req<{ gameId: number }>;
 	play: Req<{ gameId: number }, PlayResult>;
+	/** The programs that could start an installed game. Changes nothing. */
+	getExecutables: Req<{ gameId: number }, Executables>;
 	setExecutable: Req<{ gameId: number; path: string }>;
+	/** Opens the native file picker in the game's folder and sets the chosen program. Null when cancelled. */
+	browseExecutable: Req<{ gameId: number }, string | null>;
 	stop: Req<{ gameId: number }>;
 	/** Sends this device's saves to the server, or replaces them with the server's. */
 	syncSaves: Req<{ gameId: number; direction: "upload" | "download" }>;
 	/** Ludusavi entries whose name resembles the query, best first. */
 	findSaveGames: Req<{ gameId: number; query: string }, string[]>;
-	/** Sets which Ludusavi entry a game's saves follow; null turns sync off for it. */
-	setSaveGame: Req<{ gameId: number; name: string | null }>;
+	/** Sets which Ludusavi entry a game's saves follow. */
+	setSaveGame: Req<{ gameId: number; name: string }>;
 	/** Makes a game's saves the files and folders the user named, in place of a Ludusavi entry. */
 	setSavePaths: Req<{ gameId: number; paths: string[] }>;
 	/** Opens the native picker for a save file or folder; null when cancelled. */
 	pickSavePath: Req<{ gameId: number; folder: boolean }, string | null>;
+	/** Save sync for every game. */
 	setSaveSync: Req<{ on: boolean }>;
+	/** Save sync for one game, within the setting for every game. */
+	setGameSaveSync: Req<{ gameId: number; on: boolean }>;
 	/** Opens the native folder picker. Resolves once the folder is added or the picker is cancelled. */
 	addLibraryFolder: Req<{}>;
 	removeLibraryFolder: Req<{ path: string }>;

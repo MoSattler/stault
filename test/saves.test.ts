@@ -358,14 +358,32 @@ describe.skipIf(!ready)("two devices and a server", () => {
 		expect(await a.saves.search(3, "Celeste")).toContain("Celeste");
 		await a.saves.choose(3, { name: "Celeste" });
 		expect(a.record().name).toBe("Celeste");
-		await a.saves.choose(3, null);
-		expect(a.seen.status?.state).toBe("unsupported");
+	}, 60_000);
+
+	test("a game with sync turned off is left alone, and catches up when it is back on", async () => {
+		const server = fakeServer();
+		const a = device(server, "a10");
+		a.play("before");
+		expect(await a.saves.sync(3)).toBe("uploaded");
+
+		a.saves.setEnabled(3, false);
+		expect(a.seen.status).toMatchObject({ state: "off", name: "Harbor Lights" });
+		a.play("while off");
+		expect(await a.saves.sync(3)).toBe("skipped");
+		expect(await a.saves.sync(3, "upload")).toBe("skipped");
+		expect(server.stored).toHaveLength(1);
+
+		// Turning it on syncs at once: what changed meanwhile goes up.
+		a.saves.setEnabled(3, true);
+		expect(await a.saves.sync(3)).toBe("synced");
+		expect(server.stored).toHaveLength(2);
+		expect(a.seen.status?.state).toBe("idle");
 	}, 60_000);
 
 	test("a game Ludusavi doesn't know syncs the save files the user names", async () => {
 		const server = fakeServer();
-		const a = device(server, "a10", { known: false });
-		const b = device(server, "b10", { known: false });
+		const a = device(server, "a11", { known: false });
+		const b = device(server, "b11", { known: false });
 		for (const d of [a, b]) {
 			await d.saves.choose(3, {
 				paths: [d.saves.savePath(3, join(d.files, "save.txt")), d.saves.savePath(3, join(d.home, "harbor"))],

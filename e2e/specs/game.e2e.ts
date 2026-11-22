@@ -2,9 +2,6 @@ import { $, browser, expect } from "@wdio/globals";
 import { dialog, gameList, hero, main, openGame, signIn } from "../app.ts";
 
 const versions = () => $("section[aria-labelledby='h-ver']");
-const bookmark = () => $("button[aria-label='Bookmark']");
-/** Whether the open game is bookmarked. The server remembers it between runs, so no check assumes either. */
-const bookmarked = async () => (await bookmark().getAttribute("aria-pressed")) === "true";
 const menu = () => $("[role=menu]");
 
 describe("A game's page", () => {
@@ -45,38 +42,15 @@ describe("A game's page", () => {
 		await expect(dialog()).not.toExist();
 	});
 
-	it("bookmarks a game and takes the bookmark off again", async () => {
-		await openGame("Tin Kettle");
-		const was = await bookmarked();
-		await bookmark().click();
-		await expect(bookmark()).toHaveAttribute("aria-pressed", String(!was));
-		await bookmark().click();
-		await expect(bookmark()).toHaveAttribute("aria-pressed", String(was));
-	});
-
 	it("opens a game's menu on a right click", async () => {
 		await gameList().$("button*=Setup Quest").click({ button: "right" });
 		await expect(menu()).toHaveAttribute("aria-label", "Setup Quest");
 		await expect(menu().$("button*=Install")).toExist();
-		await expect(menu().$("button*=ookmark")).toExist();
 		// Uninstalling is only offered for an installed game.
 		await expect(menu().$("button*=Uninstall")).not.toExist();
 
 		await browser.keys("Escape");
 		await expect(menu()).not.toExist();
-	});
-
-	it("bookmarks from the menu as well", async () => {
-		await openGame("Setup Quest");
-		const was = await bookmarked();
-		const [flip, flipBack] = was ? ["Remove bookmark", "Bookmark"] : ["Bookmark", "Remove bookmark"];
-		await gameList().$("button*=Setup Quest").click({ button: "right" });
-		await menu().$(`button=${flip}`).click();
-		await expect(bookmark()).toHaveAttribute("aria-pressed", String(!was));
-
-		await gameList().$("button*=Setup Quest").click({ button: "right" });
-		await menu().$(`button=${flipBack}`).click();
-		await expect(bookmark()).toHaveAttribute("aria-pressed", String(was));
 	});
 
 	it("starts an install from the menu", async () => {

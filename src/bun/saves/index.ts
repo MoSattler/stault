@@ -132,21 +132,24 @@ export class Saves {
 		const { installs } = this.deps;
 		this.deps.onChange(
 			installs.ids().map((gameId): SaveSync => {
-				const record = installs.get(gameId)?.manifest.saves;
+				const manifest = installs.get(gameId)?.manifest;
+				const record = manifest?.saves;
 				const conflict = this.conflicts.get(gameId);
 				return {
 					gameId,
 					state: this.busy.has(gameId)
 						? "syncing"
-						: !record
-							? "unknown"
-							: !record.name
-								? "unsupported"
-								: conflict
-									? "conflict"
-									: record.pending
-										? "pending"
-										: "idle",
+						: manifest?.syncSaves === false
+							? "off"
+							: !record
+								? "unknown"
+								: !record.name
+									? "unsupported"
+									: conflict
+										? "conflict"
+										: record.pending
+											? "pending"
+											: "idle",
 					name: record?.name ?? null,
 					paths: record?.paths ?? null,
 					syncedAt: iso(record?.syncedAt),
@@ -211,7 +214,8 @@ export class Saves {
 	 */
 	sync(gameId: number, mode: "auto" | "upload" | "download" = "auto", signal?: AbortSignal): Promise<Outcome> {
 		return this.exclusive(async () => {
-			if (!this.usable || !this.deps.installs.get(gameId)) return "skipped";
+			const install = this.deps.installs.get(gameId);
+			if (!this.usable || !install || install.manifest.syncSaves === false) return "skipped";
 			if (this.deps.running() === gameId) {
 				if (mode === "auto") return "skipped";
 				throw new Error("Stop the game first.");
@@ -462,20 +466,31 @@ export class Saves {
 		return this.exclusive(() => this.deps.ludusavi.search(this.where(gameId), query.trim()));
 	}
 
+	/**
+	 * Turns sync on or off for one game. Off, nothing moves for it, while its
+	 * entry and what it last synced are kept for when it is turned back on.
+	 */
+	setEnabled(gameId: number, on: boolean) {
+		if (!this.deps.installs.get(gameId)) return;
+		this.deps.installs.update(gameId, { syncSaves: on ? undefined : false });
+		this.conflicts.delete(gameId);
+		this.publish();
+		if (on) this.background(gameId);
+	}
+
 	/** A file or folder the user picked, as the path to name it by in `choose`. */
 	savePath(gameId: number, picked: string): string {
 		return savePath(real(picked), this.where(gameId), real(this.deps.home));
 	}
 
-	/**
-	 * Sets which saves the game follows: a Ludusavi entry, files the user named
-	 * (kept under the game's title), or none, which turns sync off for it.
-	 */
-	async choose(gameId: number, choice: { name: string } | { paths: string[] } | null) {
+	/** Sets which saves the game follows: a Ludusavi entry, or files the user named (kept under the game's title). */
+	async choose(gameId: number, choice: { name: string } | { paths: string[] }) {
 		const entry = this.deps.installs.get(gameId);
 		if (!entry) return;
-		let saves: Pick<SaveRecord, "name" | "paths"> = { name: null };
-		if (choice && "paths" in choice) {
+		let saves: Pick<SaveRecord, "name" | "paths">;
+		if ("name" in choice) {
+			saves = { name: choice.name };
+		} else {
 			const paths = [...new Set(choice.paths.map((path) => path.trim()).filter(Boolean))];
 			if (!paths.length) throw new Error("Add at least one save file or folder.");
 			// Relative to what? Ludusavi would look for them wherever it happens to run.
@@ -483,8 +498,6 @@ export class Saves {
 			const loose = paths.find((path) => !full(path));
 			if (loose) throw new Error(`"${loose}" is not a full path. Pick it with Add file or Add folder.`);
 			saves = { name: entry.manifest.title, paths };
-		} else if (choice) {
-			saves = { name: choice.name };
 		}
 		await this.exclusive(async () => {
 			const record = await this.record(gameId);
@@ -494,7 +507,7 @@ export class Saves {
 			this.conflicts.delete(gameId);
 		});
 		this.publish();
-		if (saves.name) this.background(gameId);
+		this.background(gameId);
 	}
 
 }

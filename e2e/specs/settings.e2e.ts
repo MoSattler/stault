@@ -36,7 +36,6 @@ describe("Settings", () => {
 		await expect(syncSwitch()).toHaveAttribute("aria-checked", "true");
 		await syncSwitch().click();
 		await expect(syncSwitch()).toHaveAttribute("aria-checked", "false");
-		await expect(syncSwitch()).toHaveText("Off");
 		expect(saved().saveSync).toBe(false);
 	});
 

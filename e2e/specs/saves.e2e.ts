@@ -3,13 +3,17 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { $, browser, expect } from "@wdio/globals";
 import {
-	dialog, fill, hero, install, installFolder, LIBRARY, main, PASSWORD, SERVER, signIn, toastGone, USER,
+	dialog, fill, hero, install, installFolder, LIBRARY, main, PASSWORD, SERVER, signIn, toast, toastGone, USER,
 } from "../app.ts";
 
 const card = () => $("section[aria-labelledby='h-saves']");
 const query = () => dialog().$("input[aria-label=\"Search Ludusavi's games\"]");
+/** The switch in the game's properties that turns sync on and off for this game alone. */
+const gameSync = () => dialog().$("button[role=switch][aria-label='Sync saves']");
+const folder = () => installFolder("Pixel Drift", readdirSync(LIBRARY));
+const manifest = () => JSON.parse(readFileSync(join(folder(), ".stault", "manifest.json"), "utf8"));
 /** Pixel Drift says in its own files that its save is save.txt beside the program. */
-const saveFile = () => join(installFolder("Pixel Drift", readdirSync(LIBRARY)), "files", "save.txt");
+const saveFile = () => join(folder(), "files", "save.txt");
 // Different on every run, so a save from an earlier run is never mistaken for this one's.
 const mine = `saved by the end-to-end tests at ${new Date().toISOString()}\n`;
 const changed = `${mine}and changed on this device\n`;
@@ -104,7 +108,7 @@ describe("Save sync", () => {
 		await expect(card()).toHaveText(expect.stringContaining("In step with"), { wait: 30_000 });
 	});
 
-	it("lets the game be matched to another Ludusavi entry, or to none", async () => {
+	it("lets the game be matched to another Ludusavi entry", async () => {
 		await card().$("button=Change").click();
 		await expect(dialog().$("h2")).toHaveText("Which game is Pixel Drift?", { ignoreCase: true });
 		await expect(dialog().$("button*=Pixel Drift")).toHaveText(expect.stringContaining("CURRENT"));
@@ -113,18 +117,37 @@ describe("Save sync", () => {
 		await dialog().$("button=Search").click();
 		await expect(dialog()).toHaveText(expect.stringContaining("Nothing found."));
 
-		await dialog().$("button=Don't sync this game").click();
-		await expect(card()).toHaveText(expect.stringContaining("No Ludusavi entry chosen"));
-		await expect(main()).toHaveText(expect.stringMatching(/SAVES\s*Not synced/));
-	});
-
-	it("takes the game's own entry back", async () => {
-		await card().$("button=Choose…").click();
 		await fill(query(), "Pixel Drift");
 		await dialog().$("button=Search").click();
-		await dialog().$("ul").$("button=Pixel Drift").click();
+		// Marked CURRENT too, so matched by its start.
+		await dialog().$("ul").$("button*=Pixel Drift").click();
 		await expect(card()).toHaveText(expect.stringContaining("Save locations from Ludusavi's entry Pixel Drift"), {
 			wait: 30_000,
 		});
+	});
+
+	it("leaves the game's saves alone while sync is off for it", async () => {
+		await toastGone();
+		await main().$("button[aria-label='Properties']").click();
+		await gameSync().click();
+		await expect(gameSync()).toHaveAttribute("aria-checked", "false");
+		await browser.waitUntil(() => manifest().syncSaves === false);
+		await browser.keys("Escape");
+
+		await expect(card()).toHaveText(expect.stringContaining("Save sync is off for this game."));
+		await expect(main()).toHaveText(expect.stringMatching(/SAVES\s*Off/));
+		await expect(card().$("button=Upload now")).not.toExist();
+	});
+
+	it("uploads what changed meanwhile once sync is back on", async () => {
+		writeFileSync(saveFile(), `${changed}and while sync was off\n`);
+		await card().$("button=Open properties").click();
+		await gameSync().click();
+		await expect(gameSync()).toHaveAttribute("aria-checked", "true");
+		await browser.keys("Escape");
+
+		await expect(toast()).toHaveText(expect.stringContaining("Pixel Drift: saves uploaded"), { wait: 30_000 });
+		await expect(card()).toHaveText(expect.stringContaining("In step with"));
+		expect(manifest().syncSaves).toBeUndefined();
 	});
 });

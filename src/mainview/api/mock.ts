@@ -69,7 +69,6 @@ function game(
 		minutesPlayed: Math.round(hours * 60),
 		lastPlayedAt: lastPlayedDays === null ? null : ago(lastPlayedDays),
 		progressState,
-		bookmarked: false,
 		description,
 		publishers: publisher ? [publisher] : [],
 		installed,
@@ -236,6 +235,26 @@ export function createMockApi(): StaultApi {
 	const editDownload = (gameId: number, change: Partial<Download>) =>
 		patch({ downloads: state.downloads.map((d) => (d.gameId === gameId ? { ...d, ...change } : d)) });
 
+	// Programs chosen by hand. Cartographer (9) has two, so Play asks until one is chosen.
+	const chosen = new Map<number, string>();
+	function executables(gameId: number) {
+		const install = state.installs.find((i) => i.gameId === gameId);
+		if (!install) throw new Error("This game isn't installed.");
+		const name = find(gameId).title.replace(/\s+/g, "");
+		const candidates = install.type.startsWith("LINUX")
+			? ["start.sh", `tools${sep}config.sh`]
+			: gameId === 9
+				? [`${name}.exe`, `tools${sep}MapEditor.exe`]
+				: [`${name}.exe`];
+		const current = chosen.get(gameId) ?? (gameId === 9 && !params.has("picked") ? null : candidates[0]);
+		if (current && !candidates.includes(current)) candidates.unshift(current);
+		return { current, candidates };
+	}
+	function choose(gameId: number, path: string) {
+		chosen.set(gameId, path);
+		if (gameId === 9) params.set("picked", "1");
+	}
+
 	return {
 		onPush(type, handler) {
 			handlers[type] = handler as never;
@@ -255,9 +274,6 @@ export function createMockApi(): StaultApi {
 		getGame: ({ gameId }) => {
 			const { installed: _i, ...detail } = find(gameId);
 			return later({ ...detail, ...state.games.find((g) => g.id === gameId)! });
-		},
-		async setBookmark({ gameId, on }) {
-			updateGame(gameId, { bookmarked: on });
 		},
 		async install({ gameId, versionId }) {
 			const d = enqueue(gameId, versionId);
@@ -295,7 +311,7 @@ export function createMockApi(): StaultApi {
 				return { status: "pick", candidates: ["Cartographer.exe", "tools/MapEditor.exe"] };
 			}
 			const saves = state.saves.find((s) => s.gameId === gameId);
-			if (state.saveSync.enabled && !state.saveSync.serverOff && saves?.name) {
+			if (state.saveSync.enabled && !state.saveSync.serverOff && saves?.name && saves.state !== "off") {
 				if (saves.state === "conflict") return { status: "save-conflict" };
 				// The check for a newer save on the server, before the game starts.
 				setSave(gameId, { state: "syncing" });
@@ -306,8 +322,18 @@ export function createMockApi(): StaultApi {
 			toast(`Launching ${find(gameId).title}`, "Playtime is tracked on the server");
 			return { status: "started" };
 		},
-		async setExecutable() {
-			params.set("picked", "1");
+		async getExecutables({ gameId }) {
+			await later(null, 300);
+			return executables(gameId);
+		},
+		async setExecutable({ gameId, path }) {
+			choose(gameId, path);
+		},
+		async browseExecutable({ gameId }) {
+			// Stands in for the native picker: a program outside the game's folder.
+			const path = `${state.folders[state.folders.length - 1].path}${sep}${find(gameId).title}${sep}Launcher.exe`;
+			choose(gameId, path);
+			return later(path, 300);
 		},
 		async stop({ gameId }) {
 			const started = state.running ? new Date(state.running.startedAt).getTime() : Date.now();
@@ -331,7 +357,11 @@ export function createMockApi(): StaultApi {
 				300,
 			),
 		async setSaveGame({ gameId, name }) {
-			setSave(gameId, { name, paths: null, state: name ? "idle" : "unsupported", syncedAt: null, conflict: undefined });
+			setSave(gameId, { name, paths: null, state: "idle", syncedAt: null, conflict: undefined });
+		},
+		async setGameSaveSync({ gameId, on }) {
+			const name = state.saves.find((s) => s.gameId === gameId)?.name;
+			setSave(gameId, { state: !on ? "off" : name ? "idle" : "unsupported", conflict: undefined });
 		},
 		async setSavePaths({ gameId, paths }) {
 			const kept = paths.map((path) => path.trim()).filter(Boolean);
