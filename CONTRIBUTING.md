@@ -10,6 +10,8 @@ Install [Hutch](https://docs.electrobun.dev/electrobun/guides/hutch/), Electrobu
 hutch run install
 ```
 
+On an Intel Mac, also install [Rust](https://rustup.rs): Ludusavi has no Intel Mac release, so the first build or dev start compiles it from source.
+
 ## Tasks
 
 Tasks are defined in `hutch.config.ts` and run with `hutch run <task>`.
@@ -25,7 +27,7 @@ Tasks are defined in `hutch.config.ts` and run with `hutch run <task>`.
 | `build:canary` | Builds a canary release for the current OS and architecture. Close the dev app first. |
 | `build` | Builds a stable release for the current OS and architecture. |
 
-Hutch builds only for the OS it runs on, so a Windows or Linux build has to be made on that OS.
+Hutch builds only for the OS and chip it runs on, so a Windows, Linux or Intel Mac build has to be made on such a machine.
 
 ## Test server
 
@@ -77,12 +79,12 @@ Installed games live in the library folders chosen in Settings, one folder per g
 
 ## Commits and releases
 
-`.github/workflows/release.yml` builds installers for macOS (Apple Silicon), Windows x64 and Linux x64.
+`.github/workflows/release.yml` builds installers for macOS (Apple Silicon and Intel), Windows x64 and Linux x64. On macOS it fails when a program or library in the app is built for the other chip.
 
 Versions come from the commit messages on `main`, which follow [Conventional Commits](https://www.conventionalcommits.org): `fix:` raises the patch version, `feat:` the minor version, and a breaking change (`feat!:`) also the minor version until 1.0. Other types (`docs:`, `chore:`, `ci:`, `refactor:`, `test:`) release nothing.
 
 - [release-please](https://github.com/googleapis/release-please) keeps a release PR open with the next version and its changelog. Merge it to tag the version, publish the GitHub release and attach stable installers. The version lives in `package.json`; don't edit it or create tags by hand.
-- A release also updates the Homebrew cask in [MoSattler/homebrew-tap](https://github.com/MoSattler/homebrew-tap). The workflow pushes there with the deploy key in the `HOMEBREW_TAP_DEPLOY_KEY` secret.
+- A release also writes the Homebrew cask, `.github/homebrew/stault.rb`, into [MoSattler/homebrew-tap](https://github.com/MoSattler/homebrew-tap) with that release's version and checksums, so change the cask here, not in the tap. The workflow pushes there with the deploy key in the `HOMEBREW_TAP_DEPLOY_KEY` secret.
 - Run the workflow by hand (Actions → Release → Run workflow) for canary installers, which stay attached to the run for 14 days. Use this to try a build on Windows or a Steam Deck.
 
 The builds are not code-signed; see [Install](README.md#install) for what Windows and macOS do with them.
