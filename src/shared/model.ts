@@ -39,10 +39,15 @@ export interface GameSummary {
 	releaseYear: number | null;
 	/** ISO timestamp of when the game landed on the server. */
 	addedAt: string;
-	/** The server's default version. The full list is on GameDetail. */
+	/** The server's default version. */
 	version: string | null;
 	type: GameType;
 	sizeBytes: number;
+	/**
+	 * Every version, default first, once fetched: the server's game list leaves
+	 * them out. The library fetches them for games whose default can't run here.
+	 */
+	versions?: GameVersion[];
 	minutesPlayed: number;
 	lastPlayedAt: string | null;
 	progressState: ProgressState;

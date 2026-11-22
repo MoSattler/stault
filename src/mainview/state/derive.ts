@@ -124,8 +124,9 @@ export function saveLabel(
 }
 
 /**
- * `versions` is the full list when it is known (the game page). Without it,
- * only the server's default version can be judged.
+ * `versions` is the full list when the caller has it (the game page). Otherwise
+ * the summary's is used, which the library fetches for games whose default
+ * version can't run here.
  */
 export function gameStatus(
 	game: GameSummary,
@@ -173,15 +174,21 @@ export function gameStatus(
 		primary = { label: "Play", sub: "", icon: "play", tone: "accent", fill: 0, act: () => play(gameId) };
 	} else {
 		line = "Not installed";
-		const builds = versions ?? [game];
-		const runnable = builds.filter((v) => canRun(state.platform, v.type, v.version) !== "no");
-		if (runnable.length === 0) {
+		const known = versions ?? game.versions;
+		const runnable = (known ?? [game]).filter((v) => canRun(state.platform, v.type, v.version) !== "no");
+		// Until every version is known, a default that can't run here proves nothing.
+		if (known && runnable.length === 0) {
 			// A build for an unknown system counts as runnable, so every one here is known.
-			const systems = [...new Set(builds.map((v) => buildOs(v.type, v.version)))].filter((os) => os !== "unknown");
+			const systems = [...new Set(known.map((v) => buildOs(v.type, v.version)))].filter((os) => os !== "unknown");
 			line = `Available for ${systems.map((os) => OS_NAME[os]).join(" and ")}`;
 			primary = { label: "Available for", sub: "", icon: "none", systems, tone: "off", fill: 0, act() {} };
 		} else {
-			const sub = runnable.length > 1 ? `${runnable.length} versions · choose next` : formatBytes(runnable[0].sizeBytes);
+			const sub =
+				runnable.length > 1
+					? `${runnable.length} versions · choose next`
+					: runnable.length === 1
+						? formatBytes(runnable[0].sizeBytes)
+						: "";
 			primary = { label: "Install", sub, icon: "install", tone: "accent", fill: 0, act: () => setUi({ installing: { gameId } }) };
 		}
 	}

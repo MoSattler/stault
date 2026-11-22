@@ -6,6 +6,7 @@ import { buildOs, canRun, typeLabel } from "../src/shared/compat";
 const game: ApiGame = {
 	id: 3,
 	created_at: "2026-11-21T14:18:25.000Z",
+	updated_at: "2026-11-21T14:18:25.000Z",
 	title: "Pixel Drift",
 	sort_title: "pixel drift",
 	version: "v1.2.0",
@@ -61,6 +62,13 @@ test("metadata supplies title, art and genres", () => {
 test("versions list the server default first, then newest to oldest", () => {
 	const detail = toDetail(game, userGameData({ id: 1, username: "sam" }), mediaUrl);
 	expect(detail.versions.map((v) => v.version)).toEqual(["v1.2.0", "v1.1.0"]);
+});
+
+test("a summary has versions only when the record does", () => {
+	const user = userGameData({ id: 1, username: "sam" });
+	// The game list sends an empty array.
+	expect(toSummary({ ...game, versions: [] }, user, mediaUrl).versions).toBeUndefined();
+	expect(toSummary(game, user, mediaUrl).versions?.map((v) => v.version)).toEqual(["v1.2.0", "v1.1.0"]);
 });
 
 test("which builds run where", () => {

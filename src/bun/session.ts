@@ -93,10 +93,12 @@ export class Session {
 		try {
 			await this.library.refresh(this.client);
 		} catch (error) {
-			if (error instanceof SignedOutError) await this.forget();
-			else if (!getState().online) return;
-			else throw error;
+			if (error instanceof SignedOutError) return this.forget();
+			if (!getState().online) return;
+			throw error;
 		}
+		// Not awaited: it can take a request per game, which sign-in shouldn't wait for.
+		void this.library.fillVersions(this.client);
 	}
 
 	async signIn(input: {
