@@ -54,7 +54,7 @@ The builds are not code-signed. Windows warns before opening them. macOS refuses
 | Linux / SteamOS | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) (install it separately) |
 | macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
 
-Stault is young. It has been run on macOS and, in a test container, on Linux; on Windows, launching and save sync are covered by tests but have not been run there.
+Stault is young. It is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
 
 Not built yet: Big Picture Mode, Steam shortcuts, single sign-on.
 

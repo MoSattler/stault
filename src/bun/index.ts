@@ -1,11 +1,10 @@
-import { rm } from "node:fs/promises";
 import { homedir, hostname } from "node:os";
 import { basename, join } from "node:path";
 import { BrowserView, PATHS, Updater, Utils } from "electrobun/main";
 import { canRun } from "../shared/compat";
 import type { AppRPC } from "../shared/rpc";
 import { Downloads } from "./downloads";
-import { describeFolders } from "./folders";
+import { describeFolders, removeFolder } from "./folders";
 import { Installs } from "./installs";
 import { Launcher } from "./launcher";
 import { Library } from "./library";
@@ -15,6 +14,7 @@ import { Ludusavi } from "./saves/ludusavi";
 import { createSecretStore } from "./secrets";
 import { Session } from "./session";
 import { SettingsFile } from "./settings";
+import { claimInstance } from "./single-instance";
 import { connectSink, getState, patchState, toast } from "./state";
 import { createMainWindow } from "./window";
 
@@ -36,6 +36,9 @@ async function getMainViewUrl(): Promise<string> {
 }
 
 const dataDir = Utils.paths.userData;
+const instance = await claimInstance(dataDir);
+// Stault is already running: that copy comes to the front, this one is done.
+if (!instance) process.exit(0);
 /** Where per-game Wine prefixes live (Linux). */
 const prefixesDir = join(dataDir, "prefixes");
 console.log(`Data folder: ${dataDir}`);
@@ -217,7 +220,7 @@ async function uninstall(gameId: number) {
 	await launcher.flush(gameId);
 	await installs.remove(gameId);
 	// On Linux a Windows game also has a Wine prefix, which may even hold the game itself.
-	await rm(join(prefixesDir, String(gameId)), { recursive: true, force: true });
+	await removeFolder(join(prefixesDir, String(gameId)));
 	await refreshFolders();
 }
 
@@ -302,6 +305,10 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 });
 
 const win = createMainWindow(await getMainViewUrl(), rpc);
+instance.onSecondLaunch(() => {
+	if (win.isMinimized()) win.unminimize();
+	win.focus();
+});
 connectSink({
 	patch: (patch) => rpc.send.patch(patch),
 	toast: (message) => rpc.send.toast(message),

@@ -1,7 +1,8 @@
 import { existsSync, readdirSync } from "node:fs";
-import { readdir, rm, stat } from "node:fs/promises";
+import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { GameType, Install } from "../shared/model";
+import { removeFolder } from "./folders";
 import { readJson, writeJson } from "./json-file";
 
 /** Written into every installed game's folder. The folders are the database. */
@@ -137,7 +138,7 @@ export class Installs {
 		if (!existsSync(manifestPath(entry.dir))) {
 			throw new Error("That folder no longer looks like a Stault install.");
 		}
-		await rm(entry.dir, { recursive: true, force: true });
+		await removeFolder(entry.dir);
 		this.byGame.delete(gameId);
 		this.publish();
 	}
