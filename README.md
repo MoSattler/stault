@@ -42,7 +42,15 @@ You need a GameVault server, version 17.0 or newer.
 brew install --cask mosattler/tap/stault
 ```
 
-**Windows and Linux**: download an installer from the [latest release](https://github.com/MoSattler/stault/releases/latest).
+**Linux and SteamOS** (x64)
+
+```bash
+curl -fsSL https://github.com/MoSattler/stault/releases/latest/download/linux-x64-Stault-Setup.tar.gz | tar -xz -C /tmp && /tmp/installer
+```
+
+This installs Stault into `~/.local/share` without root, adds it to the application menu and starts it. Run it again to upgrade.
+
+**Windows**: download the installer from the [latest release](https://github.com/MoSattler/stault/releases/latest).
 
 The builds are not code-signed. Windows warns before opening them. macOS refuses a copy taken straight from the DMG until you run `xattr -dr com.apple.quarantine /Applications/Stault.app` once; the Homebrew cask does this for you.
 
