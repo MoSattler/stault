@@ -6,6 +6,7 @@ import { GameMenu } from "./components/GameMenu";
 import { Toast } from "./components/Toast";
 import { InstallDialog } from "./dialogs/InstallDialog";
 import { PickExecutableDialog } from "./dialogs/PickExecutableDialog";
+import { PropertiesDialog } from "./dialogs/PropertiesDialog";
 import { SaveConflictDialog } from "./dialogs/SaveConflictDialog";
 import { SaveGameDialog } from "./dialogs/SaveGameDialog";
 import { UninstallDialog } from "./dialogs/UninstallDialog";
@@ -49,12 +50,16 @@ function Dialogs() {
 	const uninstalling = useUi((s) => s.uninstalling);
 	const saveConflict = useUi((s) => s.saveConflict);
 	const choosingSaveGame = useUi((s) => s.choosingSaveGame);
+	const properties = useUi((s) => s.properties);
 	const games = useApp((s) => s.games);
+	const installs = useApp((s) => s.installs);
 	const installGame = installing && games.find((g) => g.id === installing.gameId);
 	const pickGame = picking && games.find((g) => g.id === picking.gameId);
 	const uninstallGame = uninstalling && games.find((g) => g.id === uninstalling.gameId);
 	const conflictGame = saveConflict && games.find((g) => g.id === saveConflict.gameId);
 	const saveGame = choosingSaveGame && games.find((g) => g.id === choosingSaveGame.gameId);
+	const propertiesGame = properties && games.find((g) => g.id === properties.gameId);
+	const propertiesInstall = properties && installs.find((i) => i.gameId === properties.gameId);
 	return (
 		<>
 			{installing && installGame && <InstallDialog game={installGame} versionId={installing.versionId} />}
@@ -63,6 +68,7 @@ function Dialogs() {
 			{saveConflict && conflictGame && (
 				<SaveConflictDialog game={conflictGame} thenPlay={saveConflict.thenPlay} />
 			)}
+			{propertiesGame && propertiesInstall && <PropertiesDialog game={propertiesGame} install={propertiesInstall} />}
 			{saveGame && <SaveGameDialog game={saveGame} />}
 		</>
 	);

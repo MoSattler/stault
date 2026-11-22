@@ -1,7 +1,8 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { PLATFORM_NAME } from "../../shared/compat";
 import { api } from "../api";
 import { CloseIcon, FolderIcon } from "../components/icons";
+import { SettingRow, Switch } from "../components/SettingRow";
 import { formatBytes } from "../format";
 import { useRise } from "../components/useRise";
 import { serverHost } from "../state/derive";
@@ -17,18 +18,6 @@ const TABS = [
 type Tab = (typeof TABS)[number][0];
 
 const button = "min-h-9 rounded-md border border-edge bg-raised px-3.5 text-[13px] font-semibold hover:bg-hover";
-
-function Row({ title, help, children }: { title: string; help?: string; children: ReactNode }) {
-	return (
-		<div className="flex items-center justify-between gap-5 border-b border-hover py-3.5">
-			<span className="flex min-w-0 flex-col gap-0.5">
-				<span className="font-semibold">{title}</span>
-				{help && <span className="text-[12.5px] text-muted">{help}</span>}
-			</span>
-			{children}
-		</div>
-	);
-}
 
 function LibraryFolders() {
 	const folders = useApp((s) => s.folders);
@@ -74,22 +63,13 @@ function Saves() {
 	const host = session ? serverHost(session.serverUrl) : "the server";
 	return (
 		<>
-			<Row
+			<SettingRow
 				title="Sync game saves"
-				help={`Fetches a newer save from ${host} before a game starts, and uploads yours after you quit.`}
+				help={`Fetches a newer save from ${host} before a game starts, and uploads yours after you quit. A game's properties can turn it off for that game.`}
 			>
-				<button
-					type="button"
-					role="switch"
-					aria-checked={enabled}
-					aria-label="Sync game saves"
-					onClick={() => attempt(api.setSaveSync({ on: !enabled }))}
-					className={`${button} min-w-16 ${enabled ? "border-lime text-lime" : "text-muted"}`}
-				>
-					{enabled ? "On" : "Off"}
-				</button>
-			</Row>
-			<Row title="Device name" help="Stored with the saves this device uploads, so you can tell where a save came from.">
+				<Switch label="Sync game saves" on={enabled} onChange={(on) => attempt(api.setSaveSync({ on }))} />
+			</SettingRow>
+			<SettingRow title="Device name" help="Stored with the saves this device uploads, so you can tell where a save came from.">
 				<input
 					aria-label="Device name"
 					value={name}
@@ -97,7 +77,7 @@ function Saves() {
 					onBlur={() => name.trim() && name !== deviceName && attempt(api.setDeviceName({ name }))}
 					className="min-h-9 w-56 rounded-md border border-line bg-raised px-2.5 text-[13px]"
 				/>
-			</Row>
+			</SettingRow>
 			{serverOff && (
 				<p className="pt-3.5 text-[13px] text-amber">
 					Save files are switched off on {host}. Whoever runs it can turn them on with{" "}
@@ -118,12 +98,12 @@ function Account() {
 	if (!session) return null;
 	return (
 		<>
-			<Row title="Server" help={`GameVault ${session.serverVersion} · ${online ? "connected" : "not reachable"}`}>
+			<SettingRow title="Server" help={`GameVault ${session.serverVersion} · ${online ? "connected" : "not reachable"}`}>
 				<span className="select-text font-mono text-[12.5px] text-muted">{serverHost(session.serverUrl)}</span>
-			</Row>
-			<Row title="Signed in as">
+			</SettingRow>
+			<SettingRow title="Signed in as">
 				<span className="font-mono text-[12.5px] text-muted">{session.username}</span>
-			</Row>
+			</SettingRow>
 			<button type="button" onClick={() => attempt(api.signOut({}))} className={`${button} mt-3.5 self-start`}>
 				Sign out
 			</button>
@@ -158,9 +138,9 @@ export function Settings() {
 				<div className="flex min-w-0 flex-[999_1_480px] flex-col">
 					{tab === "library" && <LibraryFolders />}
 					{tab === "downloads" && (
-						<Row title="Bandwidth limit" help="Applies to all downloads.">
+						<SettingRow title="Bandwidth limit" help="Applies to all downloads.">
 							<SpeedLimitSelect />
-						</Row>
+						</SettingRow>
 					)}
 					{tab === "saves" && <Saves />}
 					{tab === "account" && <Account />}

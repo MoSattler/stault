@@ -78,7 +78,6 @@ export interface ApiUser {
 	id: number;
 	username: string;
 	progresses?: ApiProgress[];
-	bookmarked_games?: { id: number }[];
 }
 
 export interface ApiPage<T> {

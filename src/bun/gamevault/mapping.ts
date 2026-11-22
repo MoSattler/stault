@@ -9,7 +9,6 @@ import type { ApiGame, ApiUser, ApiVersion } from "./types";
 /** What the signed-in user has done with each game, keyed by game id. */
 export interface UserGameData {
 	progress: Map<number, { minutes: number; lastPlayedAt: string | null; state: ProgressState }>;
-	bookmarks: Set<number>;
 }
 
 export function userGameData(user: ApiUser): UserGameData {
@@ -22,10 +21,7 @@ export function userGameData(user: ApiUser): UserGameData {
 			state: p.state,
 		});
 	}
-	return {
-		progress,
-		bookmarks: new Set((user.bookmarked_games ?? []).map((g) => g.id)),
-	};
+	return { progress };
 }
 
 const bytes = (size: string) => Number(size) || 0;
@@ -64,7 +60,6 @@ export function toSummary(
 		minutesPlayed: progress?.minutes ?? 0,
 		lastPlayedAt: progress?.lastPlayedAt ?? null,
 		progressState: progress?.state ?? "UNPLAYED",
-		bookmarked: user.bookmarks.has(game.id),
 	};
 }
 

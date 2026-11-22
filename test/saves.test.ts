@@ -345,7 +345,25 @@ describe.skipIf(!ready)("two devices and a server", () => {
 		expect(await a.saves.search(3, "Celeste")).toContain("Celeste");
 		await a.saves.setName(3, "Celeste");
 		expect(a.record().name).toBe("Celeste");
-		await a.saves.setName(3, null);
-		expect(a.seen.status?.state).toBe("unsupported");
+	}, 60_000);
+
+	test("a game with sync turned off is left alone, and catches up when it is back on", async () => {
+		const server = fakeServer();
+		const a = device(server, "a10");
+		a.play("before");
+		expect(await a.saves.sync(3)).toBe("uploaded");
+
+		a.saves.setEnabled(3, false);
+		expect(a.seen.status).toMatchObject({ state: "off", name: "Harbor Lights" });
+		a.play("while off");
+		expect(await a.saves.sync(3)).toBe("skipped");
+		expect(await a.saves.sync(3, "upload")).toBe("skipped");
+		expect(server.stored).toHaveLength(1);
+
+		// Turning it on syncs at once: what changed meanwhile goes up.
+		a.saves.setEnabled(3, true);
+		expect(await a.saves.sync(3)).toBe("synced");
+		expect(server.stored).toHaveLength(2);
+		expect(a.seen.status?.state).toBe("idle");
 	}, 60_000);
 });

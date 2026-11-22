@@ -2,6 +2,9 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { GameVaultClient } from "../src/bun/gamevault/client";
+import { Installs } from "../src/bun/installs";
+import { Launcher } from "../src/bun/launcher";
 import {
 	launchCommand,
 	pickInstaller,
@@ -159,5 +162,79 @@ describe("setup builds", () => {
 		const command = setupCommand("linux", "/t/setup.exe", "/DIR=%INSTALLDIR%", "/games/X/files", { umuRun: "umu-run", prefix: "/p/3" });
 		expect(command.argv).toEqual(["umu-run", "/t/setup.exe", "/DIR=Z:\\games\\X\\files"]);
 		expect(command.env?.WINEPREFIX).toBe("/p/3");
+	});
+});
+
+describe("choosing the program in a game's properties", () => {
+	/** An installed Windows game with these files, and a launcher whose file picker returns `picks` in turn. */
+	function installed(name: string, files: Record<string, string>) {
+		const dir = join(tree(`${name}/files`, files), "..");
+		const installs = new Installs(() => {});
+		installs.add(dir, {
+			serverUrl: "http://gv",
+			gameId: 1,
+			versionId: 1,
+			version: null,
+			type: "WINDOWS_PORTABLE",
+			title: name,
+			installedAt: new Date().toISOString(),
+			sizeBytes: 0,
+		});
+		const picks: (string | null)[] = [];
+		const launcher = new Launcher({
+			platform: "windows",
+			installs,
+			logsDir: join(root, "logs"),
+			prefixesDir: join(root, "prefixes"),
+			client: () => ({ ignoredExecutables: async () => [] }) as unknown as GameVaultClient,
+			userId: () => 1,
+			game: () => undefined,
+			progressState: () => "UNPLAYED",
+			onProgress() {},
+			onRunning() {},
+			notify() {},
+			pickFile: async () => picks.shift() ?? null,
+			beforePlay: async () => null,
+			afterExit() {},
+		});
+		const stored = () => installs.get(1)?.manifest.executable;
+		return { dir, launcher, picks, stored };
+	}
+
+	test("lists the programs and the one Play starts, without remembering it", async () => {
+		const { launcher, stored } = installed("props-list", { "Game.exe": "xx", "tools/Editor.exe": "x" });
+		expect(await launcher.executables(1)).toEqual({
+			current: "Game.exe",
+			candidates: ["Game.exe", join("tools", "Editor.exe")],
+		});
+		expect(stored()).toBeUndefined();
+	});
+
+	test("nothing is current while Play would still ask", async () => {
+		const { launcher } = installed("props-two", { "Game.exe": "xx", "Launcher.exe": "x" });
+		expect((await launcher.executables(1)).current).toBeNull();
+	});
+
+	test("a program picked among the game's files is kept relative to them", async () => {
+		const { dir, launcher, picks, stored } = installed("props-browse", { "Game.exe": "xx", "bin/Real.exe": "x" });
+		picks.push(join(dir, "files", "bin", "Real.exe"));
+		expect(await launcher.browseExecutable(1)).toBe(join("bin", "Real.exe"));
+		expect(stored()).toBe(join("bin", "Real.exe"));
+		expect((await launcher.executables(1)).current).toBe(join("bin", "Real.exe"));
+	});
+
+	test("a program elsewhere is kept whole and listed first", async () => {
+		const { launcher, stored } = installed("props-outside", { "Game.exe": "xx" });
+		const other = join(tree("props-elsewhere", { "Other.exe": "x" }), "Other.exe");
+		launcher.setExecutable(1, other);
+		expect(stored()).toBe(other);
+		expect(await launcher.executables(1)).toEqual({ current: other, candidates: [other, "Game.exe"] });
+	});
+
+	test("cancelling the file picker changes nothing", async () => {
+		const { launcher, picks, stored } = installed("props-cancel", { "Game.exe": "xx" });
+		picks.push(null);
+		expect(await launcher.browseExecutable(1)).toBeNull();
+		expect(stored()).toBeUndefined();
 	});
 });

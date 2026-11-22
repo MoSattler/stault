@@ -23,7 +23,7 @@ export function SaveGameDialog({ game }: { game: GameSummary }) {
 		void search(game.title);
 	}, [game.id]);
 
-	async function choose(name: string | null) {
+	async function choose(name: string) {
 		close();
 		await attempt(api.setSaveGame({ gameId: game.id, name }));
 	}
@@ -71,8 +71,7 @@ export function SaveGameDialog({ game }: { game: GameSummary }) {
 					</li>
 				))}
 			</ul>
-			<div className="flex justify-between gap-2.5 border-t border-line px-5 py-4">
-				<button type="button" onClick={() => choose(null)} className={dialogButton}>Don't sync this game</button>
+			<div className="flex justify-end border-t border-line px-5 py-4">
 				<button type="button" onClick={close} className={dialogButton}>Cancel</button>
 			</div>
 		</Dialog>

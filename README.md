@@ -81,6 +81,7 @@ The server has to accept save files: set `SAVEFILES_ENABLED=true` on it and give
 <summary>How it behaves</summary>
 
 - [Ludusavi](https://github.com/mtkennerly/ludusavi), bundled with Stault, finds the save files. A game it doesn't know is not synced. When Stault matches no entry or the wrong one, choose it on the game's page.
+- To leave one game's saves alone, turn sync off in its properties (the gear on its page).
 - Offline, a game starts with the saves on the device, and saves made meanwhile are uploaded once the server is back.
 - When saves changed on two devices, Stault asks which to keep. It never overwrites a save it has not seen on either side.
 - Saves use the format of the official GameVault client, so a Windows build's saves move between it and Stault, and between Windows and Linux. A Mac build's saves only move between Macs.

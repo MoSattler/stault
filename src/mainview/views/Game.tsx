@@ -4,14 +4,14 @@ import type { GameDetail, GameSummary, GameVersion } from "../../shared/model";
 import { api } from "../api";
 import { Cover } from "../components/Cover";
 import { Heading } from "../components/Heading";
-import { BackIcon, BookmarkIcon } from "../components/icons";
+import { BackIcon, GearIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { SavesCard } from "../components/SavesCard";
 import { StepList } from "../components/StepList";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
 import { PROGRESS_LABEL, saveLabel, useGameStatus } from "../state/derive";
-import { attempt, go, setUi, useApp } from "../state/store";
+import { go, setUi, useApp } from "../state/store";
 
 const card = "rounded-lg border border-line bg-panel px-5 py-[18px]";
 
@@ -117,15 +117,16 @@ export function Game({ game }: { game: GameSummary }) {
 						</div>
 					))}
 				</dl>
-				<button
-					type="button"
-					onClick={() => attempt(api.setBookmark({ gameId: game.id, on: !game.bookmarked }))}
-					aria-pressed={game.bookmarked}
-					aria-label="Bookmark"
-					className="ml-auto grid h-11 w-11 place-items-center rounded-md border border-line bg-raised hover:bg-hover"
-				>
-					<BookmarkIcon size={18} filled={game.bookmarked} />
-				</button>
+				{install && (
+					<button
+						type="button"
+						onClick={() => setUi({ properties: { gameId: game.id } })}
+						aria-label="Properties"
+						className="ml-auto grid h-11 w-11 place-items-center rounded-md border border-line bg-raised hover:bg-hover"
+					>
+						<GearIcon size={18} />
+					</button>
+				)}
 			</div>
 
 			{/* As in Steam's library: two columns that share the full width two to one, and a single column on a narrow window. */}

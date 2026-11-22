@@ -1,8 +1,7 @@
 import { type KeyboardEvent, type MouseEvent, useLayoutEffect, useRef } from "react";
 import type { GameSummary } from "../../shared/model";
-import { api } from "../api";
 import { useGameStatus } from "../state/derive";
-import { attempt, setUi, useApp, useUi } from "../state/store";
+import { setUi, useApp, useUi } from "../state/store";
 import { PrimaryButton } from "./PrimaryButton";
 
 /** `onContextMenu` for anything that stands for a game: opens its menu at the pointer. */
@@ -77,25 +76,27 @@ function Menu({ game, x, y }: { game: GameSummary; x: number; y: number }) {
 			className="fixed z-50 flex min-w-[200px] max-w-[280px] flex-col gap-0.5 rounded-lg border border-edge bg-raised p-1.5 shadow-[0_18px_40px_rgba(0,0,0,.6)] outline-none"
 		>
 			<PrimaryButton primary={status.primary} size="menu" />
-			<button
-				type="button"
-				role="menuitem"
-				onClick={() => attempt(api.setBookmark({ gameId: game.id, on: !game.bookmarked }))}
-				className={`mt-1 ${item}`}
-			>
-				{game.bookmarked ? "Remove bookmark" : "Bookmark"}
-			</button>
-			{status.install && !status.running && (
+			{status.install && (
 				<>
 					<hr className="mx-1 my-1 border-line" />
 					<button
 						type="button"
 						role="menuitem"
-						onClick={() => setUi({ uninstalling: { gameId: game.id } })}
-						className={`${item} text-[#FF8A7E]`}
+						onClick={() => setUi({ properties: { gameId: game.id } })}
+						className={item}
 					>
-						Uninstall…
+						Properties…
 					</button>
+					{!status.running && (
+						<button
+							type="button"
+							role="menuitem"
+							onClick={() => setUi({ uninstalling: { gameId: game.id } })}
+							className={`${item} text-[#FF8A7E]`}
+						>
+							Uninstall…
+						</button>
+					)}
 				</>
 			)}
 		</div>
