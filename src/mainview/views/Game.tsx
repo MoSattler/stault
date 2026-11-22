@@ -163,9 +163,6 @@ export function Game({ game }: { game: GameSummary }) {
 								{detail ? "The server has no description for this game." : pending}
 							</p>
 						)}
-						<p className="text-[12.5px] text-muted">
-							Description, art and tags come from the server's metadata provider.
-						</p>
 					</section>
 				</div>
 
