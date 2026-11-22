@@ -121,17 +121,16 @@ describe("Save sync", () => {
 		await dialog().$("button=Search").click();
 		// Marked CURRENT too, so matched by its start.
 		await dialog().$("ul").$("button*=Pixel Drift").click();
-		await expect(card()).toHaveText(expect.stringContaining("Save locations from Ludusavi's entry Pixel Drift"), {
-			wait: 30_000,
-		});
+		// Choosing starts a sync, even of the entry already in use. The card reads the same before it as after it,
+		// so see it start, then end: until then its buttons are disabled, and a click on one does nothing.
+		await expect(card()).toHaveText(expect.stringContaining("Syncing"));
+		await expect(card()).toHaveText(expect.stringContaining("In step with"), { wait: 30_000 });
+		await expect(card()).toHaveText(expect.stringContaining("Save locations from Ludusavi's entry Pixel Drift"));
 	});
 
 	it("syncs save files chosen by hand instead of a Ludusavi entry", async () => {
-		// Choosing an entry just now started a sync, which keeps the buttons disabled until it ends.
-		const change = card().$("button=Change");
-		await change.waitForEnabled({ timeout: 30_000 });
 		await toastGone();
-		await change.click();
+		await card().$("button=Change").click();
 		await dialog().$("button=Choose the save files yourself").click();
 		await expect(dialog().$("h2")).toHaveText("Where does Pixel Drift save?", { ignoreCase: true });
 
