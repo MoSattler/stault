@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/MoSattler/stault/compare/v0.5.0...v0.6.0) (2026-11-22)
+
+
+### Features
+
+* show the running version in Settings ([#32](https://github.com/MoSattler/stault/issues/32)) ([00a12db](https://github.com/MoSattler/stault/commit/00a12db2b6b4d27e7328f92086dd7c1036935a42))
+
+
+### Bug Fixes
+
+* install setup builds, fit small screens and run one copy on Windows ([#31](https://github.com/MoSattler/stault/issues/31)) ([ab8ac9f](https://github.com/MoSattler/stault/commit/ab8ac9fd83730166076280a48971b3c16e8a0600))
+* launch setup-installed games and clean up after them on Linux ([#28](https://github.com/MoSattler/stault/issues/28)) ([3836c85](https://github.com/MoSattler/stault/commit/3836c858fdca02b4ed1e6cceb56aab15b4a6380c))
+* simplify the sign-in screen ([#25](https://github.com/MoSattler/stault/issues/25)) ([6b69889](https://github.com/MoSattler/stault/commit/6b698890d2dd00e10645df161946546ca1b436d3))
+
 ## [0.5.0](https://github.com/MoSattler/stault/compare/v0.4.0...v0.5.0) (2026-11-21)
 
 
