@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { canRun, PLATFORM_NAME, typeLabel } from "../../shared/compat";
+import { canRun, PLATFORM_NAME, runnableFirst, typeLabel } from "../../shared/compat";
 import type { GameDetail, GameSummary, GameVersion } from "../../shared/model";
 import { api } from "../api";
 import { Cover } from "../components/Cover";
@@ -201,7 +201,7 @@ export function Game({ game }: { game: GameSummary }) {
 								{detail ? "No versions listed." : pending}
 							</p>
 						)}
-						{versions.map((v, i) => {
+						{runnableFirst(platform, versions).map((v) => {
 							const current = install?.versionId === v.id;
 							const runnable = canRun(platform, v.type, v.version) !== "no";
 							return (
@@ -209,7 +209,7 @@ export function Game({ game }: { game: GameSummary }) {
 									<span className="flex min-w-0 flex-auto flex-col gap-px">
 										<span className="font-mono text-[12.5px] font-semibold">
 											{v.version ?? "Unversioned"}
-											{i === 0 && <span className="font-medium text-muted"> · default</span>}
+											{v.id === versions[0].id && <span className="font-medium text-muted"> · default</span>}
 										</span>
 										<span className="text-[12.5px] text-muted">
 											{versionKind(v)} · {formatBytes(v.sizeBytes)}

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { toDetail, toSummary, userGameData } from "../src/bun/gamevault/mapping";
 import type { ApiGame } from "../src/bun/gamevault/types";
-import { buildOs, canRun, cantRunHere, typeLabel } from "../src/shared/compat";
+import { buildOs, canRun, cantRunHere, runnableFirst, typeLabel } from "../src/shared/compat";
 
 const game: ApiGame = {
 	id: 3,
@@ -95,6 +95,16 @@ test("a game can't run here only when none of its builds can", () => {
 	expect(cantRunHere("windows", [linux, { type: "UNDETECTABLE", version: "v1" }])).toBeNull();
 	// Until the versions are known, the default proves nothing.
 	expect(cantRunHere("macos", undefined)).toBeNull();
+});
+
+test("the builds that run here are listed first, each group in its order", () => {
+	const windows = { type: "WINDOWS_PORTABLE", version: "v2" } as const;
+	const older = { type: "WINDOWS_SETUP", version: "v1" } as const;
+	const linux = { type: "LINUX_PORTABLE", version: "v2" } as const;
+	const mac = { type: "UNDETECTABLE", version: "v2 · macOS" } as const;
+	expect(runnableFirst("macos", [windows, mac, linux])).toEqual([mac, windows, linux]);
+	expect(runnableFirst("windows", [linux, windows, mac, older])).toEqual([windows, older, linux, mac]);
+	expect(runnableFirst("linux", [windows, linux, mac])).toEqual([windows, linux, mac]);
 });
 
 test("a version label that names macOS marks a Mac build", () => {
