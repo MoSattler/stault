@@ -108,29 +108,11 @@ describe("Save sync", () => {
 		await expect(card()).toHaveText(expect.stringContaining("In step with"), { wait: 30_000 });
 	});
 
-	it("lets the game be matched to another Ludusavi entry", async () => {
-		await card().$("button=Change").click();
-		await expect(dialog().$("h2")).toHaveText("Which game is Pixel Drift?", { ignoreCase: true });
-		await expect(dialog().$("button*=Pixel Drift")).toHaveText(expect.stringContaining("CURRENT"));
-
-		await fill(query(), "zzzz no such game");
-		await dialog().$("button=Search").click();
-		await expect(dialog()).toHaveText(expect.stringContaining("Nothing found."));
-
-		await fill(query(), "Pixel Drift");
-		await dialog().$("button=Search").click();
-		// Marked CURRENT too, so matched by its start.
-		await dialog().$("ul").$("button*=Pixel Drift").click();
-		// Choosing starts a sync, even of the entry already in use. The card reads the same before it as after it,
-		// so see it start, then end: until then its buttons are disabled, and a click on one does nothing.
-		await expect(card()).toHaveText(expect.stringContaining("Syncing"));
-		await expect(card()).toHaveText(expect.stringContaining("In step with"), { wait: 30_000 });
-		await expect(card()).toHaveText(expect.stringContaining("Save locations from Ludusavi's entry Pixel Drift"));
-	});
-
 	it("syncs save files chosen by hand instead of a Ludusavi entry", async () => {
 		await toastGone();
 		await card().$("button=Change").click();
+		await expect(dialog().$("h2")).toHaveText("Which game is Pixel Drift?", { ignoreCase: true });
+		await expect(dialog().$("button*=Pixel Drift")).toHaveText(expect.stringContaining("CURRENT"));
 		await dialog().$("button=Choose the save files yourself").click();
 		await expect(dialog().$("h2")).toHaveText("Where does Pixel Drift save?", { ignoreCase: true });
 
@@ -149,7 +131,7 @@ describe("Save sync", () => {
 		expect(manifest().saves.paths).toEqual(["<base>/save.txt"]);
 
 		// The round trip: up from this device, then back over a changed file.
-		// Choosing starts a sync here too. A save changed before it ends would be a conflict, rightly.
+		// Choosing starts a sync. A save changed before it ends would be a conflict, rightly.
 		const upload = card().$("button=Upload now");
 		await upload.waitForEnabled({ timeout: 30_000 });
 		await expect(card()).toHaveText(expect.stringContaining("In step with"));
@@ -165,7 +147,30 @@ describe("Save sync", () => {
 		await fetchBack.waitForEnabled({ timeout: 30_000 });
 		await toastGone();
 		await fetchBack.click();
-		await browser.waitUntil(() => readFileSync(saveFile(), "utf8") === byHand, { timeout: 30_000 });
+		await expect(toast()).toHaveText(expect.stringContaining("Pixel Drift: saves restored"), { wait: 30_000 });
+		expect(readFileSync(saveFile(), "utf8")).toBe(byHand);
+	});
+
+	it("lets the game be matched to a Ludusavi entry again", async () => {
+		await toastGone();
+		await card().$("button=Change").click();
+		// It opens on the files chosen by hand.
+		await expect(dialog().$("h2")).toHaveText("Where does Pixel Drift save?", { ignoreCase: true });
+		await dialog().$("button=Back to search").click();
+		await expect(dialog().$("h2")).toHaveText("Which game is Pixel Drift?", { ignoreCase: true });
+
+		await fill(query(), "zzzz no such game");
+		await dialog().$("button=Search").click();
+		await expect(dialog()).toHaveText(expect.stringContaining("Nothing found."));
+
+		await fill(query(), "Pixel Drift");
+		await dialog().$("button=Search").click();
+		await dialog().$("ul").$("button=Pixel Drift").click();
+		await expect(card()).toHaveText(expect.stringContaining("Save locations from Ludusavi's entry Pixel Drift"), {
+			wait: 30_000,
+		});
+		// Choosing starts a sync, and the card says In step with again only once it has ended.
+		await expect(card()).toHaveText(expect.stringContaining("In step with"), { wait: 30_000 });
 	});
 
 	it("leaves the game's saves alone while sync is off for it", async () => {

@@ -74,7 +74,7 @@ winexe() {
 	mingw -O1 -mwindows -o "$2" "samples/$1.c" 2>/dev/null || echo "not a real program" > "$2"
 }
 
-mkdir -p "$WORK/portable/Pixel_Data" "$WORK/portable-old" "$WORK/setup" "$WORK/linux" "$WORK/big"
+mkdir -p "$WORK/portable/Pixel_Data" "$WORK/portable-old" "$WORK/setup" "$WORK/linux" "$WORK/windows" "$WORK/big"
 winexe game "$WORK/portable/Pixel.exe"
 echo "data" > "$WORK/portable/Pixel_Data/level0"
 cat > "$WORK/portable/.ludusavi.yaml" <<'YAML'
@@ -88,6 +88,8 @@ winexe setup "$WORK/setup/setup.exe"
 winexe game "$WORK/setup/game.exe"
 printf '#!/bin/sh\necho "Tin Kettle running"; sleep 600\n' > "$WORK/linux/start.sh"
 chmod +x "$WORK/linux/start.sh"
+# Windows' counterpart to Tin Kettle: small, one version, runs until stopped.
+winexe game "$WORK/windows/Kite.exe"
 echo "not a real program" > "$WORK/big/Longhaul.exe"
 [ -f "$FILES/Longhaul (v3.1.4) (W_P) (2020).zip" ] || head -c 209715200 /dev/urandom > "$WORK/big/assets.bin"
 
@@ -95,6 +97,7 @@ pack "Pixel Drift (v1.2.0) (W_P) (2023).zip" "$WORK/portable"
 pack "Pixel Drift (v1.1.0) (W_P) (2023).zip" "$WORK/portable-old"
 pack "Setup Quest (v2.0.1) (W_S) (2021).zip" "$WORK/setup"
 pack "Tin Kettle (v1.1.0) (L_P) (2022).zip" "$WORK/linux"
+pack "Copper Kite (v1.0.0) (W_P) (2022).zip" "$WORK/windows"
 [ -f "$FILES/Longhaul (v3.1.4) (W_P) (2020).zip" ] || pack "Longhaul (v3.1.4) (W_P) (2020).zip" "$WORK/big"
 rm -rf "$WORK"
 
