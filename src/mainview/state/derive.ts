@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { canRun, PLATFORM_NAME, typeLabel } from "../../shared/compat";
+import { buildOs, canRun, type KnownOs, OS_NAME } from "../../shared/compat";
 import type {
 	AppState,
 	Download,
@@ -54,6 +54,8 @@ export interface Primary {
 	label: string;
 	sub: string;
 	icon: PrimaryIcon;
+	/** Shown as logos after the label: the systems a game is for when none of its builds runs here. */
+	systems?: KnownOs[];
 	/** Lime call to action, a neutral in-progress state, or unavailable. */
 	tone: "accent" | "neutral" | "off";
 	/** 0–100 progress shown behind the label. */
@@ -171,12 +173,13 @@ export function gameStatus(
 		primary = { label: "Play", sub: "", icon: "play", tone: "accent", fill: 0, act: () => play(gameId) };
 	} else {
 		line = "Not installed";
-		const runnable = (versions ?? [game]).filter(
-			(v) => canRun(state.platform, v.type, v.version) !== "no",
-		);
+		const builds = versions ?? [game];
+		const runnable = builds.filter((v) => canRun(state.platform, v.type, v.version) !== "no");
 		if (runnable.length === 0) {
-			const others = new Set((versions ?? [game]).map((v) => typeLabel(v.type, v.version).os));
-			primary = { label: `Not on ${PLATFORM_NAME[state.platform]}`, sub: `${[...others].join(" and ")} only`, icon: "none", tone: "off", fill: 0, act() {} };
+			// A build for an unknown system counts as runnable, so every one here is known.
+			const systems = [...new Set(builds.map((v) => buildOs(v.type, v.version)))].filter((os) => os !== "unknown");
+			line = `Available for ${systems.map((os) => OS_NAME[os]).join(" and ")}`;
+			primary = { label: "Available for", sub: "", icon: "none", systems, tone: "off", fill: 0, act() {} };
 		} else {
 			const sub = runnable.length > 1 ? `${runnable.length} versions · choose next` : formatBytes(runnable[0].sizeBytes);
 			primary = { label: "Install", sub, icon: "install", tone: "accent", fill: 0, act: () => setUi({ installing: { gameId } }) };

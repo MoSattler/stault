@@ -1,5 +1,5 @@
 import type { Primary } from "../state/derive";
-import { PauseIcon, PlayIcon, SpinnerIcon, StopIcon } from "./icons";
+import { OsIcons, PauseIcon, PlayIcon, SpinnerIcon, StopIcon } from "./icons";
 
 function Glyph({ icon, size }: { icon: Primary["icon"]; size: number }) {
 	switch (icon) {
@@ -21,6 +21,16 @@ function Glyph({ icon, size }: { icon: Primary["icon"]; size: number }) {
 		default:
 			return null;
 	}
+}
+
+/** The label, followed by system logos when the state has them ("Available for"). */
+function Label({ primary, logo, className = "" }: { primary: Primary; logo: number; className?: string }) {
+	return (
+		<span className={`relative inline-flex items-center gap-[0.5em] ${className}`}>
+			{primary.label}
+			{primary.systems && <OsIcons systems={primary.systems} size={logo} />}
+		</span>
+	);
 }
 
 const TONE: Record<Primary["tone"], string> = {
@@ -46,7 +56,7 @@ export function PrimaryButton({ primary, size }: Props) {
 		return (
 			<button type="button" onClick={primary.act} disabled={disabled} className={`relative min-h-[34px] overflow-hidden rounded-[5px] px-3.5 text-xs font-[750] uppercase tracking-[0.06em] ${TONE[primary.tone]}`}>
 				{fill}
-				<span className="relative">{primary.label}</span>
+				<Label primary={primary} logo={12} />
 			</button>
 		);
 	}
@@ -56,7 +66,7 @@ export function PrimaryButton({ primary, size }: Props) {
 			<button type="button" role="menuitem" onClick={primary.act} disabled={disabled} className={`stretch-112 relative flex min-h-[38px] w-full items-center gap-2.5 overflow-hidden rounded-[5px] px-3 text-[13px] font-[750] uppercase tracking-[0.05em] ${TONE[primary.tone]}`}>
 				{fill}
 				<Glyph icon={primary.icon} size={14} />
-				<span className="relative">{primary.label}</span>
+				<Label primary={primary} logo={13} />
 			</button>
 		);
 	}
@@ -66,7 +76,7 @@ export function PrimaryButton({ primary, size }: Props) {
 			<button type="button" onClick={primary.act} disabled={disabled} className={`stretch-112 relative flex min-h-[46px] min-w-[168px] items-center gap-2.5 overflow-hidden rounded-md px-[22px] text-[15px] font-[750] uppercase tracking-[0.04em] ${TONE[primary.tone]}`}>
 				{fill}
 				<Glyph icon={primary.icon} size={16} />
-				<span className="relative">{primary.label}</span>
+				<Label primary={primary} logo={15} />
 				{primary.icon === "stop" && (
 					<span className="relative font-mono text-[11px] font-medium normal-case tracking-normal text-muted">{primary.sub}</span>
 				)}
@@ -79,7 +89,7 @@ export function PrimaryButton({ primary, size }: Props) {
 			{fill}
 			<Glyph icon={primary.icon} size={20} />
 			<span className="relative flex flex-col gap-px">
-				<span className="stretch-112 text-base font-[750] uppercase tracking-[0.05em]">{primary.label}</span>
+				<Label primary={primary} logo={18} className="stretch-112 text-base font-[750] uppercase tracking-[0.05em]" />
 				{primary.sub && <span className="font-mono text-[11px] opacity-80">{primary.sub}</span>}
 			</span>
 		</button>

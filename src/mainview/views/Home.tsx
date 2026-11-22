@@ -6,6 +6,7 @@ import { gameMenu } from "../components/GameMenu";
 import { Heading } from "../components/Heading";
 import { BackIcon, CheckIcon } from "../components/icons";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { StatusLine } from "../components/StatusLine";
 import { useRise } from "../components/useRise";
 import { formatBytes, formatHours, formatWhen } from "../format";
 import { useGameStatus } from "../state/derive";
@@ -81,7 +82,7 @@ function Tile({ game, caption, className = "" }: { game: GameSummary; caption: "
 					{game.genres.join(" · ") || `${typeLabel(game.type, game.version).os} · ${formatBytes(game.sizeBytes)}`}
 				</span>
 			) : (
-				<span className="-mt-1.5 font-mono text-[10.5px] text-muted">{status.line}</span>
+				<span className="-mt-1.5 font-mono text-[10.5px] text-muted"><StatusLine status={status} /></span>
 			)}
 		</button>
 	);
