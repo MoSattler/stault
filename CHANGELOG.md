@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/MoSattler/stault/compare/v0.10.0...v0.11.0) (2026-11-22)
+
+
+### Features
+
+* list the versions that run here first ([#56](https://github.com/MoSattler/stault/issues/56)) ([62d0c3f](https://github.com/MoSattler/stault/commit/62d0c3faec86e2c07ea6870a3aadcb1cf6d41724))
+
 ## [0.10.0](https://github.com/MoSattler/stault/compare/v0.9.0...v0.10.0) (2026-11-22)
 
 
