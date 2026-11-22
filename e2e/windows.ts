@@ -2,7 +2,12 @@
 // give every launch a new data folder of its own choosing and can't start the
 // app again, so a check across a restart couldn't be made. Here the app gets
 // the spec's own folders (wdio.conf.ts), and Edge's WebDriver attaches to its
-// WebView2 through the debug port WebView2 opens on request.
+// WebView2 through a debug port.
+//
+// WebView2 opens that port when a machine policy asks it to (e2e.yml sets it,
+// for bun.exe, the program that hosts the app's webview). It ignores the
+// WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS variable and the per-user policy on
+// the CI runner, where every process runs elevated.
 
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
 import { closeSync, existsSync, openSync, readFileSync } from "node:fs";
@@ -10,6 +15,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
+/** The port the WebView2 policy in e2e.yml opens. */
 export const DEBUG_PORT = 9222;
 
 let app: ChildProcess | undefined;
@@ -37,16 +43,15 @@ const pages = (): Promise<{ type: string }[]> =>
  */
 const logs = () => [join(homedir(), "output.log"), join(homedir(), "app.log")];
 
-/** Starts the app with WebView2's debug port open and waits until its page is there. */
+/** Starts the app and waits until its page is there on the debug port. */
 export async function startApp() {
-	// Otherwise WebdriverIO would attach to an app left over from before, with its data.
-	if ((await pages()).length) throw new Error(`Another app already holds debug port ${DEBUG_PORT}.`);
+	// The webview of an app closed a moment ago may still hold the port. One that
+	// keeps holding it would have WebdriverIO attach to the wrong app.
+	for (const deadline = Date.now() + 10_000; (await pages()).length; await sleep(250)) {
+		if (Date.now() > deadline) throw new Error(`Another app holds debug port ${DEBUG_PORT}.`);
+	}
 	const output = openSync(logs()[0], "a");
-	app = spawn(process.env.STAULT_APP!, [], {
-		cwd: homedir(),
-		env: { ...process.env, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${DEBUG_PORT}` },
-		stdio: ["ignore", output, output],
-	});
+	app = spawn(process.env.STAULT_APP!, [], { cwd: homedir(), stdio: ["ignore", output, output] });
 	closeSync(output);
 	for (const deadline = Date.now() + 30_000; Date.now() < deadline && app.exitCode === null; await sleep(250)) {
 		if ((await pages()).some((page) => page.type === "page")) return;

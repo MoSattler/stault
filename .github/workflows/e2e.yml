@@ -110,6 +110,17 @@ jobs:
         shell: wsl-bash {0}
         run: ./dev/seed.sh
 
+      # Edge's WebDriver attaches to the app's WebView2 through a debug port,
+      # which WebView2 only opens here when a machine policy asks for it: it
+      # ignores the environment variable and per-user policy in an elevated
+      # process, and everything on this runner is elevated. bun.exe hosts the
+      # app's webview; the port is DEBUG_PORT in e2e/windows.ts.
+      - name: Let the app's WebView2 open a debug port
+        run: |
+          $key = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments"
+          New-Item -Force $key | Out-Null
+          New-ItemProperty -Force -Path $key -Name bun.exe -Value "--remote-debugging-port=9222" | Out-Null
+
       - name: Install Hutch
         run: |
           & ([scriptblock]::Create((irm https://hutch.blackboard.sh/hutch/install.ps1))) -Version $env:HUTCH_VERSION -NoModifyPath
