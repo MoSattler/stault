@@ -19,6 +19,11 @@ Browse, install, play and sync saves on Windows, macOS and Linux.
 
 </div>
 
+> [!IMPORTANT]
+> Stault is alpha software. Expect bugs and rough edges, and keep a backup of any saves you care about.
+>
+> Bug reports and contributions are very welcome. If something breaks, please [report it](https://github.com/MoSattler/stault/issues/new?template=bug_report.yml). To help with code, start with [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Features
 
 - **Your whole library.** Recently played, recently added, search, and a page per game with the art and details from your server.
@@ -62,7 +67,7 @@ The builds are not code-signed. Windows warns before opening them. macOS refuses
 | Linux | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) (install it separately) |
 | macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
 
-Stault is young. It is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
+Stault is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
 
 Not built yet: Big Picture Mode, Steam shortcuts, single sign-on.
 
