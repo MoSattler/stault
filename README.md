@@ -7,7 +7,7 @@
 **The launcher your [GameVault](https://gamevau.lt) server deserves.**
 
 A Steam-style desktop client for your self-hosted game library.<br>
-Browse, install, play and sync saves on Windows, macOS and SteamOS.
+Browse, install, play and sync saves on Windows, macOS and Linux.
 
 [![Latest release](https://img.shields.io/github/v/release/MoSattler/stault?color=c5f04a&labelColor=16181c)](https://github.com/MoSattler/stault/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/MoSattler/stault/total?color=c5f04a&labelColor=16181c)](https://github.com/MoSattler/stault/releases)
@@ -42,7 +42,7 @@ You need a GameVault server, version 17.0 or newer.
 brew install --cask mosattler/tap/stault
 ```
 
-**Linux and SteamOS** (x64)
+**Linux** (x64)
 
 ```bash
 curl -fsSL https://github.com/MoSattler/stault/releases/latest/download/linux-x64-Stault-Setup.tar.gz | tar -xz -C /tmp && /tmp/installer
@@ -59,7 +59,7 @@ The builds are not code-signed. Windows warns before opening them. macOS refuses
 | | Launches |
 | --- | --- |
 | Windows | Windows builds |
-| Linux / SteamOS | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) (install it separately) |
+| Linux | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) (install it separately) |
 | macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
 
 Stault is young. It has been run on macOS and, in a test container, on Linux; on Windows, launching and save sync are covered by tests but have not been run there.
