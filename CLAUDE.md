@@ -16,8 +16,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`, `refactor:`, `test:`; `!` marks a breaking change). release-please reads them on `main` to pick the next version and write the changelog, so the type decides whether a change is released: only `feat` and `fix` are.
 - Never edit `version` in `package.json`, `CHANGELOG.md` or `.release-please-manifest.json`, and never push a version tag. Merging the release PR does all of it (`.github/workflows/release.yml`).
-- The release workflow builds the Mac app on `macos-latest` (Apple Silicon) and `macos-26-intel` (Intel; GitHub ends Intel runners in August 2027), and fails when a binary in the app is built for the other chip. Since 26.6.0, `7zip-bin-full` puts the Apple Silicon binary in `mac/x64`, so on an Intel Mac `dev/fetch-vendor.ts` fetches 7-Zip's own build of the same version instead; raise the two together.
-- The Homebrew cask is `.github/homebrew/stault.rb`. Each release writes it into MoSattler/homebrew-tap with the version and both DMGs' checksums, so a change made in the tap is lost.
+- The Homebrew cask is `.github/homebrew/stault.rb`. Each release writes it into MoSattler/homebrew-tap with the version and the DMG's checksum, so a change made in the tap is lost.
 
 ## Images in PR descriptions
 
@@ -48,7 +47,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 ## Save sync (`src/bun/saves/`)
 
-- Ludusavi 0.31 finds and moves save files. It is not on npm: `dev/fetch-vendor.ts` downloads the pinned build into `vendor/` (git-ignored) before every build and dev start, and `electrobun.config.ts` copies it into the app. To upgrade, change the version and checksums there. 0.31 has no Intel Mac release, so on an Intel Mac the script compiles the release's source with cargo instead.
+- Ludusavi 0.31 finds and moves save files. It is not on npm: `dev/fetch-vendor.ts` downloads the pinned build into `vendor/` (git-ignored) before every build and dev start, and `electrobun.config.ts` copies it into the app. To upgrade, change the version and checksums there.
 - The rule the sync follows (`nextStep` in `saves/index.ts`): never replace a server save this device has not seen, never replace local saves the server has not seen. Both changed means compare, then ask.
 - Ludusavi quirks, all found by running it: without a game name it waits on stdin; root paths are globs, so the `[id]` in Stault's folder names must be escaped; it reports real paths, so folders must be resolved through symlinks before they are named in redirects; it does not follow symlinks into game folders.
 - A game can describe its own saves with a `.ludusavi.yaml` in its files; the Harbor Lights sample does.
