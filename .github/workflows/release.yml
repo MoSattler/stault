@@ -6,14 +6,14 @@ name: Release
 #   Push to main         opens or updates the release PR: next version, changelog
 #   Release PR merged    tags the version and publishes the GitHub release, then
 #                        builds stable installers, attaches them to it and
-#                        points the Homebrew cask at the new macOS installers
+#                        points the Homebrew cask at the new macOS installer
 #   Manual run           canary installers, kept on the run for testing
 #   PR touching the      the same canary build, as a check that packaging
 #   packaging files      still works
 #
 # The builds live in this workflow because a tag created by a workflow does not
-# start another one. Hutch can only build for the OS and chip it runs on, so
-# each platform needs its own runner.
+# start another one. Hutch can only build for the OS it runs on, so each
+# platform needs its own runner.
 
 on:
   push:
@@ -67,9 +67,6 @@ jobs:
         include:
           - name: macOS arm64
             runner: macos-latest
-          # GitHub has said it ends Intel runners in August 2027.
-          - name: macOS x64
-            runner: macos-26-intel
           - name: Windows x64
             runner: windows-latest
           - name: Linux x64
@@ -97,26 +94,6 @@ jobs:
 
       - name: Build
         run: hutch run ${{ env.CHANNEL == 'stable' && 'build' || 'build:canary' }}
-
-      # Every program and library in the app must run on the runner's chip. A
-      # bundled tool built for the other chip would otherwise go unnoticed until
-      # someone on that Mac tried it. The DMG holds only a launcher that unpacks
-      # the app from the .app.tar.zst on first start, so the check reads that.
-      - name: Check the app's binaries (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          app="$(mktemp -d)"
-          tar -xf artifacts/*.app.tar.zst -C "$app"
-          chip="$(uname -m)"
-          wrong=0
-          while IFS= read -r file; do
-            chips="$(lipo -archs "$file" 2>/dev/null)" || continue
-            case " $chips " in
-              *" $chip "*) ;;
-              *) echo "::error::${file#"$app"/} is built for $chips, not $chip"; wrong=1 ;;
-            esac
-          done < <(find "$app" -type f)
-          exit "$wrong"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -149,9 +126,9 @@ jobs:
           gh release upload "$TAG" artifacts/* --clobber
           gh release edit "$TAG" --title "Stault $TAG"
 
-  # Writes the cask in MoSattler/homebrew-tap for this release's DMGs, so that
+  # Writes the cask in MoSattler/homebrew-tap for this release's DMG, so that
   # `brew install --cask mosattler/tap/stault` and `brew upgrade` get it. The
-  # cask is .github/homebrew/stault.rb; this fills in the version and checksums.
+  # cask is .github/homebrew/stault.rb; this fills in the version and checksum.
   homebrew:
     name: Update the Homebrew cask
     needs: [release-please, publish]
@@ -164,9 +141,8 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with:
-          pattern: stault-stable-macOS-*
+          name: stault-stable-macOS-ARM64
           path: artifacts
-          merge-multiple: true
 
       # HOMEBREW_TAP_DEPLOY_KEY is the private half of a deploy key with
       # write access on the tap repository.
@@ -181,9 +157,8 @@ jobs:
           TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
           version="${TAG#v}"
-          arm="$(sha256sum artifacts/macos-arm64-Stault.dmg)"
-          intel="$(sha256sum artifacts/macos-x64-Stault.dmg)"
-          sed -e "s/@VERSION@/$version/" -e "s/@SHA256_ARM@/${arm%% *}/" -e "s/@SHA256_INTEL@/${intel%% *}/" \
+          sha256="$(sha256sum artifacts/macos-arm64-Stault.dmg)"
+          sed -e "s/@VERSION@/$version/" -e "s/@SHA256@/${sha256%% *}/" \
             .github/homebrew/stault.rb > tap/Casks/stault.rb
           cd tap
           # Nothing to commit when the workflow is re-run for the same release.

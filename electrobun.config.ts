@@ -2,14 +2,9 @@ import type { ElectrobunConfig } from "electrobun";
 import packageJson from "./package.json";
 
 // 7-Zip extracts downloaded games. Only this platform's binary goes in the bundle.
-// An Intel Mac's comes from dev/fetch-vendor.ts: since 26.6.0, 7zip-bin-full's
-// mac/x64 folder holds the Apple Silicon build.
-const sevenZipDir =
-	process.platform === "darwin" && process.arch === "x64"
-		? "vendor/7zip"
-		: `node_modules/7zip-bin-full/${
-				{ darwin: "mac", win32: "win", linux: "linux" }[process.platform as "darwin" | "win32" | "linux"]
-			}/${process.arch}`;
+const sevenZipDir = `node_modules/7zip-bin-full/${
+	{ darwin: "mac", win32: "win", linux: "linux" }[process.platform as "darwin" | "win32" | "linux"]
+}/${process.arch}`;
 const sevenZipFiles = process.platform === "win32" ? ["7z.exe", "7z.dll"] : ["7zz"];
 
 // Ludusavi finds and moves game saves; on Linux, umu-launcher runs Windows games.
