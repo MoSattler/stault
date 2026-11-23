@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/MoSattler/stault/compare/v0.12.0...v0.13.0) (2026-11-23)
+
+
+### Features
+
+* build for Intel Macs ([#61](https://github.com/MoSattler/stault/issues/61)) ([8c7b359](https://github.com/MoSattler/stault/commit/8c7b3592e2101f6b2070827913f99ce426bcb71d))
+
 ## [0.12.0](https://github.com/MoSattler/stault/compare/v0.11.0...v0.12.0) (2026-11-22)
 
 
