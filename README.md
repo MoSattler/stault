@@ -41,7 +41,7 @@ Browse, install, play and sync saves on Windows, macOS and Linux.
 
 You need a GameVault server, version 17.0 or newer.
 
-**macOS** (Apple Silicon, macOS 14 or newer)
+**macOS** (Apple Silicon or Intel, macOS 14 or newer)
 
 ```bash
 brew install --cask mosattler/tap/stault
@@ -65,7 +65,7 @@ The builds are not code-signed. Windows warns before opening them. macOS refuses
 | --- | --- |
 | Windows | Windows builds |
 | Linux | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher), which comes with Stault and needs Python 3. Ubuntu 24.04 and later may also need umu-launcher's own package; Stault tells you if so. |
-| macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
+| macOS | Games whose files contain a Mac `.app`; on an Intel Mac, not those built only for Apple Silicon. Windows builds are not supported. |
 
 Stault is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
 
