@@ -1,10 +1,12 @@
 import { findServer, GameVaultClient, SignedOutError } from "./gamevault/client";
+import type { ApiStatus, ApiTokens } from "./gamevault/types";
 import type { Library } from "./library";
 import type { MediaProxy } from "./media";
 import type { SecretStore } from "./secrets";
 import type { SettingsFile } from "./settings";
+import { browserSignIn } from "./sso";
 import { getState, patchState } from "./state";
-import type { ServerCheck } from "../shared/model";
+import type { ServerCheck, SignInMethod } from "../shared/model";
 
 /** Oldest server whose API Stault is written against (versions, save files). */
 const MIN_SERVER_MAJOR = 17;
@@ -17,15 +19,32 @@ function checkVersion(version: string) {
 	}
 }
 
+/** How Stault can sign in to a server. */
+async function signInMethods(serverUrl: string, status: ApiStatus): Promise<SignInMethod[]> {
+	const offered = status.available_authentication_methods ?? [];
+	const password = offered.includes("basic");
+	// This includes a server that names no method: its answer to a password says what's wrong.
+	if (!offered.includes("sso")) return ["basic"];
+	if (await GameVaultClient.ssoReturnsToApps(serverUrl)) return password ? ["basic", "sso"] : ["sso"];
+	if (password) return ["basic"];
+	throw new Error(
+		"This server signs in only through single sign-on, and doesn't hand that back to apps. It needs GameVault 17.3 or newer, with AUTH_OAUTH2_LOOPBACK_RETURN_ENABLED left on.",
+	);
+}
+
 export interface SessionHooks {
 	/** A session exists (restored or just signed in). */
 	signedIn(serverUrl: string): void;
 	/** The session is about to be dropped. */
 	signingOut(): Promise<void>;
+	/** Opens a web page in the system browser. False when there is no browser to open it. */
+	openBrowser(url: string): boolean;
 }
 
 export class Session {
 	private current: GameVaultClient | null = null;
+	/** The single sign-on waiting on the browser, if any. */
+	private sso: AbortController | null = null;
 
 	constructor(
 		private readonly settings: SettingsFile,
@@ -67,7 +86,7 @@ export class Session {
 		try {
 			const { serverUrl, status } = await findServer(url);
 			checkVersion(status.version);
-			return { ok: true, serverUrl, version: status.version };
+			return { ok: true, serverUrl, version: status.version, methods: await signInMethods(serverUrl, status) };
 		} catch (error) {
 			return { ok: false, error: (error as Error).message };
 		}
@@ -108,13 +127,63 @@ export class Session {
 	}) {
 		const username = input.username.trim();
 		if (!username || !input.password) throw new Error("Enter your username and password.");
-		const { serverUrl, status } = await findServer(input.serverUrl);
+		await this.start(input.serverUrl, (client) => client.login(username, input.password));
+	}
+
+	/**
+	 * Signs in through the server's identity provider, in the system browser.
+	 * False when the sign-in was called off (`cancelSso`).
+	 */
+	async signInWithSso(input: { serverUrl: string }): Promise<boolean> {
+		this.cancelSso();
+		const pending = new AbortController();
+		this.sso = pending;
+		try {
+			await this.start(input.serverUrl, async (client, status) => {
+				if (!(await signInMethods(client.serverUrl, status)).includes("sso")) {
+					throw new Error("This server doesn't offer single sign-on to Stault.");
+				}
+				return browserSignIn(
+					client.serverUrl,
+					this.hooks.openBrowser,
+					(code, verifier) => client.redeemLoginCode(code, verifier),
+					pending.signal,
+				);
+			});
+			return true;
+		} catch (error) {
+			if (pending.signal.aborted) return false;
+			throw error;
+		} finally {
+			if (this.sso === pending) this.sso = null;
+		}
+	}
+
+	/** Stops waiting for the browser. */
+	cancelSso() {
+		this.sso?.abort();
+	}
+
+	/** Signs in to the server at `url`. `authenticate` gets the first tokens for the client it is handed. */
+	private async start(
+		url: string,
+		authenticate: (client: GameVaultClient, status: ApiStatus) => Promise<void>,
+	) {
+		const { serverUrl, status } = await findServer(url);
 		checkVersion(status.version);
 
-		const client = this.connect(serverUrl, username, null);
+		// The refresh token is stored under the account's name, which only the
+		// server knows for sure. So the first tokens go to a client of their own.
+		const issued: ApiTokens[] = [];
+		const guest = new GameVaultClient(serverUrl, null, {
+			onTokens: (tokens) => void issued.push(tokens),
+		});
+		await authenticate(guest, status);
+		const me = await guest.me();
+
+		const client = this.connect(serverUrl, me.username, null);
 		try {
-			await client.login(username, input.password);
-			const me = await client.me();
+			await client.adopt(issued.at(-1)!);
 			const account = {
 				serverUrl,
 				serverVersion: status.version,

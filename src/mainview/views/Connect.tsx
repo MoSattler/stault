@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import type { ServerCheck } from "../../shared/model";
 import { api } from "../api";
 import { WindowControls } from "../chrome/WindowControls";
@@ -11,6 +11,8 @@ const WALL = Array.from({ length: 20 }, (_, i) => gradientFor(`wall-${i * 7}`));
 const label = "text-sm font-semibold";
 const field =
 	"min-h-[46px] min-w-0 rounded-md border border-edge bg-raised px-3.5 disabled:opacity-60";
+const primary =
+	"stretch-112 flex min-h-[50px] items-center justify-center rounded-md bg-lime text-[15px] font-[750] uppercase tracking-[0.05em] text-carbon hover:brightness-110 disabled:opacity-50";
 
 /** First run: find the server and sign in. */
 export function Connect() {
@@ -19,8 +21,14 @@ export function Connect() {
 	const [username, setUsername] = useState(last?.username ?? "");
 	const [password, setPassword] = useState("");
 	const [check, setCheck] = useState<ServerCheck | "checking" | null>(null);
-	const [busy, setBusy] = useState(false);
+	const [busy, setBusy] = useState<"password" | "sso" | null>(null);
 	const [error, setError] = useState<string | null>(null);
+
+	// Until the server says otherwise, expect a password.
+	const methods = (check !== "checking" && check?.methods) || ["basic"];
+	const passwordSignIn = methods.includes("basic");
+	const sso = methods.includes("sso");
+	const ssoLabel = busy === "sso" ? "Waiting for your browser…" : "Sign in with SSO";
 
 	async function runCheck() {
 		if (!url.trim()) return;
@@ -31,16 +39,29 @@ export function Connect() {
 		if (result.serverUrl) setUrl(result.serverUrl);
 	}
 
-	async function submit(event: FormEvent) {
-		event.preventDefault();
-		setBusy(true);
+	// A remembered server is asked right away how it signs people in.
+	useEffect(() => void runCheck(), []);
+
+	async function signIn(how: "password" | "sso") {
+		setBusy(how);
 		setError(null);
 		try {
-			await api.signIn({ serverUrl: url, username, password });
+			if (how === "sso") {
+				if (await api.signInWithSso({ serverUrl: url })) return;
+			} else {
+				await api.signIn({ serverUrl: url, username, password });
+				return;
+			}
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
-			setBusy(false);
 		}
+		// Still here: the sign-in failed, or single sign-on was cancelled.
+		setBusy(null);
+	}
+
+	function submit(event: FormEvent) {
+		event.preventDefault();
+		void signIn(passwordSignIn ? "password" : "sso");
 	}
 
 	return (
@@ -92,13 +113,13 @@ export function Connect() {
 								autoCapitalize="off"
 								spellCheck={false}
 								autoFocus
-								disabled={busy}
+								disabled={!!busy}
 								className={`${field} flex-auto font-mono text-sm`}
 							/>
 							<button
 								type="button"
 								onClick={runCheck}
-								disabled={busy || check === "checking"}
+								disabled={!!busy || check === "checking"}
 								className="min-h-[46px] rounded-md border border-edge bg-hover px-4 text-sm font-semibold"
 							>
 								Check
@@ -120,26 +141,54 @@ export function Connect() {
 						)}
 					</div>
 
-					<div className="grid grid-cols-2 gap-3.5">
-						<div className="flex flex-col gap-2">
-							<label htmlFor="usr" className={label}>Username</label>
-							<input id="usr" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoCapitalize="off" spellCheck={false} disabled={busy} className={field} />
+					{passwordSignIn && (
+						<div className="grid grid-cols-2 gap-3.5">
+							<div className="flex flex-col gap-2">
+								<label htmlFor="usr" className={label}>Username</label>
+								<input id="usr" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoCapitalize="off" spellCheck={false} disabled={!!busy} className={field} />
+							</div>
+							<div className="flex flex-col gap-2">
+								<label htmlFor="pwd" className={label}>Password</label>
+								<input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" disabled={!!busy} className={field} />
+							</div>
 						</div>
-						<div className="flex flex-col gap-2">
-							<label htmlFor="pwd" className={label}>Password</label>
-							<input id="pwd" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" disabled={busy} className={field} />
-						</div>
-					</div>
+					)}
 
 					{error && <p role="alert" className="text-[13px] text-amber">{error}</p>}
 
-					<button
-						type="submit"
-						disabled={busy || !url.trim() || !username.trim() || !password}
-						className="stretch-112 flex min-h-[50px] items-center justify-center rounded-md bg-lime text-[15px] font-[750] uppercase tracking-[0.05em] text-carbon hover:brightness-110 disabled:opacity-50"
-					>
-						{busy ? "Signing in…" : "Sign in"}
-					</button>
+					<div className="flex flex-col gap-2.5">
+						{passwordSignIn ? (
+							<button
+								type="submit"
+								disabled={!!busy || !url.trim() || !username.trim() || !password}
+								className={primary}
+							>
+								{busy === "password" ? "Signing in…" : "Sign in"}
+							</button>
+						) : (
+							<button type="submit" disabled={!!busy || !url.trim()} className={primary}>
+								{ssoLabel}
+							</button>
+						)}
+						{passwordSignIn && sso && (
+							<button
+								type="button"
+								onClick={() => signIn("sso")}
+								disabled={!!busy || !url.trim()}
+								className="flex min-h-[46px] items-center justify-center rounded-md border border-edge bg-hover text-sm font-semibold disabled:opacity-50"
+							>
+								{ssoLabel}
+							</button>
+						)}
+					</div>
+					{busy === "sso" && (
+						<p role="status" className="text-[13px] text-muted">
+							Sign in on the page that opened in your browser.{" "}
+							<button type="button" onClick={() => api.cancelSso({})} className="font-semibold text-lime hover:text-lime-hi">
+								Cancel
+							</button>
+						</p>
+					)}
 				</form>
 			</main>
 		</div>

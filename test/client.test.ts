@@ -25,6 +25,12 @@ function fakeServer() {
 			issued++;
 			return json({ access_token: `a${issued}`, refresh_token: `r${issued}` });
 		}
+		if (path === "/api/auth/oauth2/token") {
+			const body = JSON.parse(String(init.body));
+			if (body.code !== "c1" || body.code_verifier !== "v1") return json({ message: "The login code is invalid." }, 401);
+			issued++;
+			return json({ access_token: `a${issued}`, refresh_token: `r${issued}` });
+		}
 		if (path === "/api/auth/refresh") {
 			if (!refreshAccepted || auth !== `Bearer r${issued}`) return json({}, 401);
 			issued++;
@@ -81,6 +87,28 @@ describe("findServer", () => {
 	});
 });
 
+describe("ssoReturnsToApps", () => {
+	/** A server that refuses a loopback login without a PKCE challenge, or one that passes it on to its identity provider. */
+	const server = (takesApps: boolean) => async (url: string, init?: RequestInit) => {
+		const asked = new URL(url);
+		expect(asked.pathname).toBe("/api/auth/oauth2/login");
+		expect(asked.searchParams.get("client_origin")).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+		expect(asked.searchParams.has("code_challenge")).toBe(false);
+		expect(init?.redirect).toBe("manual");
+		return takesApps
+			? json({ message: "A loopback client_origin requires a PKCE code_challenge." }, 400)
+			: new Response(null, { status: 302, headers: { Location: "https://idp.example/authorize" } });
+	};
+
+	test("a server that hands single sign-on back to apps turns down a login without PKCE", async () => {
+		expect(await GameVaultClient.ssoReturnsToApps("http://gv", server(true))).toBe(true);
+	});
+
+	test("one that doesn't sends it on to the identity provider", async () => {
+		expect(await GameVaultClient.ssoReturnsToApps("http://gv", server(false))).toBe(false);
+	});
+});
+
 describe("GameVaultClient", () => {
 	test("logs in and hands the tokens to the hook", async () => {
 		const server = fakeServer();
@@ -95,6 +123,26 @@ describe("GameVaultClient", () => {
 		const server = fakeServer();
 		const client = new GameVaultClient("http://gv", null, { onTokens() {} }, server.fetchImpl);
 		expect(client.login("sam", "wrong")).rejects.toThrow("Wrong username or password.");
+	});
+
+	test("trades a single sign-on's one-time code and verifier for tokens", async () => {
+		const server = fakeServer();
+		const saved: string[] = [];
+		const client = new GameVaultClient("http://gv", null, { onTokens: (t) => void saved.push(t.refresh_token) }, server.fetchImpl);
+		await expect(client.redeemLoginCode("c1", "not-it")).rejects.toThrow("The login code is invalid.");
+		await client.redeemLoginCode("c1", "v1");
+		expect(saved).toEqual(["r1"]);
+		expect((await client.me()).username).toBe("sam");
+	});
+
+	test("hands its tokens on to another client", async () => {
+		const server = fakeServer();
+		const saved: string[] = [];
+		const client = new GameVaultClient("http://gv", null, { onTokens: (t) => void saved.push(t.refresh_token) }, server.fetchImpl);
+		await new GameVaultClient("http://gv", null, { onTokens: (t) => client.adopt(t) }, server.fetchImpl).login("sam", "secret");
+		expect(saved).toEqual(["r1"]);
+		expect((await client.me()).username).toBe("sam");
+		expect(server.calls).toEqual(["GET /api/auth/basic/login", "GET /api/users/me"]);
 	});
 
 	test("refreshes once when the access token has expired, even for parallel requests", async () => {

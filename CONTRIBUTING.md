@@ -31,6 +31,8 @@ Hutch builds only for the OS it runs on, so a Windows or Linux build has to be m
 
 `./dev/seed.sh` starts a local GameVault server in Docker at http://127.0.0.1:18080 with a few tiny sample games and a test account (see the script for its name and password). One sample, Harbor Lights, is a real Mac app that writes a save each time it runs, so install, launch and save sync can be tried on macOS.
 
+The server also offers single sign-on through a stand-in identity provider at http://127.0.0.1:18081, which signs the test account in straight away, without a login page. This works from the machine that runs Docker, not from the Linux desktop container or the Windows VM.
+
 ## Testing on Linux
 
 `./dev/linux/up.sh` starts a Linux desktop in Docker (Debian 13, x64) next to the test server, and `./dev/linux/run.sh` runs the current code in it. Watch the screen at `vnc://127.0.0.1:5901`; inside the container the test server is `http://gamevault:8080`. Windows games run there through the umu-launcher that comes with Stault, and the Pixel Drift and Setup Quest samples are real Windows programs once the image is built, so installing and launching them can be tried without a game or a GPU.
@@ -50,7 +52,7 @@ They run on Linux, through WebdriverIO's [Electrobun service](https://github.com
 
 That runs them in a Linux container of their own (`stault-e2e`), on the same mix as `run.sh`: this checkout's JavaScript in the latest released Linux app. A failed check leaves a screenshot of the window in `e2e/failures/`.
 
-One spec file per area: signing in and out, the library, a game's page, installing and playing, downloads, settings and save sync. A new screen or flow gets its checks in the same change. What they can't reach is listed in `CLAUDE.md`: mainly the system's own file dialogs.
+One spec file per area: signing in and out, single sign-on, the library, a game's page, installing and playing, downloads, settings and save sync. A new screen or flow gets its checks in the same change. What they can't reach is listed in `CLAUDE.md`: mainly the system's own file dialogs.
 
 WebdriverIO runs on Node, so `e2e/` is a small npm project of its own (`package-lock.json`, `npm ci`), apart from the app's Hutch-managed dependencies. Nothing in `src/` exists for the tests' sake; they find things the way a user does, by label and text.
 

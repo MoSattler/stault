@@ -127,6 +127,27 @@ export class GameVaultClient {
 		return status;
 	}
 
+	/**
+	 * Whether the server hands a single sign-on back to an app on this device:
+	 * GameVault 17.3 and newer do, unless AUTH_OAUTH2_LOOPBACK_RETURN_ENABLED is
+	 * off. /api/status doesn't say, so this starts such a login without its PKCE
+	 * challenge. A server that takes them turns that down (400) before it sends
+	 * anyone to the identity provider; any other answers with that redirect.
+	 */
+	static async ssoReturnsToApps(serverUrl: string, fetchImpl: Fetch = fetch): Promise<boolean> {
+		const origin = encodeURIComponent("http://127.0.0.1:1");
+		let response: Response;
+		try {
+			response = await fetchImpl(`${serverUrl}/api/auth/oauth2/login?client_origin=${origin}`, {
+				redirect: "manual",
+				signal: AbortSignal.timeout(8000),
+			});
+		} catch {
+			throw new OfflineError(serverUrl);
+		}
+		return response.status === 400;
+	}
+
 	private async send(path: string, init: RequestInit): Promise<Response> {
 		try {
 			const response = await this.fetchImpl(`${this.serverUrl}${path}`, init);
@@ -139,8 +160,8 @@ export class GameVaultClient {
 		}
 	}
 
-	private async acceptTokens(response: Response): Promise<void> {
-		const tokens = (await response.json()) as ApiTokens;
+	/** Continues with a token pair, from this server or from another client's sign-in. */
+	async adopt(tokens: ApiTokens): Promise<void> {
 		this.accessToken = tokens.access_token;
 		this.refreshToken = tokens.refresh_token;
 		await this.hooks.onTokens(tokens);
@@ -153,7 +174,21 @@ export class GameVaultClient {
 		});
 		if (response.status === 401) throw new ApiError(401, "Wrong username or password.");
 		if (!response.ok) throw await errorFrom(response);
-		await this.acceptTokens(response);
+		await this.adopt(await response.json());
+	}
+
+	/**
+	 * Finishes a single sign-on: trades the one-time code the browser brought
+	 * back, with the PKCE verifier its login was started with (GameVault 17.3).
+	 */
+	async redeemLoginCode(code: string, verifier: string): Promise<void> {
+		const response = await this.send("/api/auth/oauth2/token", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ code, code_verifier: verifier }),
+		});
+		if (!response.ok) throw await errorFrom(response);
+		await this.adopt(await response.json());
 	}
 
 	/** Trades the refresh token for a new pair. Concurrent callers share one request. */
@@ -169,7 +204,7 @@ export class GameVaultClient {
 				throw new SignedOutError();
 			}
 			if (!response.ok) throw await errorFrom(response);
-			await this.acceptTokens(response);
+			await this.adopt(await response.json());
 		})().finally(() => {
 			this.refreshing = null;
 		});

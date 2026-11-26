@@ -11,8 +11,7 @@ import { startApp } from "./windows.ts";
 const seed = readFileSync(join(import.meta.dirname, "..", "dev", "seed.sh"), "utf8");
 const read = (name: string) => seed.match(new RegExp(`^${name}=(.*)$`, "m"))![1];
 
-/** STAULT_SERVER overrides the address where the server goes by another name, as inside a container. */
-export const SERVER = process.env.STAULT_SERVER ?? read("SERVER");
+export const SERVER = read("SERVER");
 export const USER = read("DEV_USER");
 export const PASSWORD = read("DEV_PASSWORD");
 

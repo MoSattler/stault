@@ -30,7 +30,7 @@ Browse, install, play and sync saves on Windows, macOS and Linux.
 - **Installs that take care of themselves.** A download queue with pause, resume and a bandwidth limit. It picks up where it left off after a restart.
 - **Play and keep count.** Stault launches the game and records your playtime on the server.
 - **Saves that follow you.** A newer save is fetched before the game starts, and yours is uploaded after you quit.
-- **Sign in once.** The session token is kept in the system keychain. The password is never stored.
+- **Sign in once.** With a password, or through your server's single sign-on in your web browser. The session token is kept in the system keychain. The password is never stored.
 
 <p align="center">
 <img src="docs/screenshots/game.webp" width="49%" alt="A game's page with its play button, playtime, save status and details">
@@ -39,7 +39,7 @@ Browse, install, play and sync saves on Windows, macOS and Linux.
 
 ## Install
 
-You need a GameVault server, version 17.0 or newer.
+You need a GameVault server, version 17.0 or newer. Single sign-on needs 17.3.
 
 **macOS** (Apple Silicon, macOS 14 or newer)
 
@@ -69,7 +69,7 @@ The builds are not code-signed. Windows warns before opening them. macOS refuses
 
 Stault is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
 
-Not built yet: Big Picture Mode, Steam shortcuts, single sign-on.
+Not built yet: Big Picture Mode, Steam shortcuts.
 
 ## Save sync
 

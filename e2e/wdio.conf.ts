@@ -3,9 +3,8 @@
 // how to run them.
 //
 //   STAULT_APP     the built app's launcher, <app>/bin/launcher (launcher.exe on Windows)
-//   STAULT_SERVER  the test server's address, where it is not the one in dev/seed.sh
 
-import { mkdirSync, mkdtempSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { browser } from "@wdio/globals";
@@ -52,6 +51,7 @@ export const config: WebdriverIO.Config = {
 		process.env.USERPROFILE = home;
 		process.env.LOCALAPPDATA = join(home, "AppData", "Local");
 		mkdirSync(process.env.LOCALAPPDATA, { recursive: true });
+		if (!WINDOWS) useCurlAsBrowser(home);
 	},
 	async beforeSession() {
 		if (WINDOWS) await startApp();
@@ -73,3 +73,23 @@ export const config: WebdriverIO.Config = {
 	reporters: ["spec"],
 	mochaOpts: { ui: "bdd", timeout: 60_000 },
 };
+
+/**
+ * Makes curl the web browser in a Linux home folder: single sign-on opens one,
+ * and the test server's identity provider signs the test account in by
+ * itself, so all a browser does there is follow redirects, with cookies. On
+ * Windows, e2e.yml does the same for the runner's account.
+ */
+function useCurlAsBrowser(home: string) {
+	const apps = join(home, ".local", "share", "applications");
+	mkdirSync(apps, { recursive: true });
+	writeFileSync(
+		join(apps, "curl-browser.desktop"),
+		'[Desktop Entry]\nType=Application\nName=curl\nExec=curl -fsSL -b "" -o /dev/null %u\nMimeType=x-scheme-handler/http;x-scheme-handler/https;\n',
+	);
+	mkdirSync(join(home, ".config"), { recursive: true });
+	writeFileSync(
+		join(home, ".config", "mimeapps.list"),
+		"[Default Applications]\nx-scheme-handler/http=curl-browser.desktop\nx-scheme-handler/https=curl-browser.desktop\n",
+	);
+}

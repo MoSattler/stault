@@ -1,6 +1,7 @@
 // Stand-in for the main process when the UI runs in a plain browser
 // (`hutch run hmr`). Sample library taken from design/Main.dc.html.
-// URL switches: ?platform=macos|windows|linux, ?signedout, ?savesoff (the server has save files switched off)
+// URL switches: ?platform=macos|windows|linux, ?signedout, ?savesoff (the server has save files switched off),
+// ?sso (the server also offers single sign-on), ?sso=only (it offers nothing else)
 
 import { canRun } from "../../shared/compat";
 import type {
@@ -12,6 +13,7 @@ import type {
 	Platform,
 	ProgressState,
 	SaveState,
+	SignInMethod,
 } from "../../shared/model";
 import type { Pushes } from "../../shared/rpc";
 import type { StaultApi } from "./index";
@@ -19,6 +21,9 @@ import type { StaultApi } from "./index";
 const GB = 1024 ** 3;
 const DAY = 86_400_000;
 const params = new URLSearchParams(location.search);
+const methods: SignInMethod[] = !params.has("sso")
+	? ["basic"]
+	: params.get("sso") === "only" ? ["sso"] : ["basic", "sso"];
 const ago = (days: number) => new Date(Date.now() - days * DAY).toISOString();
 
 let nextVersionId = 100;
@@ -266,18 +271,30 @@ export function createMockApi(): StaultApi {
 		if (gameId === 9) params.set("picked", "1");
 	}
 
+	let cancelSso = () => {};
+
 	return {
 		onPush(type, handler) {
 			handlers[type] = handler as never;
 		},
 		getState: () => later(state, 0),
 		checkServer: ({ url }) =>
-			later(/\S+\.\S+/.test(url) ? { ok: true, serverUrl: /^https?:/.test(url) ? url : `https://${url}`, version: "17.2.0" } : { ok: false, error: "No GameVault server answered at that address." }, 400),
+			later(/\S+\.\S+/.test(url) ? { ok: true, serverUrl: /^https?:/.test(url) ? url : `https://${url}`, version: "17.3.0", methods } : { ok: false, error: "No GameVault server answered at that address." }, 400),
 		async signIn({ serverUrl, password, username }) {
 			await later(null, 600);
 			if (password === "wrong") throw new Error("Wrong username or password.");
 			patch({ session: { ...session, serverUrl, username } });
 		},
+		async signInWithSso({ serverUrl }) {
+			// Stands in for the browser: the user is back after four seconds, unless they cancel first.
+			const signedIn = await new Promise<boolean>((resolve) => {
+				cancelSso = () => resolve(false);
+				setTimeout(() => resolve(true), 4000);
+			});
+			if (signedIn) patch({ session: { ...session, serverUrl } });
+			return signedIn;
+		},
+		cancelSso: async () => cancelSso(),
 		async signOut() {
 			patch({ session: null });
 		},

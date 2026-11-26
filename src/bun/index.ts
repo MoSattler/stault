@@ -92,6 +92,7 @@ const session: Session = new Session(
 			await downloads.clear();
 			installs.scan([], null);
 		},
+		openBrowser: (url) => Utils.openExternal(url),
 	},
 );
 
@@ -242,6 +243,13 @@ const rpc = BrowserView.defineRPC<AppRPC>({
 			getState: () => getState(),
 			checkServer: ({ url }) => session.check(url),
 			signIn: (input) => session.signIn(input),
+			signInWithSso: async (input) => {
+				const signedIn = await session.signInWithSso(input);
+				// The browser is in front. Once the sign-in is through, Stault is what the user wants to see.
+				if (signedIn) win.focus();
+				return signedIn;
+			},
+			cancelSso: () => session.cancelSso(),
 			signOut: () => session.signOut(),
 			refreshLibrary: () => session.refreshLibrary(),
 			getGame: ({ gameId }) => library.detail(session.client, gameId),
