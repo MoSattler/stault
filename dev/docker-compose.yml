@@ -2,7 +2,9 @@
 # Start with ./dev/seed.sh, which also creates the sample games and a test user.
 services:
   gamevault:
-    image: phalcode/gamevault-backend:17.2.0
+    # 17.3.0 is the first version whose single sign-on returns to an app. Until
+    # it is released, this is the development build that has it (x64 only).
+    image: phalcode/gamevault-backend:unstable@sha256:8a7dcba73a9476c2e111f4499e1b0561bdad658171f827c2299ebef9d64b1bc5
     environment:
       DB_SYSTEM: SQLITE
       # Without a fixed seed the server signs everyone out each time it restarts.
@@ -10,6 +12,15 @@ services:
       SERVER_ACCOUNT_ACTIVATION_DISABLED: "true"
       # Save sync needs the server to accept save files; they are off by default.
       SAVEFILES_ENABLED: "true"
+      # Single sign-on through the stand-in identity provider below. The browser
+      # reaches it on this machine, the server inside Docker.
+      AUTH_OAUTH2_ENABLED: "true"
+      AUTH_OAUTH2_CLIENT_ID: stault-dev
+      AUTH_OAUTH2_CLIENT_SECRET: stault-dev-only
+      AUTH_OAUTH2_AUTH_URL: http://127.0.0.1:18081/default/authorize
+      AUTH_OAUTH2_TOKEN_URL: http://sso:8080/default/token
+      AUTH_OAUTH2_USERINFO_URL: http://sso:8080/default/userinfo
+      AUTH_OAUTH2_CALLBACK_URL: http://127.0.0.1:18080/api/auth/oauth2/login
     volumes:
       - ./.data/files:/files
       - ./.data/media:/media
@@ -17,3 +28,15 @@ services:
       - ./.data/savefiles:/savefiles
     ports:
       - 127.0.0.1:18080:8080
+
+  # Stand-in identity provider. It signs in the test user seed.sh creates
+  # ("stault") straight away, without a login page, so a browser only has to
+  # follow its redirects. The end-to-end tests rely on that.
+  sso:
+    image: ghcr.io/navikt/mock-oauth2-server:7.0.2
+    environment:
+      JSON_CONFIG: >-
+        {"interactiveLogin": false, "tokenCallbacks": [{"issuerId": "default", "requestMappings":
+        [{"requestParam": "grant_type", "match": ".*", "claims": {"sub": "stault", "preferred_username": "stault"}}]}]}
+    ports:
+      - 127.0.0.1:18081:8080

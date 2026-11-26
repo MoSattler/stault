@@ -14,7 +14,9 @@ import { getState } from "../src/bun/state";
 const seed = readFileSync(join(import.meta.dir, "..", "dev", "seed.sh"), "utf8");
 const read = (name: string) => seed.match(new RegExp(`^${name}=(.*)$`, "m"))![1];
 const SERVER = read("SERVER");
-const up = await fetch(`${SERVER}/api/status`).then((r) => r.ok, () => false);
+const status = await fetch(`${SERVER}/api/status`).then((r) => r.json(), () => null);
+const up = !!status;
+const sso: boolean = up && status.available_authentication_methods?.includes("sso");
 
 const dir = mkdtempSync(join(tmpdir(), "stault-session-"));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -27,6 +29,8 @@ function boot() {
 		delete: async (name) => void stored.delete(name),
 	};
 	const events: string[] = [];
+	/** What the system browser does with a page it is asked to open. */
+	const browser = { open: (_url: string) => {} };
 	const make = () => {
 		const settings = new SettingsFile(join(dir, "settings.json"), {
 			account: null, lastSignIn: null, deviceName: "Test rig", libraryFolders: [], speedLimitKib: 0, saveSync: true,
@@ -37,9 +41,35 @@ function boot() {
 		return new Session(settings, secrets, media, library, {
 			signedIn: (url) => void events.push(`in ${url}`),
 			signingOut: async () => void events.push("out"),
+			openBrowser: (url) => {
+				browser.open(url);
+				return true;
+			},
 		});
 	};
-	return { make, stored, events };
+	return { make, stored, events, browser };
+}
+
+/**
+ * Plays the system browser through a single sign-on: it follows the redirects
+ * from the server to its identity provider, which signs the test account in by
+ * itself, and back to Stault. Keeps cookies, which the server's login needs.
+ */
+async function browse(url: string) {
+	const cookies = new Map<string, string>();
+	let next: string | null = url;
+	for (let hop = 0; next && hop < 10; hop++) {
+		const response: Response = await fetch(next, {
+			redirect: "manual",
+			headers: { Cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; ") },
+		});
+		for (const line of response.headers.getSetCookie()) {
+			const [name, value] = line.split(";")[0].split(/=(.*)/);
+			cookies.set(name, value);
+		}
+		const location = response.headers.get("location");
+		next = location ? new URL(location, next).href : null;
+	}
 }
 
 test.skipIf(!up)("signs in, loads the library, restores on the next start, and signs out", async () => {
@@ -82,4 +112,31 @@ test.skipIf(!up)("signs in, loads the library, restores on the next start, and s
 	expect(getState().games).toEqual([]);
 	expect(stored.size).toBe(0);
 	expect(getState().lastSignIn).toEqual({ serverUrl: SERVER, username: read("DEV_USER") });
+});
+
+test.skipIf(!sso)("signs in through single sign-on in the browser, and not at all when called off", async () => {
+	const { make, stored, events, browser } = boot();
+	const session = make();
+	expect(await session.check(SERVER)).toMatchObject({ ok: true, methods: ["basic", "sso"] });
+
+	// The user gives up while the browser is still open.
+	browser.open = () => setTimeout(() => session.cancelSso(), 50);
+	expect(await session.signInWithSso({ serverUrl: SERVER })).toBe(false);
+	expect(getState().session).toBeNull();
+	expect(stored.size).toBe(0);
+	expect(events).toEqual([]);
+
+	browser.open = (url) => void browse(url);
+	expect(await session.signInWithSso({ serverUrl: SERVER })).toBe(true);
+	expect(getState().session).toMatchObject({ serverUrl: SERVER, username: read("DEV_USER") });
+	expect(getState().games.length).toBeGreaterThan(0);
+	expect([...stored.keys()]).toEqual([`${SERVER}#${read("DEV_USER")}`]);
+	expect(events).toEqual([`in ${SERVER}`]);
+
+	// The stored token is the one that keeps the session going after a restart.
+	const restored = make();
+	await restored.restore();
+	expect(getState().session?.username).toBe(read("DEV_USER"));
+	await restored.signOut();
+	expect(stored.size).toBe(0);
 });

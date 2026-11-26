@@ -44,6 +44,9 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - There is no macOS game type. A Mac build is indexed as `UNDETECTABLE`.
 - The spec is served by any server at `/api/docs-json`.
 - Save files (`/api/savefiles/user/{id}/game/{id}`) are off unless the server sets `SAVEFILES_ENABLED=true`; a disabled endpoint answers `405`. Only the newest save can be fetched. `HEAD` returns its name, `<upload ms>_<installation id>.zip`, without the body. `DELETE` answers `401` even with a valid token.
+- Single sign-on (`src/bun/sso.ts`) can return to an app from 17.3.0 on (RFC 8252): `GET /api/auth/oauth2/login?client_origin=http://127.0.0.1:<port>&code_challenge=…&code_challenge_method=S256` ends in the browser at `http://127.0.0.1:<port>/?code=…`, and `POST /api/auth/oauth2/token` with `{code, code_verifier}` returns the tokens. A code works once, for 60 s. `localhost` is refused. Older servers end the login in their own web UI instead, so Stault offers SSO only from 17.3. A 17.3 server with `AUTH_OAUTH2_LOOPBACK_RETURN_ENABLED=false` does the same, and `/api/status` doesn't say so: Stault waits until the user cancels.
+- `/api/status` lists `sso` but not whether it returns to apps. `ssoReturnsToApps` in `gamevault/client.ts` asks with a loopback login that lacks its PKCE challenge: 400 means yes, the redirect to the identity provider means no.
+- Until 17.3.0 is released, the test server runs the `unstable` build that has it, pinned by digest (x64 only, emulated on Apple Silicon). Its stand-in identity provider (port 18081) signs the test account in by itself, without a login page.
 
 ## Save sync (`src/bun/saves/`)
 
@@ -54,7 +57,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 ## Working on and checking the UI
 
-- `hutch run hmr` (preview config `ui` in `.claude/launch.json`) serves the UI on mock data at http://localhost:5173. Switches: `?platform=macos|windows|linux`, `?signedout`.
+- `hutch run hmr` (preview config `ui` in `.claude/launch.json`) serves the UI on mock data at http://localhost:5173. Switches: `?platform=macos|windows|linux`, `?signedout`, `?sso` (the server also offers single sign-on), `?sso=only`.
 - For the real app, start the test server with `./dev/seed.sh` and run `hutch run dev:hmr`. Webview console output is forwarded to the terminal.
 - Screen-control tools cannot type into the password field. `hutch dev/sign-in.ts "<data folder>"` signs the dev build into the test server instead; the app prints its data folder on start.
 - When the app window is covered by another window (or the browser pane is hidden), CSS animations pause, so a screenshot can show a page still faded out. The content is there; check the accessibility tree or bring the window forward.
@@ -74,6 +77,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 - WebdriverIO drives the built app's real window, on Linux and on Windows; `.github/workflows/e2e.yml` runs both on pull requests. Not on macOS: nothing reaches WKWebView (`@wdio/electrobun-service` only reaches a CEF build). `./dev/linux/e2e.sh` runs the Linux side from a Mac in the container `stault-e2e`; the Windows side runs on CI only.
 - Linux: `@wdio/electrobun-service` starts the app through WebKit's WebDriver. Windows: the tests start the app themselves (`e2e/windows.ts`) and Edge's WebDriver attaches to its WebView2 through a debug port. The service would give every launch a new data folder of its own and can't start the app again, so nothing could be checked across a restart.
 - On the Windows runner every process runs elevated, and WebView2 there ignores `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` and the per-user policy. It opens the debug port for the machine policy `e2e.yml` sets (`HKLM\SOFTWARE\Policies\Microsoft\Edge\WebView2\AdditionalBrowserArguments`, entry `bun.exe`, which hosts the webview). The session must be classic WebDriver: over BiDi it lands on a blank page instead of the app's.
+- Single sign-on opens the system's browser, which is curl in the tests: each Linux spec's home folder makes it the default for `http` (`wdio.conf.ts`), and `e2e.yml` does it for the Windows runner's account. It only follows redirects, since the identity provider signs in by itself. `e2e.sh` forwards ports 18080 and 18081 into its container, so the tests reach the server at the same addresses as on CI.
 - The Windows runner can only run the Linux test server in Docker inside WSL2. `e2e.yml` sets that up and runs `seed.sh` there unchanged, with MinGW so the Windows samples are real programs. WSL stops an idle distribution after 15 s, so `.wslconfig` turns that off first. `.gitattributes` keeps shell scripts LF in a Windows checkout.
 - `e2e/` is its own npm project on Node (`npm ci`, `package-lock.json`), not part of `hutch install`. The WebdriverIO packages are pinned to the versions the service depends on; raise them together.
 - The tests must not need anything from `src/`: no test ids, hooks or test-only branches. Select by label, role and text.

@@ -121,6 +121,17 @@ jobs:
           New-Item -Force $key | Out-Null
           New-ItemProperty -Force -Path $key -Name bun.exe -Value "--remote-debugging-port=9222" | Out-Null
 
+      # Single sign-on opens the system's web browser. Here that is curl, which
+      # follows the server's redirects as a browser would: the test server's
+      # identity provider signs the test account in by itself. A browser the
+      # account chose itself would come first; the log shows if there is one.
+      - name: Make curl the web browser
+        run: |
+          $key = "HKCU:\Software\Classes\http\shell\open\command"
+          New-Item -Force $key | Out-Null
+          Set-Item $key -Value "`"$env:SystemRoot\System32\curl.exe`" -fsSL -b `"`" -o NUL `"%1`""
+          Get-ItemProperty -ErrorAction SilentlyContinue "HKCU:\Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice" | Select-Object ProgId
+
       - name: Install Hutch
         run: |
           & ([scriptblock]::Create((irm https://hutch.blackboard.sh/hutch/install.ps1))) -Version $env:HUTCH_VERSION -NoModifyPath

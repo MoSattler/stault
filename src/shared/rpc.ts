@@ -19,6 +19,12 @@ export type Requests = {
 		username: string;
 		password: string;
 	}>;
+	/**
+	 * Opens the server's login page in the system browser and waits for the
+	 * user. True once signed in, false after `cancelSso`.
+	 */
+	signInWithSso: Req<{ serverUrl: string }, boolean>;
+	cancelSso: Req<{}>;
 	signOut: Req<{}>;
 	refreshLibrary: Req<{}>;
 	getGame: Req<{ gameId: number }, GameDetail>;

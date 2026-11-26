@@ -191,11 +191,16 @@ export interface AppState {
 	};
 }
 
+/** A way to sign in: with a password, or through the server's identity provider (single sign-on). */
+export type SignInMethod = "basic" | "sso";
+
 export interface ServerCheck {
 	ok: boolean;
 	/** The full address that answered, e.g. "http://nas.local:8080". */
 	serverUrl?: string;
 	version?: string;
+	/** How Stault can sign in to this server. */
+	methods?: SignInMethod[];
 	error?: string;
 }
 
