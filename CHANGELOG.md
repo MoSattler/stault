@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.14.0](https://github.com/MoSattler/stault/compare/v0.13.0...v0.14.0) (2026-11-26)
+
+
+### Features
+
+* sign in through the server's single sign-on ([#65](https://github.com/MoSattler/stault/issues/65)) ([5dfbb18](https://github.com/MoSattler/stault/commit/5dfbb18a2f84aef7aa2692311afe151d16137b4c))
+
+
+### Reverts
+
+* build for Intel Macs ([#63](https://github.com/MoSattler/stault/issues/63)) ([f10cf96](https://github.com/MoSattler/stault/commit/f10cf96f99f8e4867080579661158f76af01fae5))
+
 ## [0.13.0](https://github.com/MoSattler/stault/compare/v0.12.0...v0.13.0) (2026-11-23)
 
 
