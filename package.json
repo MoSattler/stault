@@ -1,6 +1,6 @@
 {
 	"name": "stault",
-	"version": "0.13.0",
+	"version": "0.14.0",
 	"description": "Steam-style desktop client for a self-hosted GameVault server",
 	"license": "MIT",
 	"private": true,
