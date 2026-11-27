@@ -47,13 +47,15 @@ You need a GameVault server, version 17.0 or newer. Single sign-on needs 17.3.
 brew install --cask mosattler/tap/stault
 ```
 
+Or download it from the [latest release](https://github.com/MoSattler/stault/releases/latest).
+
 **Linux** (x64)
 
 ```bash
 curl -fsSL https://github.com/MoSattler/stault/releases/latest/download/linux-x64-Stault-Setup.tar.gz | tar -xz -C /tmp && /tmp/installer
 ```
 
-This installs Stault into `~/.local/share` without root, adds it to the application menu and starts it. Run it again to upgrade.
+This installs Stault into `~/.local/share` without root, adds it to the application menu and starts it. Run it again to upgrade. Or download it from the [latest release](https://github.com/MoSattler/stault/releases/latest).
 
 **Windows**: download the installer from the [latest release](https://github.com/MoSattler/stault/releases/latest).
 
