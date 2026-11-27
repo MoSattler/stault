@@ -27,6 +27,11 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
   ```
 - Never replace or delete a file there: merged descriptions still point at it. A changed image gets a new name.
 
+## Website (`docs/`)
+
+- GitHub Pages publishes `docs/` from `main` as it is: https://mosattler.github.io/stault/. One page (`index.html`), no build step; preview config `site` in `.claude/launch.json`.
+- The page repeats the README's features and install steps. Change both together.
+
 ## Architecture
 
 - `src/bun/` is the main process and owns everything privileged: tokens, server calls, files, downloads, child processes. `index.ts` wires the services together and is the only file that imports `electrobun/main`, so everything else can be unit-tested.

@@ -89,6 +89,14 @@ Versions come from the commit messages on `main`, which follow [Conventional Com
 
 The builds are not code-signed; see [Install](README.md#install) for what Windows and macOS do with them.
 
-## README screenshots
+## Website
 
-The images in `docs/screenshots/` are taken from the UI in a browser (`hutch run hmr`, `?platform=windows`) at 1280×800, with the sample games in `src/mainview/api/mock.ts` swapped for real ones for the capture.
+`docs/` is the website, https://mosattler.github.io/stault/. GitHub Pages publishes the folder from `main` as it is (Settings → Pages: the branch `main`, the folder `/docs`), so there is nothing to build. The page repeats the README's features and install steps; change both together. To preview it at http://localhost:4000:
+
+```sh
+python3 -m http.server -d docs 4000
+```
+
+## Screenshots
+
+The images in `docs/screenshots/`, shown in the README and on the website, are taken from the UI in a browser (`hutch run hmr`, `?platform=windows`) at 1280×800, with the sample games in `src/mainview/api/mock.ts` swapped for real ones for the capture.

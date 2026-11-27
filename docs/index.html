@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Stault: the launcher your GameVault server deserves</title>
+		<meta name="description" content="A Steam-style desktop client for your self-hosted GameVault library. Browse, install, play and sync saves on Windows, macOS and Linux." />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#0b0c0e" />
+		<meta property="og:title" content="Stault" />
+		<meta property="og:description" content="The launcher your GameVault server deserves. Browse, install, play and sync saves on Windows, macOS and Linux." />
+		<meta property="og:image" content="https://mosattler.github.io/stault/screenshots/library.webp" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<link rel="icon" href="icon.png" sizes="256x256" />
+		<link rel="icon" href="icon.svg" type="image/svg+xml" />
+		<link rel="apple-touch-icon" href="icon.png" />
+		<link rel="preload" href="fonts/archivo-latin-wdth-normal.woff2" as="font" type="font/woff2" crossorigin />
+		<style>
+			/* The app's "Vault" look: colours and fonts from src/mainview/index.css. */
+			@font-face {
+				font-family: "Archivo";
+				font-style: normal;
+				font-weight: 100 900;
+				font-stretch: 62% 125%;
+				font-display: swap;
+				src: url("fonts/archivo-latin-wdth-normal.woff2") format("woff2");
+			}
+			@font-face {
+				font-family: "JetBrains Mono";
+				font-style: normal;
+				font-weight: 100 800;
+				font-display: swap;
+				src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+			}
+
+			:root {
+				color-scheme: dark;
+				--carbon: #0b0c0e;
+				--panel: #111316;
+				--raised: #16191d;
+				--hover: #1d2126;
+				--line: #262b31;
+				--edge: #323840;
+				--faint: #7d858f;
+				--muted: #a9b0b8;
+				--soft: #c9ced4;
+				--ink: #eceef0;
+				--lime: #c5f04a;
+				--lime-hi: #e2ff8a;
+				--amber: #ffb648;
+				--sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+				--mono: "JetBrains Mono", ui-monospace, monospace;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+			html {
+				background: var(--carbon);
+			}
+			@media (prefers-reduced-motion: no-preference) {
+				html {
+					scroll-behavior: smooth;
+				}
+			}
+			body {
+				margin: 0;
+				color: var(--muted);
+				font: 400 1rem/1.6 var(--sans);
+				-webkit-font-smoothing: antialiased;
+			}
+			h1,
+			h2,
+			h3,
+			p,
+			ul {
+				margin: 0;
+			}
+			h1,
+			h2,
+			h3 {
+				color: var(--ink);
+				font-weight: 800;
+				font-stretch: 125%;
+				line-height: 1.05;
+				text-wrap: balance;
+			}
+			img,
+			svg {
+				display: block;
+			}
+			img {
+				max-width: 100%;
+				height: auto;
+			}
+			a {
+				color: var(--ink);
+				text-decoration-color: var(--edge);
+				text-underline-offset: 0.2em;
+			}
+			a:hover {
+				text-decoration-color: var(--lime);
+			}
+			code {
+				color: var(--soft);
+				font-family: var(--mono);
+				font-size: 0.85em;
+				/* JetBrains Mono joins "--" and "&&" into ligatures, which would misquote commands. */
+				font-variant-ligatures: none;
+			}
+			:focus-visible {
+				outline: 2px solid var(--lime);
+				outline-offset: 3px;
+				border-radius: 4px;
+			}
+			.wrap {
+				width: min(1120px, 100% - 48px);
+				margin-inline: auto;
+			}
+
+			.top {
+				position: sticky;
+				top: 0;
+				z-index: 1;
+				border-bottom: 1px solid var(--line);
+				background: rgb(11 12 14 / 0.82);
+				-webkit-backdrop-filter: blur(14px);
+				backdrop-filter: blur(14px);
+			}
+			.top .wrap {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 24px;
+				height: 60px;
+			}
+			.brand {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: var(--ink);
+				text-decoration: none;
+				font-weight: 800;
+				font-stretch: 125%;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+			.brand svg {
+				color: var(--lime);
+			}
+			.top nav {
+				display: flex;
+				gap: 28px;
+			}
+			.top nav a {
+				color: var(--muted);
+				text-decoration: none;
+				font-size: 0.8125rem;
+				font-weight: 700;
+				font-stretch: 112%;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+			.top nav a:hover {
+				color: var(--ink);
+			}
+			@media (max-width: 640px) {
+				.top nav a:not(:last-child) {
+					display: none;
+				}
+			}
+
+			.hero {
+				position: relative;
+				overflow: hidden;
+				padding-top: clamp(56px, 10vw, 112px);
+				text-align: center;
+			}
+			/* The lime glow of the app icon, behind the screenshot. */
+			.hero::before {
+				content: "";
+				position: absolute;
+				left: 50%;
+				bottom: -10%;
+				width: 120%;
+				height: 75%;
+				transform: translateX(-50%);
+				background: radial-gradient(closest-side, rgb(197 240 74 / 0.13), transparent);
+				pointer-events: none;
+			}
+			.hero h1 {
+				max-width: 13em;
+				margin-inline: auto;
+				font-size: clamp(2rem, 5.6vw, 4.25rem);
+				letter-spacing: -0.015em;
+			}
+			.lede {
+				max-width: 36em;
+				margin-top: 20px;
+				color: var(--soft);
+				font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+			}
+			.hero .lede {
+				margin-inline: auto;
+			}
+			.actions {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: 12px;
+				margin-top: 36px;
+			}
+			.button {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				min-height: 48px;
+				padding: 0 22px;
+				border: 1px solid var(--edge);
+				border-radius: 8px;
+				background: var(--raised);
+				color: var(--ink);
+				text-decoration: none;
+				font-size: 0.875rem;
+				font-weight: 700;
+				font-stretch: 112%;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+			.button:hover {
+				background: var(--hover);
+			}
+			.button.primary {
+				border-color: var(--lime);
+				background: var(--lime);
+				color: var(--carbon);
+			}
+			.button.primary:hover {
+				border-color: var(--lime-hi);
+				background: var(--lime-hi);
+			}
+			.tags,
+			.meta {
+				color: var(--faint);
+				font: 500 0.75rem/1.5 var(--mono);
+				letter-spacing: 0.08em;
+			}
+			.tags {
+				margin-top: 20px;
+				text-transform: uppercase;
+			}
+			.hero-shot {
+				position: relative;
+				width: min(1240px, 100% - 16px);
+				margin: clamp(40px, 6vw, 64px) auto 0;
+			}
+
+			.section {
+				padding-top: clamp(80px, 11vw, 136px);
+			}
+			.section h2 {
+				font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+				letter-spacing: -0.01em;
+			}
+			.grid {
+				display: grid;
+				gap: 16px;
+				margin-top: 40px;
+			}
+			.features {
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+			}
+			.card {
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				padding: 24px;
+				border: 1px solid var(--line);
+				border-radius: 12px;
+				background: var(--panel);
+				font-size: 0.9375rem;
+			}
+			.card h3 {
+				font-size: 1.0625rem;
+				font-weight: 700;
+				font-stretch: 112%;
+				line-height: 1.3;
+			}
+			.pair {
+				display: grid;
+				gap: 8px 24px;
+				margin-top: 48px;
+			}
+			@media (min-width: 760px) {
+				.pair {
+					grid-template-columns: 1fr 1fr;
+				}
+			}
+
+			.split {
+				display: grid;
+				gap: 40px 64px;
+			}
+			@media (min-width: 900px) {
+				.split {
+					grid-template-columns: 1fr 1.15fr;
+				}
+			}
+			.note {
+				max-width: 36em;
+				margin-top: 24px;
+				padding-left: 16px;
+				border-left: 2px solid var(--edge);
+				font-size: 0.9375rem;
+			}
+			.checks {
+				display: grid;
+				gap: 22px;
+				padding: 0;
+				list-style: none;
+			}
+			.checks li {
+				display: grid;
+				grid-template-columns: 20px 1fr;
+				gap: 14px;
+			}
+			.checks svg {
+				margin-top: 3px;
+				color: var(--lime);
+			}
+			.checks strong {
+				display: block;
+				color: var(--ink);
+				font-weight: 700;
+				font-stretch: 112%;
+			}
+
+			@media (min-width: 900px) {
+				.platforms {
+					grid-template-columns: repeat(3, 1fr);
+				}
+			}
+			.platform {
+				gap: 16px;
+			}
+			.platform h3 {
+				font-size: 1.5rem;
+				font-weight: 800;
+				font-stretch: 125%;
+			}
+			.platform .meta {
+				margin-top: -10px;
+			}
+			.platform .button {
+				align-self: flex-start;
+			}
+			.platform .runs {
+				margin-top: auto;
+				padding-top: 16px;
+				border-top: 1px solid var(--line);
+			}
+			.runs strong {
+				color: var(--ink);
+			}
+			.cmd {
+				padding: 14px 16px;
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				background: var(--carbon);
+			}
+			.cmd code {
+				display: block;
+				color: var(--ink);
+				font-size: 0.8125rem;
+				line-height: 1.6;
+				white-space: pre-wrap;
+				overflow-wrap: anywhere;
+			}
+			/* Floats in the corner, so only the command's first line wraps around it. */
+			.copy {
+				float: right;
+				margin: -6px -8px 4px 12px;
+				padding: 4px 8px;
+				border: 1px solid var(--edge);
+				border-radius: 6px;
+				background: var(--raised);
+				color: var(--muted);
+				font: 500 0.6875rem/1.4 var(--mono);
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				cursor: pointer;
+			}
+			.copy:hover {
+				background: var(--hover);
+				color: var(--ink);
+			}
+			.alpha {
+				margin-top: 24px;
+				padding: 20px 24px;
+				border: 1px solid rgb(255 182 72 / 0.32);
+				border-radius: 12px;
+				background: rgb(255 182 72 / 0.06);
+				color: var(--soft);
+			}
+			.alpha strong {
+				color: var(--amber);
+			}
+
+			footer {
+				margin-top: clamp(96px, 12vw, 160px);
+				border-top: 1px solid var(--line);
+			}
+			footer .wrap {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				justify-content: space-between;
+				gap: 16px 32px;
+				padding: 32px 0 48px;
+				font-size: 0.875rem;
+			}
+			footer nav {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 8px 24px;
+			}
+			footer nav a {
+				color: var(--muted);
+				text-decoration: none;
+			}
+			footer nav a:hover {
+				color: var(--ink);
+			}
+		</style>
+	</head>
+	<body>
+		<header class="top">
+			<div class="wrap">
+				<a class="brand" href="./">
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="12" cy="12" r="4.2" /><path d="M12 5.8v2M12 16.2v2M5.8 12h2M16.2 12h2" /></svg>
+					Stault
+				</a>
+				<nav aria-label="Sections">
+					<a href="#features">Features</a>
+					<a href="#saves">Save sync</a>
+					<a href="#install">Install</a>
+					<a href="https://github.com/MoSattler/stault">GitHub</a>
+				</nav>
+			</div>
+		</header>
+
+		<main>
+			<section class="hero">
+				<div class="wrap">
+					<h1>The launcher your GameVault server deserves.</h1>
+					<p class="lede">A Steam-style desktop client for your self-hosted game library. Browse, install, play and sync saves on Windows, macOS and Linux.</p>
+					<div class="actions">
+						<a class="button primary" href="#install">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v12M7.5 12.5L12 17l4.5-4.5" /></svg>
+							Install Stault
+						</a>
+						<a class="button" href="https://github.com/MoSattler/stault">View on GitHub</a>
+					</div>
+					<p class="tags">Free and open source · MIT · Alpha</p>
+				</div>
+				<img class="hero-shot" src="screenshots/library.webp" width="2752" height="1792" fetchpriority="high" alt="The Stault library: a game to jump back into, recently added games and the full list in the sidebar" />
+			</section>
+
+			<section id="features" class="section">
+				<div class="wrap">
+					<h2>Features</h2>
+					<div class="grid features">
+						<article class="card">
+							<h3>Your whole library</h3>
+							<p>Recently played, recently added, search, and a page per game with the art and details from your server.</p>
+						</article>
+						<article class="card">
+							<h3>Installs that take care of themselves</h3>
+							<p>A download queue with pause, resume and a bandwidth limit. It picks up where it left off after a restart.</p>
+						</article>
+						<article class="card">
+							<h3>Play and keep count</h3>
+							<p>Stault launches the game and records your playtime on the server.</p>
+						</article>
+						<article class="card">
+							<h3>Sign in once</h3>
+							<p>With a password, or through your server's single sign-on in your web browser. The session token is kept in the system keychain. The password is never stored.</p>
+						</article>
+					</div>
+					<div class="pair">
+						<img src="screenshots/game.webp" width="2752" height="1792" loading="lazy" decoding="async" alt="A game's page with its play button, playtime, save status and details" />
+						<img src="screenshots/downloads.webp" width="2752" height="1792" loading="lazy" decoding="async" alt="The download queue with one game downloading and two completed" />
+					</div>
+				</div>
+			</section>
+
+			<section id="saves" class="section">
+				<div class="wrap split">
+					<div>
+						<h2>Save sync</h2>
+						<p class="lede">Before a game starts, Stault fetches a newer save from the server. After you quit, it uploads yours.</p>
+						<p class="note">The server has to accept save files: set <code>SAVEFILES_ENABLED=true</code> on it and give <code>/savefiles</code> a volume. They are off by default.</p>
+					</div>
+					<ul class="checks">
+						<li>
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+							<p><strong>Asks when both sides changed.</strong> When saves changed on two devices, Stault asks which to keep. It never overwrites a save it has not seen on either side.</p>
+						</li>
+						<li>
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+							<p><strong>Finds the save files.</strong> <a href="https://github.com/mtkennerly/ludusavi">Ludusavi</a>, bundled with Stault, finds them. For a game it doesn't list, choose the files on the game's page.</p>
+						</li>
+						<li>
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+							<p><strong>Works offline.</strong> A game starts with the saves on the device, and saves made meanwhile are uploaded once the server is back.</p>
+						</li>
+						<li>
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+							<p><strong>Same format as the official client.</strong> A Windows build's saves move between it and Stault, and between Windows and Linux. A Mac build's saves only move between Macs.</p>
+						</li>
+					</ul>
+				</div>
+			</section>
+
+			<section id="install" class="section">
+				<div class="wrap">
+					<h2>Install</h2>
+					<p class="lede">You need a GameVault server, version 17.0 or newer. Single sign-on needs 17.3.</p>
+					<div class="grid platforms">
+						<article class="card platform">
+							<h3>macOS</h3>
+							<p class="meta">Apple Silicon · macOS 14 or newer</p>
+							<div class="cmd"><code>brew install --cask mosattler/tap/stault</code></div>
+							<p>Or <a href="https://github.com/MoSattler/stault/releases/latest/download/macos-arm64-Stault.dmg">download the DMG</a>. macOS refuses a copy taken straight from it until you run <code>xattr -dr com.apple.quarantine /Applications/Stault.app</code> once; the Homebrew cask does this for you.</p>
+							<p class="runs"><strong>Plays</strong> games whose files contain a Mac <code>.app</code>. Windows builds are not supported.</p>
+						</article>
+						<article class="card platform">
+							<h3>Linux</h3>
+							<p class="meta">x64</p>
+							<div class="cmd"><code>curl -fsSL https://github.com/MoSattler/stault/releases/latest/download/linux-x64-Stault-Setup.tar.gz | tar -xz -C /tmp &amp;&amp; /tmp/installer</code></div>
+							<p>This installs Stault into <code>~/.local/share</code> without root, adds it to the application menu and starts it. Run it again to upgrade.</p>
+							<p class="runs"><strong>Plays</strong> Linux builds natively, and Windows builds through <a href="https://github.com/Open-Wine-Components/umu-launcher">umu-launcher</a>, which comes with Stault and needs Python 3. Ubuntu 24.04 and later may also need umu-launcher's own package; Stault tells you if so.</p>
+						</article>
+						<article class="card platform">
+							<h3>Windows</h3>
+							<p class="meta">x64</p>
+							<a class="button primary" href="https://github.com/MoSattler/stault/releases/latest/download/win-x64-Stault-Setup.zip">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v12M7.5 12.5L12 17l4.5-4.5" /></svg>
+								Download installer
+							</a>
+							<p>Unzip it and run <code>Stault-Setup.exe</code>. Windows warns before opening it, because the builds are not code-signed.</p>
+							<p class="runs"><strong>Plays</strong> Windows builds.</p>
+						</article>
+					</div>
+					<aside class="alpha">
+						<p><strong>Stault is alpha software.</strong> Expect bugs and rough edges, and keep a backup of any saves you care about. It is used on macOS; on Linux and Windows it has so far only been run in test machines, not on a Steam Deck or a gaming PC. Not built yet: Big Picture Mode, Steam shortcuts. If something breaks, please <a href="https://github.com/MoSattler/stault/issues/new?template=bug_report.yml">report it</a>.</p>
+					</aside>
+				</div>
+			</section>
+		</main>
+
+		<footer>
+			<div class="wrap">
+				<a class="brand" href="./">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="12" cy="12" r="4.2" /><path d="M12 5.8v2M12 16.2v2M5.8 12h2M16.2 12h2" /></svg>
+					Stault
+				</a>
+				<nav aria-label="Links">
+					<a href="https://github.com/MoSattler/stault">GitHub</a>
+					<a href="https://github.com/MoSattler/stault/releases">Releases</a>
+					<a href="https://github.com/MoSattler/stault/blob/main/CONTRIBUTING.md">Contributing</a>
+					<a href="https://github.com/MoSattler/stault/blob/main/LICENSE">MIT License</a>
+					<a href="https://gamevau.lt">GameVault</a>
+				</nav>
+			</div>
+		</footer>
+
+		<script>
+			// A copy button on each install command. The clipboard needs a secure page (https or localhost);
+			// where the browser refuses it anyway, the command is selected for copying by hand.
+			if (navigator.clipboard) {
+				for (const cmd of document.querySelectorAll(".cmd")) {
+					const code = cmd.querySelector("code");
+					const button = document.createElement("button");
+					button.type = "button";
+					button.className = "copy";
+					button.textContent = "Copy";
+					button.setAttribute("aria-live", "polite");
+					button.addEventListener("click", () =>
+						navigator.clipboard.writeText(code.textContent).then(
+							() => {
+								button.textContent = "Copied";
+								setTimeout(() => (button.textContent = "Copy"), 1600);
+							},
+							() => getSelection().selectAllChildren(code),
+						),
+					);
+					cmd.prepend(button);
+				}
+			}
+		</script>
+	</body>
+</html>

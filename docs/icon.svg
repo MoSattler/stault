@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+	<!-- The vault dial from the in-app Logo (src/mainview/components/icons.tsx) on a carbon tile. -->
+	<defs>
+		<linearGradient id="tile" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#262b31" />
+			<stop offset="1" stop-color="#0b0c0e" />
+		</linearGradient>
+		<linearGradient id="edge" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#fff" stop-opacity="0.16" />
+			<stop offset="0.5" stop-color="#fff" stop-opacity="0.03" />
+			<stop offset="1" stop-color="#fff" stop-opacity="0.06" />
+		</linearGradient>
+		<radialGradient id="glow" cx="512" cy="512" r="430" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#c5f04a" stop-opacity="0.2" />
+			<stop offset="1" stop-color="#c5f04a" stop-opacity="0" />
+		</radialGradient>
+		<linearGradient id="lime" x1="0" y1="174" x2="0" y2="850" gradientUnits="userSpaceOnUse">
+			<stop offset="0" stop-color="#e2ff8a" />
+			<stop offset="1" stop-color="#b3e02f" />
+		</linearGradient>
+	</defs>
+	<rect width="1024" height="1024" rx="230" fill="url(#tile)" />
+	<rect x="5" y="5" width="1014" height="1014" rx="225" fill="none" stroke="url(#edge)" stroke-width="10" />
+	<circle cx="512" cy="512" r="430" fill="url(#glow)" />
+	<g fill="none" stroke="url(#lime)" stroke-width="64" stroke-linecap="round">
+		<rect x="206" y="206" width="612" height="612" rx="136" />
+		<circle cx="512" cy="512" r="143" />
+		<path d="M512 369v-68M512 655v68M369 512h-68M655 512h68" />
+	</g>
+</svg>
