@@ -57,16 +57,12 @@ This installs Stault into `~/.local/share` without root, adds it to the applicat
 
 **Windows**: download the installer from the [latest release](https://github.com/MoSattler/stault/releases/latest).
 
-The builds are not code-signed. Windows warns before opening them. macOS refuses a copy taken straight from the DMG until you run `xattr -dr com.apple.quarantine /Applications/Stault.app` once; the Homebrew cask does this for you.
-
 ## What runs where
 
 | | Launches |
 | --- | --- |
 | Windows | Windows builds |
 | Linux | Linux builds natively, Windows builds through [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher), which comes with Stault and needs Python 3. Ubuntu 24.04 and later may also need umu-launcher's own package; Stault tells you if so. |
-| macOS | Games whose files contain a Mac `.app`. Windows builds are not supported. |
-
 Stault is used on macOS; on Linux and Windows it has so far only been run in test machines (a container, and a VM with Windows for Arm), not on a Steam Deck or a gaming PC.
 
 Not built yet: Big Picture Mode, Steam shortcuts.

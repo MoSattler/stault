@@ -72,8 +72,7 @@
 			h1,
 			h2,
 			h3,
-			p,
-			ul {
+			p {
 				margin: 0;
 			}
 			h1,
@@ -298,44 +297,6 @@
 				}
 			}
 
-			.split {
-				display: grid;
-				gap: 40px 64px;
-			}
-			@media (min-width: 900px) {
-				.split {
-					grid-template-columns: 1fr 1.15fr;
-				}
-			}
-			.note {
-				max-width: 36em;
-				margin-top: 24px;
-				padding-left: 16px;
-				border-left: 2px solid var(--edge);
-				font-size: 0.9375rem;
-			}
-			.checks {
-				display: grid;
-				gap: 22px;
-				padding: 0;
-				list-style: none;
-			}
-			.checks li {
-				display: grid;
-				grid-template-columns: 20px 1fr;
-				gap: 14px;
-			}
-			.checks svg {
-				margin-top: 3px;
-				color: var(--lime);
-			}
-			.checks strong {
-				display: block;
-				color: var(--ink);
-				font-weight: 700;
-				font-stretch: 112%;
-			}
-
 			@media (min-width: 900px) {
 				.platforms {
 					grid-template-columns: repeat(3, 1fr);
@@ -354,14 +315,6 @@
 			}
 			.platform .button {
 				align-self: flex-start;
-			}
-			.platform .runs {
-				margin-top: auto;
-				padding-top: 16px;
-				border-top: 1px solid var(--line);
-			}
-			.runs strong {
-				color: var(--ink);
 			}
 			.cmd {
 				padding: 14px 16px;
@@ -443,7 +396,6 @@
 				</a>
 				<nav aria-label="Sections">
 					<a href="#features">Features</a>
-					<a href="#saves">Save sync</a>
 					<a href="#install">Install</a>
 					<a href="https://github.com/MoSattler/stault">GitHub</a>
 				</nav>
@@ -472,20 +424,20 @@
 					<h2>Features</h2>
 					<div class="grid features">
 						<article class="card">
-							<h3>Your whole library</h3>
-							<p>Recently played, recently added, search, and a page per game with the art and details from your server.</p>
+							<h3>Install and play in a few clicks</h3>
+							<p>Pick a game, press Install, then Play. Stault downloads, unpacks and sets up the game for you.</p>
 						</article>
 						<article class="card">
-							<h3>Installs that take care of themselves</h3>
-							<p>A download queue with pause, resume and a bandwidth limit. It picks up where it left off after a restart.</p>
+							<h3>Windows games on Linux</h3>
+							<p>On Linux, Stault plays your Windows games through Proton and sets it up for you.</p>
 						</article>
 						<article class="card">
-							<h3>Play and keep count</h3>
-							<p>Stault launches the game and records your playtime on the server.</p>
+							<h3>Saves that follow you</h3>
+							<p>Your latest save is downloaded before you play and uploaded when you quit, so you can pick up on another device. If two devices changed it, Stault asks which to keep.</p>
 						</article>
 						<article class="card">
-							<h3>Sign in once</h3>
-							<p>With a password, or through your server's single sign-on in your web browser. The session token is kept in the system keychain. The password is never stored.</p>
+							<h3>Feels familiar</h3>
+							<p>If you've used Steam, you already know your way around: recent games up front, search across your library, and a page for every game.</p>
 						</article>
 					</div>
 					<div class="pair">
@@ -495,66 +447,34 @@
 				</div>
 			</section>
 
-			<section id="saves" class="section">
-				<div class="wrap split">
-					<div>
-						<h2>Save sync</h2>
-						<p class="lede">Before a game starts, Stault fetches a newer save from the server. After you quit, it uploads yours.</p>
-						<p class="note">The server has to accept save files: set <code>SAVEFILES_ENABLED=true</code> on it and give <code>/savefiles</code> a volume. They are off by default.</p>
-					</div>
-					<ul class="checks">
-						<li>
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-							<p><strong>Asks when both sides changed.</strong> When saves changed on two devices, Stault asks which to keep. It never overwrites a save it has not seen on either side.</p>
-						</li>
-						<li>
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-							<p><strong>Finds the save files.</strong> <a href="https://github.com/mtkennerly/ludusavi">Ludusavi</a>, bundled with Stault, finds them. For a game it doesn't list, choose the files on the game's page.</p>
-						</li>
-						<li>
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-							<p><strong>Works offline.</strong> A game starts with the saves on the device, and saves made meanwhile are uploaded once the server is back.</p>
-						</li>
-						<li>
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-							<p><strong>Same format as the official client.</strong> A Windows build's saves move between it and Stault, and between Windows and Linux. A Mac build's saves only move between Macs.</p>
-						</li>
-					</ul>
-				</div>
-			</section>
-
 			<section id="install" class="section">
 				<div class="wrap">
 					<h2>Install</h2>
-					<p class="lede">You need a GameVault server, version 17.0 or newer. Single sign-on needs 17.3.</p>
+					<p class="lede">You need a GameVault server, version 17.0 or newer.</p>
 					<div class="grid platforms">
 						<article class="card platform">
 							<h3>macOS</h3>
 							<p class="meta">Apple Silicon · macOS 14 or newer</p>
 							<div class="cmd"><code>brew install --cask mosattler/tap/stault</code></div>
-							<p>Or <a href="https://github.com/MoSattler/stault/releases/latest/download/macos-arm64-Stault.dmg">download the DMG</a>. macOS refuses a copy taken straight from it until you run <code>xattr -dr com.apple.quarantine /Applications/Stault.app</code> once; the Homebrew cask does this for you.</p>
-							<p class="runs"><strong>Plays</strong> games whose files contain a Mac <code>.app</code>. Windows builds are not supported.</p>
+							<p>Or download it from the <a href="https://github.com/MoSattler/stault/releases/latest">latest release</a>.</p>
 						</article>
 						<article class="card platform">
 							<h3>Linux</h3>
 							<p class="meta">x64</p>
 							<div class="cmd"><code>curl -fsSL https://github.com/MoSattler/stault/releases/latest/download/linux-x64-Stault-Setup.tar.gz | tar -xz -C /tmp &amp;&amp; /tmp/installer</code></div>
-							<p>This installs Stault into <code>~/.local/share</code> without root, adds it to the application menu and starts it. Run it again to upgrade.</p>
-							<p class="runs"><strong>Plays</strong> Linux builds natively, and Windows builds through <a href="https://github.com/Open-Wine-Components/umu-launcher">umu-launcher</a>, which comes with Stault and needs Python 3. Ubuntu 24.04 and later may also need umu-launcher's own package; Stault tells you if so.</p>
+							<p>Installs Stault for your user, without root. Run it again to update.</p>
 						</article>
 						<article class="card platform">
 							<h3>Windows</h3>
 							<p class="meta">x64</p>
-							<a class="button primary" href="https://github.com/MoSattler/stault/releases/latest/download/win-x64-Stault-Setup.zip">
+							<a class="button primary" href="https://github.com/MoSattler/stault/releases/latest">
 								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v12M7.5 12.5L12 17l4.5-4.5" /></svg>
-								Download installer
+								Download from GitHub
 							</a>
-							<p>Unzip it and run <code>Stault-Setup.exe</code>. Windows warns before opening it, because the builds are not code-signed.</p>
-							<p class="runs"><strong>Plays</strong> Windows builds.</p>
 						</article>
 					</div>
 					<aside class="alpha">
-						<p><strong>Stault is alpha software.</strong> Expect bugs and rough edges, and keep a backup of any saves you care about. It is used on macOS; on Linux and Windows it has so far only been run in test machines, not on a Steam Deck or a gaming PC. Not built yet: Big Picture Mode, Steam shortcuts. If something breaks, please <a href="https://github.com/MoSattler/stault/issues/new?template=bug_report.yml">report it</a>.</p>
+						<p><strong>Stault is alpha software.</strong> Expect bugs and rough edges, and keep a backup of any saves you care about. If something breaks, please <a href="https://github.com/MoSattler/stault/issues/new?template=bug_report.yml">report it</a>.</p>
 					</aside>
 				</div>
 			</section>

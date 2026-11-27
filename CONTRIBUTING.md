@@ -87,11 +87,11 @@ Versions come from the commit messages on `main`, which follow [Conventional Com
 - A release also writes the Homebrew cask, `.github/homebrew/stault.rb`, into [MoSattler/homebrew-tap](https://github.com/MoSattler/homebrew-tap) with that release's version and checksum, so change the cask here, not in the tap. The workflow pushes there with the deploy key in the `HOMEBREW_TAP_DEPLOY_KEY` secret.
 - Run the workflow by hand (Actions → Release → Run workflow) for canary installers, which stay attached to the run for 14 days. Use this to try a build on Windows or a Steam Deck.
 
-The builds are not code-signed; see [Install](README.md#install) for what Windows and macOS do with them.
+The builds are not code-signed. How to install them anyway is in `.github/release-notes.md`, which the workflow puts under the changelog of every release; the README and the website link to the release for it.
 
 ## Website
 
-`docs/` is the website, https://mosattler.github.io/stault/. GitHub Pages publishes the folder from `main` as it is (Settings → Pages: the branch `main`, the folder `/docs`), so there is nothing to build. The page repeats the README's features and install steps; change both together. To preview it at http://localhost:4000:
+`docs/` is the website, https://mosattler.github.io/stault/. GitHub Pages publishes the folder from `main` as it is (Settings → Pages: the branch `main`, the folder `/docs`), so there is nothing to build. Its install commands repeat the README's; change both together. To preview it at http://localhost:4000:
 
 ```sh
 python3 -m http.server -d docs 4000

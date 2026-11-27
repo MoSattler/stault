@@ -16,6 +16,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`, `refactor:`, `test:`; `!` marks a breaking change). release-please reads them on `main` to pick the next version and write the changelog, so the type decides whether a change is released: only `feat` and `fix` are.
 - Never edit `version` in `package.json`, `CHANGELOG.md` or `.release-please-manifest.json`, and never push a version tag. Merging the release PR does all of it (`.github/workflows/release.yml`).
+- How to install each download (the DMG and Windows installer are unsigned) is `.github/release-notes.md`, which the `notes` job puts under every release's changelog. Download instructions go there, not in the README or on the website.
 - The Homebrew cask is `.github/homebrew/stault.rb`. Each release writes it into MoSattler/homebrew-tap with the version and the DMG's checksum, so a change made in the tap is lost.
 
 ## Images in PR descriptions
@@ -30,7 +31,7 @@ Stack: Electrobun 2 (Bun main process + system webview), React 19, Tailwind 4, V
 ## Website (`docs/`)
 
 - GitHub Pages publishes `docs/` from `main` as it is: https://mosattler.github.io/stault/. One page (`index.html`), no build step; preview config `site` in `.claude/launch.json`.
-- The page repeats the README's features and install steps. Change both together.
+- It shows the core features only. Its install commands repeat the README's; change both together.
 
 ## Architecture
 
