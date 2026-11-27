@@ -5,8 +5,9 @@ name: Release
 #
 #   Push to main         opens or updates the release PR: next version, changelog
 #   Release PR merged    tags the version and publishes the GitHub release, then
-#                        builds stable installers, attaches them to it and
-#                        points the Homebrew cask at the new macOS installer
+#                        builds stable installers, attaches them to it with
+#                        notes on installing them, and points the Homebrew
+#                        cask at the new macOS installer
 #   Manual run           canary installers, kept on the run for testing
 #   PR touching the      the same canary build, as a check that packaging
 #   packaging files      still works
@@ -125,6 +126,33 @@ jobs:
           ls -l artifacts
           gh release upload "$TAG" artifacts/* --clobber
           gh release edit "$TAG" --title "Stault $TAG"
+
+  # Puts .github/release-notes.md, how to install each download, under the
+  # changelog in the release's notes. The README and the website link here for it.
+  notes:
+    name: Add install notes
+    needs: [release-please, publish]
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/release-notes.md
+          sparse-checkout-cone-mode: false
+
+      - name: Add them to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh release view "$TAG" --json body --jq .body > notes.md
+          # Nothing to add when the workflow is re-run for the same release.
+          if grep -qx '## Install' notes.md; then exit 0; fi
+          { echo; sed "s/@TAG@/$TAG/g" .github/release-notes.md; } >> notes.md
+          gh release edit "$TAG" --notes-file notes.md
 
   # Writes the cask in MoSattler/homebrew-tap for this release's DMG, so that
   # `brew install --cask mosattler/tap/stault` and `brew upgrade` get it. The
